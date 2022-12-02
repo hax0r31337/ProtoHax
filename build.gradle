@@ -1,0 +1,27 @@
+plugins {
+    id 'org.jetbrains.kotlin.jvm' version '1.7.21'
+}
+
+group = 'dev.sora.relay'
+version = '1.0.0'
+
+repositories {
+    mavenCentral()
+    maven { url = 'https://repo.opencollab.dev/maven-releases/' }
+    maven { url = 'https://repo.opencollab.dev/maven-snapshots/' }
+}
+
+dependencies {
+    implementation('com.nukkitx.protocol:bedrock-v560:2.9.15-SNAPSHOT') {
+        exclude group: "com.nukkitx.network"
+    }
+    implementation project(":raknet")
+
+    implementation 'io.netty:netty-transport:4.1.85.Final'
+    implementation 'com.google.code.findbugs:jsr305:3.0.2'
+    implementation 'net.jodah:expiringmap:0.5.10'
+}
+
+compileKotlin {
+    kotlinOptions.jvmTarget = '1.8'
+}

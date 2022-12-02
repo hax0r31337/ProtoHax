@@ -1,0 +1,16 @@
+plugins {
+    id 'java'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'io.netty:netty-transport:4.1.85.Final'
+    implementation 'com.google.code.findbugs:jsr305:3.0.2'
+    implementation 'net.jodah:expiringmap:0.5.10'
+
+    compileOnly 'org.projectlombok:lombok:1.18.24'
+    annotationProcessor 'org.projectlombok:lombok:1.18.24'
+}
