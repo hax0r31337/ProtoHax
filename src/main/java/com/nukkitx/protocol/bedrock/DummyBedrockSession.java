@@ -17,8 +17,6 @@ import java.util.zip.Deflater;
 
 public class DummyBedrockSession extends BedrockSession {
 
-    public static final DummyBedrockSession INSTANCE = new DummyBedrockSession();
-
     public DummyBedrockSession() {
         this(null);
     }

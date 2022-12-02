@@ -29,6 +29,7 @@ class RakNetRelaySession(val clientsideSession: RakNetServerSession,
     val serverSerializer = if (clientsideSession.protocolVersion != serversideSession.protocolVersion)
         BedrockWrapperSerializers.getSerializer(serversideSession.protocolVersion)
     else clientSerializer
+    private val session = DummyBedrockSession(eventLoop)
 
     init {
         serversideSession.listener = RakNetRelayServerListener()
@@ -69,7 +70,7 @@ class RakNetRelaySession(val clientsideSession: RakNetServerSession,
             serializer.compressionSerializer = NoCompression.INSTANCE
         }
         try {
-            serializer.serialize(compressed, packetCodec, listOf(packet), Deflater.DEFAULT_COMPRESSION, DummyBedrockSession.INSTANCE)
+            serializer.serialize(compressed, packetCodec, listOf(packet), Deflater.DEFAULT_COMPRESSION, session)
 
             val finalPayload = ByteBufAllocator.DEFAULT.ioBuffer(1 + compressed.readableBytes() + 8)
             finalPayload.writeByte(0xfe) // Wrapped packet ID
@@ -109,7 +110,7 @@ class RakNetRelaySession(val clientsideSession: RakNetServerSession,
 
         if (buffer.isReadable) {
             val packets = mutableListOf<BedrockPacket>()
-            (if (isClientside) clientSerializer else serverSerializer).deserialize(buffer, packetCodec, packets, DummyBedrockSession.INSTANCE)
+            (if (isClientside) clientSerializer else serverSerializer).deserialize(buffer, packetCodec, packets, session)
             packets.forEach {
                 val hold = if (isClientside) {
                     listener.onPacketOutbound(it)

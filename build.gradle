@@ -1,5 +1,7 @@
 plugins {
     id 'org.jetbrains.kotlin.jvm' version '1.7.21'
+    id 'com.github.johnrengelman.shadow' version '7.1.2'
+    id 'maven-publish'
 }
 
 group = 'dev.sora.relay'
@@ -11,17 +13,38 @@ repositories {
     maven { url = 'https://repo.opencollab.dev/maven-snapshots/' }
 }
 
-dependencies {
-    implementation('com.nukkitx.protocol:bedrock-v560:2.9.15-SNAPSHOT') {
-        exclude group: "com.nukkitx.network"
-    }
-    implementation project(":raknet")
+configurations {
+    embed
+    implementation.extendsFrom(embed)
+}
 
-    implementation 'io.netty:netty-transport:4.1.85.Final'
-    implementation 'com.google.code.findbugs:jsr305:3.0.2'
-    implementation 'net.jodah:expiringmap:0.5.10'
+dependencies {
+    embed('com.nukkitx.protocol:bedrock-v560:2.9.15-SNAPSHOT') {
+        exclude group: 'com.nukkitx.network'
+        exclude group: 'com.nukkitx', module: 'natives'
+    }
+    embed project(':raknet')
+    embed project(':natives')
+
+    embed 'io.netty:netty-transport:4.1.85.Final'
+    embed 'com.google.code.findbugs:jsr305:3.0.2'
+    embed 'net.jodah:expiringmap:0.5.10'
 }
 
 compileKotlin {
     kotlinOptions.jvmTarget = '1.8'
+}
+
+shadowJar {
+    archiveClassifier.set('')
+    configurations = [project.configurations.embed]
+    duplicatesStrategy DuplicatesStrategy.EXCLUDE
+}
+
+publishing {
+    publications {
+        shadow(MavenPublication) { publication ->
+            project.shadow.component(publication)
+        }
+    }
 }
