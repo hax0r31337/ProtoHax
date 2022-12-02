@@ -4,6 +4,7 @@ import com.nukkitx.network.raknet.*
 import com.nukkitx.network.util.DisconnectReason
 import com.nukkitx.protocol.bedrock.BedrockPacket
 import com.nukkitx.protocol.bedrock.BedrockPacketCodec
+import com.nukkitx.protocol.bedrock.DummyBedrockSession
 import com.nukkitx.protocol.bedrock.annotation.Incompressible
 import com.nukkitx.protocol.bedrock.wrapper.BedrockWrapperSerializerV11
 import com.nukkitx.protocol.bedrock.wrapper.BedrockWrapperSerializers
@@ -68,7 +69,7 @@ class RakNetRelaySession(val clientsideSession: RakNetServerSession,
             serializer.compressionSerializer = NoCompression.INSTANCE
         }
         try {
-            serializer.serialize(compressed, packetCodec, listOf(packet), Deflater.BEST_COMPRESSION, null)
+            serializer.serialize(compressed, packetCodec, listOf(packet), Deflater.DEFAULT_COMPRESSION, DummyBedrockSession.INSTANCE)
 
             val finalPayload = ByteBufAllocator.DEFAULT.ioBuffer(1 + compressed.readableBytes() + 8)
             finalPayload.writeByte(0xfe) // Wrapped packet ID
@@ -108,7 +109,7 @@ class RakNetRelaySession(val clientsideSession: RakNetServerSession,
 
         if (buffer.isReadable) {
             val packets = mutableListOf<BedrockPacket>()
-            (if (isClientside) clientSerializer else serverSerializer).deserialize(buffer, packetCodec, packets, null)
+            (if (isClientside) clientSerializer else serverSerializer).deserialize(buffer, packetCodec, packets, DummyBedrockSession.INSTANCE)
             packets.forEach {
                 val hold = if (isClientside) {
                     listener.onPacketOutbound(it)
