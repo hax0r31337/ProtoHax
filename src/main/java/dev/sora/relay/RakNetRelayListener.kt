@@ -12,6 +12,8 @@ interface RakNetRelayListener {
      */
     fun onQuery(address: InetSocketAddress): ByteArray?
 
+    fun onPrepareClientConnection(address: InetSocketAddress)
+
     fun onSessionCreation(serverSession: RakNetServerSession): InetSocketAddress
 
     fun onSession(session: RakNetRelaySession)

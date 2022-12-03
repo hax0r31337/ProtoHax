@@ -27,22 +27,23 @@ class RakNetRelay(listen: InetSocketAddress, private val eventLoopGroup: EventLo
     }
 
     private fun onSession(serverSession: RakNetServerSession) {
-        val port = try {
+        val serverAddress = listener?.onSessionCreation(serverSession) ?: InetSocketAddress("127.0.0.1", 19132)
+        val clientAddress = InetSocketAddress("0.0.0.0", try {
             val socket = DatagramSocket()
             val port = socket.localPort
             socket.close()
             port
         } catch (e: Exception) {
             Random().nextInt(65535)
-        }
+        })
+        listener?.onPrepareClientConnection(clientAddress)
 
         // launch a raknet client
-        val client = RakNetClient(InetSocketAddress("0.0.0.0", port), eventLoopGroup)
+        val client = RakNetClient(clientAddress, eventLoopGroup)
         client.protocolVersion = serverSession.protocolVersion
         client.bind().join()
 
         // connect to server
-        val serverAddress = listener?.onSessionCreation(serverSession) ?: InetSocketAddress("127.0.0.1", 19132)
         val clientSession = client.connect(serverAddress)
 
         // construct relay session

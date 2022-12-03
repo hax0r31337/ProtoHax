@@ -28,17 +28,23 @@ fun main(args: Array<String>) {
         override fun onQuery(address: InetSocketAddress) =
             "MCPE;RakNet Relay;557;1.19.20;0;10;${relay.server.guid};Bedrock level;Survival;1;19132;19132;".toByteArray()
 
-        override fun onSessionCreation(serverSession: RakNetServerSession) =
-            InetSocketAddress("127.0.0.1", 19136)
+        override fun onSessionCreation(serverSession: RakNetServerSession): InetSocketAddress {
+            return InetSocketAddress("127.0.0.1", 19136)
+        }
+
+        override fun onPrepareClientConnection(address: InetSocketAddress) {
+            println(address.address.hostAddress)
+            println(address.port)
+        }
 
         override fun onSession(session: RakNetRelaySession) {
             println("SESSION")
             var entityId = 0L
             session.listener = object : RakNetRelaySessionListener(session = session) {
                 override fun onPacketInbound(packet: BedrockPacket): Boolean {
-                    if (packet !is LevelChunkPacket && packet !is UpdateBlockPacket) {
-                        println(packet)
-                    }
+//                    if (packet !is LevelChunkPacket && packet !is UpdateBlockPacket) {
+//                        println(packet)
+//                    }
                     if (packet is StartGamePacket) {
                         entityId = packet.runtimeEntityId
                     } else if (packet is UpdateAbilitiesPacket) {
@@ -62,9 +68,9 @@ fun main(args: Array<String>) {
                 }
 
                 override fun onPacketOutbound(packet: BedrockPacket): Boolean {
-                    if (packet !is PlayerAuthInputPacket) {
-                        println(packet)
-                    }
+//                    if (packet !is PlayerAuthInputPacket) {
+//                        println(packet)
+//                    }
                     if (packet is RequestAbilityPacket && packet.ability == Ability.FLYING) return false
                     return super.onPacketOutbound(packet)
                 }
