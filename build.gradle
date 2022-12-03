@@ -22,6 +22,7 @@ dependencies {
     embed('com.nukkitx.protocol:bedrock-v560:2.9.15-SNAPSHOT') {
         exclude group: 'com.nukkitx.network'
         exclude group: 'com.nukkitx', module: 'natives'
+        exclude group: 'org.lanternpowered'
     }
     embed project(':raknet')
     embed project(':natives')
@@ -29,6 +30,9 @@ dependencies {
     embed 'io.netty:netty-transport:4.1.85.Final'
     embed 'com.google.code.findbugs:jsr305:3.0.2'
     embed 'net.jodah:expiringmap:0.5.10'
+
+    compileOnly 'org.projectlombok:lombok:1.18.24'
+    annotationProcessor 'org.projectlombok:lombok:1.18.24'
 }
 
 compileKotlin {
