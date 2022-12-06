@@ -36,7 +36,7 @@ class RakNetRelay(listen: InetSocketAddress, private val eventLoopGroup: EventLo
         } catch (e: Exception) {
             Random().nextInt(65535)
         })
-        listener?.onPrepareClientConnection(clientAddress)
+        val relayListener = listener?.onPrepareClientConnection(clientAddress) ?: RakNetRelaySessionListener()
 
         // launch a raknet client
         val client = RakNetClient(clientAddress, eventLoopGroup)
@@ -47,7 +47,7 @@ class RakNetRelay(listen: InetSocketAddress, private val eventLoopGroup: EventLo
         val clientSession = client.connect(serverAddress)
 
         // construct relay session
-        val relaySession = RakNetRelaySession(serverSession, clientSession, eventLoopGroup.next(), packetCodec)
+        val relaySession = RakNetRelaySession(serverSession, clientSession, eventLoopGroup.next(), packetCodec, relayListener)
         listener?.onSession(relaySession)
     }
 

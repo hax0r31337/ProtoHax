@@ -1,5 +1,7 @@
 package dev.sora.relay
 
+import com.nukkitx.natives.sha256.Sha256
+import com.nukkitx.natives.util.Natives
 import com.nukkitx.network.raknet.*
 import com.nukkitx.network.util.DisconnectReason
 import com.nukkitx.protocol.bedrock.BedrockPacket
@@ -7,31 +9,37 @@ import com.nukkitx.protocol.bedrock.BedrockPacketCodec
 import com.nukkitx.protocol.bedrock.DummyBedrockSession
 import com.nukkitx.protocol.bedrock.annotation.Incompressible
 import com.nukkitx.protocol.bedrock.wrapper.BedrockWrapperSerializerV11
-import com.nukkitx.protocol.bedrock.wrapper.BedrockWrapperSerializers
 import com.nukkitx.protocol.bedrock.wrapper.compression.CompressionSerializer
 import com.nukkitx.protocol.bedrock.wrapper.compression.NoCompression
+import dev.sora.relay.utils.CipherPair
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.ByteBufAllocator
 import io.netty.buffer.Unpooled
 import io.netty.channel.EventLoop
+import java.nio.ByteBuffer
+import java.util.*
+import java.util.concurrent.atomic.AtomicLong
 import java.util.zip.Deflater
 
 
 class RakNetRelaySession(val clientsideSession: RakNetServerSession,
                          val serversideSession: RakNetClientSession,
-                         private val eventLoop: EventLoop, private val packetCodec: BedrockPacketCodec) {
+                         private val eventLoop: EventLoop, private val packetCodec: BedrockPacketCodec,
+                         val listener: RakNetRelaySessionListener) {
 
     private var clientState = RakNetState.INITIALIZING
     private var serverState = RakNetState.INITIALIZING
-    var listener = RakNetRelaySessionListener(this)
 
-    val clientSerializer = BedrockWrapperSerializers.getSerializer(clientsideSession.protocolVersion)
-    val serverSerializer = if (clientsideSession.protocolVersion != serversideSession.protocolVersion)
-        BedrockWrapperSerializers.getSerializer(serversideSession.protocolVersion)
-    else clientSerializer
-    private val session = DummyBedrockSession(eventLoop)
+    val clientSerializer = listener.provideSerializer(clientsideSession)
+    val serverSerializer = listener.provideSerializer(serversideSession)
+    private val bedrockSession = DummyBedrockSession(eventLoop)
+
+    var clientCipher: CipherPair? = null
+    var serverCipher: CipherPair? = null
+    private val sentEncryptedPacketCount = AtomicLong()
 
     init {
+        listener.session = this
         serversideSession.listener = RakNetRelayServerListener()
         clientsideSession.listener = RakNetRelayClientListener()
     }
@@ -60,6 +68,23 @@ class RakNetRelaySession(val clientsideSession: RakNetServerSession,
         sendWrapped(packet, false)
     }
 
+    private fun generateTrailer(buf: ByteBuf, cipherPair: CipherPair): ByteArray? {
+        val hash: Sha256 = Natives.SHA_256.get()
+        val counterBuf = ByteBufAllocator.DEFAULT.directBuffer(8)
+        return try {
+            counterBuf.writeLongLE(this.sentEncryptedPacketCount.getAndIncrement())
+            val keyBuffer = ByteBuffer.wrap(cipherPair.secretKey.encoded)
+            hash.update(counterBuf.internalNioBuffer(0, 8))
+            hash.update(buf.internalNioBuffer(buf.readerIndex(), buf.readableBytes()))
+            hash.update(keyBuffer)
+            val digested = hash.digest()
+            Arrays.copyOf(digested, 8)
+        } finally {
+            counterBuf.release()
+            hash.reset()
+        }
+    }
+
     private fun sendWrapped(packet: BedrockPacket, isClientside: Boolean) {
         val serializer = if (isClientside) clientSerializer else serverSerializer
 
@@ -70,11 +95,23 @@ class RakNetRelaySession(val clientsideSession: RakNetServerSession,
             serializer.compressionSerializer = NoCompression.INSTANCE
         }
         try {
-            serializer.serialize(compressed, packetCodec, listOf(packet), Deflater.DEFAULT_COMPRESSION, session)
+            serializer.serialize(compressed, packetCodec, listOf(packet), Deflater.DEFAULT_COMPRESSION, bedrockSession)
 
             val finalPayload = ByteBufAllocator.DEFAULT.ioBuffer(1 + compressed.readableBytes() + 8)
             finalPayload.writeByte(0xfe) // Wrapped packet ID
-            finalPayload.writeBytes(compressed)
+
+            val cipherPair = if (isClientside) clientCipher else serverCipher
+            if (cipherPair != null) {
+                val trailer = ByteBuffer.wrap(this.generateTrailer(compressed, cipherPair))
+                val outBuffer = finalPayload.internalNioBuffer(1, compressed.readableBytes() + 8)
+                val inBuffer = compressed.internalNioBuffer(compressed.readerIndex(), compressed.readableBytes())
+
+                cipherPair.encryptionCipher.update(inBuffer, outBuffer)
+                cipherPair.encryptionCipher.update(trailer, outBuffer)
+                finalPayload.writerIndex(finalPayload.writerIndex() + compressed.readableBytes() + 8)
+            } else {
+                finalPayload.writeBytes(compressed)
+            }
             (if (isClientside) clientsideSession else serversideSession).send(finalPayload)
         } catch (e: Exception) {
             e.printStackTrace()
@@ -106,11 +143,20 @@ class RakNetRelaySession(val clientsideSession: RakNetServerSession,
     }
 
     private fun onWrappedPacket(buffer: ByteBuf, isClientside: Boolean) {
+        val cipherPair = if (isClientside) clientCipher else serverCipher
+        if (cipherPair != null) {
+            val inBuffer: ByteBuffer = buffer.internalNioBuffer(buffer.readerIndex(), buffer.readableBytes())
+            val outBuffer = inBuffer.duplicate()
+            cipherPair.decryptionCipher.update(inBuffer, outBuffer)
+
+            buffer.writerIndex(buffer.writerIndex() - 8)
+        }
+
         buffer.markReaderIndex()
 
         if (buffer.isReadable) {
             val packets = mutableListOf<BedrockPacket>()
-            (if (isClientside) clientSerializer else serverSerializer).deserialize(buffer, packetCodec, packets, session)
+            (if (isClientside) clientSerializer else serverSerializer).deserialize(buffer, packetCodec, packets, bedrockSession)
             packets.forEach {
                 val hold = if (isClientside) {
                     listener.onPacketOutbound(it)

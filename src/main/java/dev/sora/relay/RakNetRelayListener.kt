@@ -12,9 +12,13 @@ interface RakNetRelayListener {
      */
     fun onQuery(address: InetSocketAddress): ByteArray?
 
-    fun onPrepareClientConnection(address: InetSocketAddress)
+    fun onPrepareClientConnection(address: InetSocketAddress): RakNetRelaySessionListener {
+        return RakNetRelaySessionListener()
+    }
 
     fun onSessionCreation(serverSession: RakNetServerSession): InetSocketAddress
 
-    fun onSession(session: RakNetRelaySession)
+    fun onSession(session: RakNetRelaySession) {
+
+    }
 }
