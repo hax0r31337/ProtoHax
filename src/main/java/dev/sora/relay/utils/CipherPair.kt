@@ -1,5 +1,6 @@
 package dev.sora.relay.utils
 
+import java.util.concurrent.atomic.AtomicLong
 import javax.crypto.Cipher
 import javax.crypto.SecretKey
 import javax.crypto.spec.IvParameterSpec
@@ -8,6 +9,7 @@ class CipherPair(val secretKey: SecretKey) {
 
     val encryptionCipher: Cipher
     val decryptionCipher: Cipher
+    val sentEncryptedPacketCount = AtomicLong()
 
     init {
         val iv = ByteArray(16)

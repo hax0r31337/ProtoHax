@@ -36,7 +36,6 @@ class RakNetRelaySession(val clientsideSession: RakNetServerSession,
 
     var clientCipher: CipherPair? = null
     var serverCipher: CipherPair? = null
-    private val sentEncryptedPacketCount = AtomicLong()
 
     init {
         listener.session = this
@@ -72,7 +71,7 @@ class RakNetRelaySession(val clientsideSession: RakNetServerSession,
         val hash: Sha256 = Natives.SHA_256.get()
         val counterBuf = ByteBufAllocator.DEFAULT.directBuffer(8)
         return try {
-            counterBuf.writeLongLE(this.sentEncryptedPacketCount.getAndIncrement())
+            counterBuf.writeLongLE(cipherPair.sentEncryptedPacketCount.getAndIncrement())
             val keyBuffer = ByteBuffer.wrap(cipherPair.secretKey.encoded)
             hash.update(counterBuf.internalNioBuffer(0, 8))
             hash.update(buf.internalNioBuffer(buf.readerIndex(), buf.readableBytes()))
@@ -176,6 +175,7 @@ class RakNetRelaySession(val clientsideSession: RakNetServerSession,
     internal inner class RakNetRelayClientListener : RakNetSessionListener {
         override fun onSessionChangeState(state: RakNetState) {
             clientState = state
+            println(state)
             while (state == RakNetState.CONNECTED && serverState != RakNetState.CONNECTED) {
                 safeSleep(1L)
             }
@@ -199,6 +199,7 @@ class RakNetRelaySession(val clientsideSession: RakNetServerSession,
     internal inner class RakNetRelayServerListener : RakNetSessionListener {
         override fun onSessionChangeState(state: RakNetState) {
             serverState = state
+            println(state)
             while (state == RakNetState.CONNECTED && clientState != RakNetState.CONNECTED) {
                 safeSleep(1L)
             }
