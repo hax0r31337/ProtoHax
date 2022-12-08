@@ -13,12 +13,14 @@ import dev.sora.relay.game.event.impl.EventPacketOutbound
 import dev.sora.relay.game.event.impl.EventTick
 import dev.sora.relay.game.world.WorldClient
 
-class GameSession(val netSession: RakNetRelaySession) : RakNetRelaySessionListener.PacketListener {
+class GameSession : RakNetRelaySessionListener.PacketListener {
 
     val thePlayer = EntityPlayerSP()
     val theWorld = WorldClient(this)
 
     val eventManager = EventManager()
+
+    lateinit var netSession: RakNetRelaySession
 
     override fun onPacketInbound(packet: BedrockPacket): Boolean {
         val event = EventPacketInbound(this, packet)

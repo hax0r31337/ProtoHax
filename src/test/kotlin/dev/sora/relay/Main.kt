@@ -1,30 +1,21 @@
 package dev.sora.relay
 
 import com.google.gson.JsonParser
-import com.nukkitx.network.raknet.*
-import com.nukkitx.network.util.DisconnectReason
-import com.nukkitx.protocol.bedrock.BedrockPacket
-import com.nukkitx.protocol.bedrock.data.Ability
-import com.nukkitx.protocol.bedrock.packet.*
-import com.nukkitx.protocol.bedrock.util.EncryptionUtils
+import com.nukkitx.network.raknet.RakNetServerSession
 import com.nukkitx.protocol.bedrock.v557.Bedrock_v557
-import com.nukkitx.protocol.bedrock.wrapper.BedrockWrapperSerializers
-import dev.sora.relay.session.RakNetRelaySessionListenerMicrosoft
+import dev.sora.relay.cheat.command.CommandManager
+import dev.sora.relay.cheat.command.impl.CommandToggle
+import dev.sora.relay.cheat.module.ModuleManager
+import dev.sora.relay.game.GameSession
 import dev.sora.relay.utils.HttpUtils
-import io.netty.buffer.ByteBuf
-import io.netty.buffer.ByteBufAllocator
-import io.netty.buffer.Unpooled
 import io.netty.util.internal.logging.InternalLoggerFactory
 import java.io.File
-import java.net.DatagramSocket
 import java.net.InetSocketAddress
-import java.util.*
-import java.util.zip.Deflater
-import javax.crypto.spec.SecretKeySpec
 
 
 fun main(args: Array<String>) {
     InternalLoggerFactory.setDefaultFactory(LoggerFactory())
+    val gameSession = craftSession()
 
     val relay = RakNetRelay(InetSocketAddress("0.0.0.0", 19132), packetCodec = Bedrock_v557.V557_CODEC)
     relay.listener = object : RakNetRelayListener {
@@ -37,44 +28,9 @@ fun main(args: Array<String>) {
         }
 
         override fun onSession(session: RakNetRelaySession) {
-            println("SESSION")
-            var entityId = 0L
-            session.listener.childListener.add(object : RakNetRelaySessionListener.PacketListener {
-                override fun onPacketInbound(packet: BedrockPacket): Boolean {
-                    if (packet !is LevelChunkPacket && packet !is UpdateBlockPacket) {
-                        println(packet)
-                    }
-//                    if (packet is StartGamePacket) {
-//                        entityId = packet.runtimeEntityId
-//                    } else if (packet is UpdateAbilitiesPacket) {
-//                        session.inboundPacket(UpdateAbilitiesPacket().apply {
-//                            uniqueEntityId = entityId
-//                            playerPermission = PlayerPermission.OPERATOR
-//                            commandPermission = CommandPermission.OPERATOR
-//                            abilityLayers.add(AbilityLayer().apply {
-//                                layerType = AbilityLayer.Type.BASE
-//                                abilitiesSet.addAll(Ability.values())
-//                                abilityValues.addAll(arrayOf(Ability.BUILD, Ability.MINE, Ability.DOORS_AND_SWITCHES, Ability.OPEN_CONTAINERS, Ability.ATTACK_PLAYERS, Ability.ATTACK_MOBS, Ability.OPERATOR_COMMANDS, Ability.MAY_FLY, Ability.FLY_SPEED, Ability.WALK_SPEED))
-//                                walkSpeed = 0.1f
-//                                flySpeed = 0.25f
-//                            })
-//                        })
-//                        return false
-//                    } else if (packet is UpdateAttributesPacket) {
-//                        packet.attributes.add(AttributeData("minecraft:movement", 0.0f, Float.MAX_VALUE, 0.5f, 0.1f))
-//                    }
-                    return true
-                }
-
-                override fun onPacketOutbound(packet: BedrockPacket): Boolean {
-                    if (packet !is PlayerAuthInputPacket) {
-                        println(packet)
-                    }
-                    if (packet is RequestAbilityPacket && packet.ability == Ability.FLYING) return false
-                    return true
-                }
-            })
-            session.listener.childListener.add(RakNetRelaySessionListenerMicrosoft(getMSAccessToken(), session))
+            session.listener.childListener.add(gameSession)
+            gameSession.netSession = session
+//            session.listener.childListener.add(RakNetRelaySessionListenerMicrosoft(getMSAccessToken(), session))
         }
     }
     relay.bind()
@@ -90,4 +46,18 @@ private fun getMSAccessToken(): String {
         mapOf("Content-Type" to "application/x-www-form-urlencoded")).inputStream.reader(Charsets.UTF_8)).asJsonObject
     file.writeText(body.get("refresh_token").asString)
     return body.get("access_token").asString
+}
+
+private fun craftSession() : GameSession {
+    val session = GameSession()
+
+    val moduleManager = ModuleManager(session)
+    moduleManager.init()
+
+    val commandManager = CommandManager(session)
+    commandManager.registerCommand(CommandToggle(moduleManager))
+
+    session.eventManager.registerListener(commandManager)
+
+    return session
 }

@@ -1,14 +1,13 @@
-package dev.sora.relay.cheat
+package dev.sora.relay.cheat.module
 
 import com.nukkitx.protocol.bedrock.packet.TextPacket
+import dev.sora.relay.cheat.BasicThing
 import dev.sora.relay.game.GameSession
 import dev.sora.relay.game.event.Listener
 
 abstract class CheatModule(val name: String,
                            defaultOn: Boolean = false,
-                           private val canToggle: Boolean = true) : Listener {
-
-    lateinit var session: GameSession
+                           private val canToggle: Boolean = true) : BasicThing(), Listener {
 
     var state = defaultOn
         set(state) {
@@ -30,14 +29,6 @@ abstract class CheatModule(val name: String,
     open fun onEnable() {}
 
     open fun onDisable() {}
-
-    protected fun chat(msg: String) {
-        session.netSession.inboundPacket(TextPacket().apply {
-            type = TextPacket.Type.RAW
-            isNeedsTranslation = false
-            message = "[§9§lProtoHax§r] $msg"
-        })
-    }
 
     override fun listen() = state
 }

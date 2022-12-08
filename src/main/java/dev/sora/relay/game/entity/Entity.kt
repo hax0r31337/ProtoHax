@@ -5,6 +5,7 @@ import com.nukkitx.protocol.bedrock.BedrockPacket
 import com.nukkitx.protocol.bedrock.data.AttributeData
 import com.nukkitx.protocol.bedrock.data.entity.EntityDataMap
 import com.nukkitx.protocol.bedrock.packet.MoveEntityAbsolutePacket
+import kotlin.math.sqrt
 
 abstract class Entity(open val entityId: Long) {
 
@@ -51,6 +52,26 @@ abstract class Entity(open val entityId: Long) {
 
     open fun rotate(rotation: Vector3f) {
         rotate(rotation.x, rotation.y)
+    }
+
+    fun distanceSq(x: Double, y: Double, z: Double): Double {
+        val dx = posX - x
+        val dy = posY - y
+        val dz = posZ - z
+        return dx * dx + dy * dy + dz * dz
+    }
+
+    fun distanceSq(entity: Entity)
+            = distanceSq(entity.posX, entity.posY, entity.posZ)
+
+    fun distance(x: Double, y: Double, z: Double)
+        = sqrt(distanceSq(x, y, z))
+
+    fun distance(entity: Entity)
+        = distance(entity.posX, entity.posY, entity.posZ)
+
+    fun vec3Position(): Vector3f {
+        return Vector3f.from(posX, posY, posZ)
     }
 
     open fun onPacket(packet: BedrockPacket) {
