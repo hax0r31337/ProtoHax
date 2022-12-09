@@ -5,19 +5,46 @@ import com.nukkitx.protocol.bedrock.data.inventory.ItemData
 import com.nukkitx.protocol.bedrock.data.inventory.TransactionType
 import com.nukkitx.protocol.bedrock.packet.AnimatePacket
 import com.nukkitx.protocol.bedrock.packet.InventoryTransactionPacket
+import com.nukkitx.protocol.bedrock.packet.MovePlayerPacket
+import com.nukkitx.protocol.bedrock.packet.PlayerAuthInputPacket
+import com.nukkitx.protocol.bedrock.packet.RemoveEntityPacket
+import com.nukkitx.protocol.bedrock.packet.TextPacket
 import dev.sora.relay.cheat.module.CheatModule
+import dev.sora.relay.game.entity.Entity
+import dev.sora.relay.game.entity.EntityItem
 import dev.sora.relay.game.entity.EntityPlayer
+import dev.sora.relay.game.entity.EntityUnknown
 import dev.sora.relay.game.event.Listen
+import dev.sora.relay.game.event.impl.EventPacketInbound
+import dev.sora.relay.game.event.impl.EventPacketOutbound
 import dev.sora.relay.game.event.impl.EventTick
+import dev.sora.relay.utils.getRandomString
+import java.lang.Math.atan2
+import java.lang.Math.sqrt
 
 class ModuleKillAura : CheatModule("KillAura") {
+
+    private var rotation: Pair<Float, Float>? = null
+    private var lastHit = 0
 
     @Listen
     fun onTick(event: EventTick) {
         val session = event.session
 
-        val entity = session.theWorld.entityMap.values.filter { it is EntityPlayer && it.distanceSq(session.thePlayer) < 15 }
+        val entity = session.theWorld.entityMap.values.filter { it is EntityPlayer && it.distanceSq(session.thePlayer) < 64 }
             .firstOrNull() ?: return
+
+        rotation = toRotation(session.thePlayer.vec3Position(), entity.vec3Position().add(0f, 1f, 0f))
+
+        if (lastHit != 0) {
+            lastHit--
+            return
+        }
+        lastHit = 3
+
+        if (entity is EntityUnknown) {
+            println(entity.type)
+        }
 
         // swing
         AnimatePacket().apply {
@@ -34,10 +61,34 @@ class ModuleKillAura : CheatModule("KillAura") {
             transactionType = TransactionType.ITEM_USE_ON_ENTITY
             actionType = 1
             runtimeEntityId = entity.entityId
-            hotbarSlot = 0
+            hotbarSlot = 1
             itemInHand = ItemData.AIR
             playerPosition = session.thePlayer.vec3Position()
             clickPosition = Vector3f.ZERO
         })
+    }
+
+    @Listen
+    fun onPacketOutbound(event: EventPacketOutbound) {
+        val rotation = rotation ?: return
+        val packet = event.packet
+
+        if (packet is PlayerAuthInputPacket) {
+            packet.rotation = Vector3f.from(rotation.first, rotation.second, packet.rotation.z)
+            this.rotation = null
+        } else if (packet is MovePlayerPacket) {
+            packet.rotation = Vector3f.from(rotation.first, rotation.second, packet.rotation.z)
+            this.rotation = null
+        }
+    }
+
+    private fun toRotation(from: Vector3f, to: Vector3f): Pair<Float, Float> {
+        val diffX = (to.x - from.x).toDouble()
+        val diffY = (to.y - from.y).toDouble()
+        val diffZ = (to.z - from.z).toDouble()
+        return Pair(
+            ((-Math.toDegrees(atan2(diffY, sqrt(diffX * diffX + diffZ * diffZ)))).toFloat()),
+            (Math.toDegrees(atan2(diffZ, diffX)).toFloat() - 90f)
+        )
     }
 }

@@ -5,6 +5,7 @@ import com.nukkitx.protocol.bedrock.packet.AddEntityPacket
 import com.nukkitx.protocol.bedrock.packet.AddItemEntityPacket
 import com.nukkitx.protocol.bedrock.packet.AddPlayerPacket
 import com.nukkitx.protocol.bedrock.packet.RemoveEntityPacket
+import com.nukkitx.protocol.bedrock.packet.TakeItemEntityPacket
 import dev.sora.relay.game.GameSession
 import dev.sora.relay.game.entity.Entity
 import dev.sora.relay.game.entity.EntityPlayer
@@ -34,6 +35,8 @@ class WorldClient(private val session: GameSession) {
             }
         } else if (packet is RemoveEntityPacket) {
             entityMap.remove(packet.uniqueEntityId)
+        } else if (packet is TakeItemEntityPacket) {
+            entityMap.remove(packet.itemRuntimeEntityId)
         } else {
             entityMap.values.forEach { entity ->
                 entity.onPacket(packet)

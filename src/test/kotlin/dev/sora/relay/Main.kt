@@ -2,11 +2,20 @@ package dev.sora.relay
 
 import com.google.gson.JsonParser
 import com.nukkitx.network.raknet.RakNetServerSession
+import com.nukkitx.protocol.bedrock.BedrockPacket
+import com.nukkitx.protocol.bedrock.packet.AnimatePacket
+import com.nukkitx.protocol.bedrock.packet.InventoryTransactionPacket
+import com.nukkitx.protocol.bedrock.packet.MovePlayerPacket
+import com.nukkitx.protocol.bedrock.packet.TransferPacket
+import com.nukkitx.protocol.bedrock.v554.Bedrock_v554
 import com.nukkitx.protocol.bedrock.v557.Bedrock_v557
+import com.nukkitx.protocol.bedrock.v560.Bedrock_v560
 import dev.sora.relay.cheat.command.CommandManager
 import dev.sora.relay.cheat.command.impl.CommandToggle
 import dev.sora.relay.cheat.module.ModuleManager
 import dev.sora.relay.game.GameSession
+import dev.sora.relay.session.RakNetRelaySessionListenerMicrosoft
+import dev.sora.relay.session.RakNetRelaySessionListenerVersionSpoof
 import dev.sora.relay.utils.HttpUtils
 import io.netty.util.internal.logging.InternalLoggerFactory
 import java.io.File
@@ -17,20 +26,43 @@ fun main(args: Array<String>) {
     InternalLoggerFactory.setDefaultFactory(LoggerFactory())
     val gameSession = craftSession()
 
-    val relay = RakNetRelay(InetSocketAddress("0.0.0.0", 19132), packetCodec = Bedrock_v557.V557_CODEC)
+    val relay = RakNetRelay(InetSocketAddress("0.0.0.0", 19132), packetCodec = Bedrock_v560.V560_CODEC)
+    var dst = InetSocketAddress("mco.mineplex.com", 19132)
+//    var dst = InetSocketAddress("bedrock.pika.host", 19132)
     relay.listener = object : RakNetRelayListener {
         override fun onQuery(address: InetSocketAddress) =
             "MCPE;RakNet Relay;557;1.19.20;0;10;${relay.server.guid};Bedrock level;Survival;1;19132;19132;".toByteArray()
 
         override fun onSessionCreation(serverSession: RakNetServerSession): InetSocketAddress {
-            return InetSocketAddress("127.0.0.1", 19136)
-//            return InetSocketAddress("101.67.57.190", 19114)
+//            return InetSocketAddress("127.0.0.1", 19136)
+            return dst
         }
 
         override fun onSession(session: RakNetRelaySession) {
             session.listener.childListener.add(gameSession)
             gameSession.netSession = session
-//            session.listener.childListener.add(RakNetRelaySessionListenerMicrosoft(getMSAccessToken(), session))
+            session.listener.childListener.add(RakNetRelaySessionListenerMicrosoft(getMSAccessToken(), session))
+//            session.listener.childListener.add(object : RakNetRelaySessionListener.PacketListener {
+//                override fun onPacketInbound(packet: BedrockPacket): Boolean {
+//                    if(packet !is MovePlayerPacket && packet !is AnimatePacket) {
+//                        println(packet.toString().let {
+//                            if (it.contains("\n")) it.split("\n")[0] else it
+//                        })
+//                    }
+//                    if (packet is TransferPacket) {
+//                        println("Transfer: ${packet.address}:${packet.port}")
+//                        dst = InetSocketAddress(packet.address, packet.port)
+//                        packet.address = "192.168.2.103"
+//                        packet.port = 19132
+//                    }
+//                    return true
+//                }
+//
+//                override fun onPacketOutbound(packet: BedrockPacket): Boolean {
+////                    println(packet)
+//                    return true
+//                }
+//            })
         }
     }
     relay.bind()

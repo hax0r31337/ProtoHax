@@ -51,7 +51,7 @@ abstract class Entity(open val entityId: Long) {
     }
 
     open fun rotate(rotation: Vector3f) {
-        rotate(rotation.x, rotation.y)
+        rotate(rotation.y, rotation.x)
     }
 
     fun distanceSq(x: Double, y: Double, z: Double): Double {

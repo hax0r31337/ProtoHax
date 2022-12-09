@@ -1,6 +1,8 @@
 package dev.sora.relay.session
 
 import coelho.msftauth.api.xbox.*
+import com.google.gson.Gson
+import com.google.gson.JsonArray
 import com.google.gson.JsonParser
 import com.nimbusds.jose.shaded.json.JSONObject
 import com.nukkitx.protocol.bedrock.BedrockPacket
@@ -14,9 +16,12 @@ import dev.sora.relay.utils.CipherPair
 import dev.sora.relay.utils.HttpUtils
 import dev.sora.relay.utils.JoseStuff
 import io.netty.util.AsciiString
+import java.io.InputStreamReader
 import java.security.KeyPair
 import java.security.Signature
+import java.time.Instant
 import java.util.*
+import java.util.concurrent.TimeUnit
 
 class RakNetRelaySessionListenerMicrosoft(val accessToken: String, private val session: RakNetRelaySession) : RakNetRelaySessionListener.PacketListener {
 
@@ -40,15 +45,40 @@ class RakNetRelaySessionListenerMicrosoft(val accessToken: String, private val s
 
     override fun onPacketOutbound(packet: BedrockPacket): Boolean {
         if (packet is LoginPacket) {
-            packet.chainData = AsciiString(fetchChain(accessToken))
-            val skinBody = packet.skinData.toString().split(".")
-            packet.skinData = AsciiString(toJWTRaw(skinBody[1], keyPair))
+            println(packet.chainData.toString())
+            packet.chainData = AsciiString(getChain(accessToken).also {
+                println(it)
+            })
+            val skinBody = packet.skinData.toString().split(".")[1]
+            packet.skinData = AsciiString(toJWTRaw(skinBody, keyPair))
         }
 
         return true
     }
 
-    private fun fetchChain(accessToken: String): String {
+    private fun getChain(accessToken: String): String {
+        val rawChain = JsonParser.parseReader(fetchChain(accessToken)).asJsonObject
+        val chains = rawChain.get("chain").asJsonArray
+
+        // add the self-signed jwt
+        val identityPubKey = JsonParser.parseString(Base64.getDecoder().decode(chains.get(0).asString.split(".")[0]).toString(Charsets.UTF_8)).asJsonObject
+        val jwt = toJWTRaw(Base64.getEncoder().encodeToString(JSONObject().apply {
+            put("certificateAuthority", true)
+            put("exp", (Instant.now().epochSecond + TimeUnit.HOURS.toSeconds(6)).toInt())
+            put("nbf", (Instant.now().epochSecond - TimeUnit.HOURS.toSeconds(6)).toInt())
+            put("identityPublicKey", identityPubKey.get("x5u").asString)
+        }.toJSONString().toByteArray(Charsets.UTF_8)), keyPair)
+        println(jwt)
+
+        rawChain.add("chain", JsonArray().also {
+            it.add(jwt)
+            it.addAll(chains)
+        })
+
+        return Gson().toJson(rawChain)
+    }
+
+    private fun fetchChain(accessToken: String): InputStreamReader {
         val key = XboxDeviceKey() // this key used to sign the post content
 
         val userToken = XboxUserAuthRequest(
@@ -79,12 +109,11 @@ class RakNetRelaySessionListenerMicrosoft(val accessToken: String, private val s
         val data = JSONObject().apply {
             put("identityPublicKey", Base64.getEncoder().encodeToString(keyPair.public.encoded))
         }
-        println(data.toJSONString())
         val connection = HttpUtils.make("https://multiplayer.minecraft.net/authentication", "POST", data.toJSONString(),
             mapOf("Content-Type" to "application/json", "Authorization" to identityToken,
-                "User-Agent" to "MCPE/UWP", "Client-Version" to "1.19.40"))
+                "User-Agent" to "MCPE/UWP", "Client-Version" to "1.19.50"))
 
-        return connection.inputStream.reader().readText()
+        return connection.inputStream.reader()
     }
 
     private fun toJWTRaw(payload: String, keyPair: KeyPair): String {
@@ -92,7 +121,6 @@ class RakNetRelaySessionListenerMicrosoft(val accessToken: String, private val s
             put("alg", "ES384")
             put("x5u", Base64.getEncoder().encodeToString(keyPair.public.encoded))
         }
-        println(headerJson.toJSONString())
         val header = Base64.getUrlEncoder().withoutPadding().encodeToString(headerJson.toJSONString().toByteArray(Charsets.UTF_8))
         val sign = signBytes("$header.$payload".toByteArray(Charsets.UTF_8), keyPair)
         return "$header.$payload.$sign"
