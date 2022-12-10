@@ -9,7 +9,7 @@ class ModuleVelocity : CheatModule("Velocity") {
 
     @Listen
     fun onPacketInbound(event: EventPacketInbound) {
-        if ((event.packet is SetEntityMotionPacket) && (event.packet.runtimeEntityId == event.session.thePlayer.entityId)) {
+        if (event.packet is SetEntityMotionPacket) {
             event.cancel()
         }
     }

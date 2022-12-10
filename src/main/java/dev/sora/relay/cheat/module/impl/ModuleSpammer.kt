@@ -2,28 +2,32 @@ package dev.sora.relay.cheat.module.impl
 
 import com.nukkitx.protocol.bedrock.packet.TextPacket
 import dev.sora.relay.cheat.module.CheatModule
+import dev.sora.relay.cheat.value.IntValue
+import dev.sora.relay.cheat.value.StringValue
 import dev.sora.relay.game.event.Listen
 import dev.sora.relay.game.event.impl.EventTick
 import dev.sora.relay.utils.getRandomString
-import java.util.*
+import dev.sora.relay.utils.timing.TheTimer
+import kotlin.random.Random
 
-class ModuleSpammer : CheatModule("Spammer", defaultOn = false) {
+class ModuleSpammer : CheatModule("Spammer") {
 
-    private var ticks = 0
+    private val delayValue = IntValue("Delay", 5000, 500, 10000)
+    private val messageValue = StringValue("Message", "[!] I'm using ProtoHax t<dot>me/protohax")
+
+    private val spamTimer = TheTimer()
 
     @Listen
     fun onTick(event: EventTick) {
-        ticks++
-        if (ticks % 150 == 0) {
+        if (spamTimer.hasTimePassed(delayValue.get())) {
             event.session.netSession.outboundPacket(TextPacket().apply {
                 type = TextPacket.Type.CHAT
                 xuid = event.session.xuid
                 sourceName = event.session.displayName
                 platformChatId = ""
-                message = "LiquidBounce Client | liquidbounce(.net) >${getRandomString(10 + Random().nextInt(5))}<"
-//                message = ""
+                message = "${messageValue.get()} >${getRandomString(10 + Random.nextInt(5))}<"
             })
-            ticks = 0
+            spamTimer.reset()
         }
     }
 }

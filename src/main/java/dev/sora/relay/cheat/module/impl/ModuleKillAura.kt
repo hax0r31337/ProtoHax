@@ -8,41 +8,59 @@ import com.nukkitx.protocol.bedrock.packet.InventoryTransactionPacket
 import com.nukkitx.protocol.bedrock.packet.MovePlayerPacket
 import com.nukkitx.protocol.bedrock.packet.PlayerAuthInputPacket
 import dev.sora.relay.cheat.module.CheatModule
+import dev.sora.relay.cheat.value.IntValue
+import dev.sora.relay.cheat.value.ListValue
+import dev.sora.relay.game.GameSession
+import dev.sora.relay.game.entity.Entity
 import dev.sora.relay.game.entity.EntityPlayer
 import dev.sora.relay.game.entity.EntityUnknown
 import dev.sora.relay.game.event.Listen
 import dev.sora.relay.game.event.impl.EventPacketOutbound
 import dev.sora.relay.game.event.impl.EventTick
+import dev.sora.relay.utils.timing.ClickTimer
 import java.lang.Math.atan2
 import java.lang.Math.sqrt
 
 class ModuleKillAura : CheatModule("KillAura") {
 
+    private val cpsValue = IntValue("CPS", 7, 1, 20)
+    private val attackModeValue = ListValue("AttackMode", arrayOf("Single", "Multi"), "Single")
+    private val rotationModeValue = ListValue("RotationMode", arrayOf("Lock", "None"), "Lock")
+
     private var rotation: Pair<Float, Float>? = null
-    private var lastHit = 0
+
+    private val clickTimer = ClickTimer()
 
     @Listen
     fun onTick(event: EventTick) {
+        if (cpsValue.get() < 20 && !clickTimer.canClick())
+            return
+
         val session = event.session
 
-        val entity = session.theWorld.entityMap.values.filter { it is EntityPlayer && it.distanceSq(session.thePlayer) < 20 }
-            .firstOrNull() ?: return
+        val entityList = session.theWorld.entityMap.values.filter { it is EntityPlayer && it.distanceSq(session.thePlayer) < 20 }
+        if (entityList.isEmpty()) return
 
-//        rotation = toRotation(session.thePlayer.vec3Position(), entity.vec3Position().add(0f, 1f, 0f)).let {
-//            (it.first - session.thePlayer.rotationYaw) * 0.8f + session.thePlayer.rotationYaw to it.second
-//        }
-
-        if (lastHit != 0) {
-            lastHit--
-            return
-        }
-        lastHit = 3
-
-        if (entity is EntityUnknown) {
-            println(entity.type)
+        val aimTarget = when(attackModeValue.get()) {
+            "Multi" -> {
+                entityList.forEach { attackEntity(it, event.session) }
+                entityList.first()
+            }
+            else -> (entityList.minByOrNull { it.distanceSq(event.session.thePlayer) } ?: return).also {
+                attackEntity(it, event.session)
+            }
         }
 
-        // swing
+        if (rotationModeValue.get() == "Lock") {
+            rotation = toRotation(session.thePlayer.vec3Position(), aimTarget.vec3Position().add(0f, 1f, 0f)).let {
+                (it.first - session.thePlayer.rotationYaw) * 0.8f + session.thePlayer.rotationYaw to it.second
+            }
+        }
+
+        clickTimer.update(cpsValue.get(), cpsValue.get() + 1)
+    }
+
+    private fun attackEntity(entity: Entity, session: GameSession) {
         AnimatePacket().apply {
             action = AnimatePacket.Action.SWING_ARM
             runtimeEntityId = session.thePlayer.entityId
@@ -57,7 +75,7 @@ class ModuleKillAura : CheatModule("KillAura") {
             transactionType = TransactionType.ITEM_USE_ON_ENTITY
             actionType = 1
             runtimeEntityId = entity.entityId
-            hotbarSlot = event.session.thePlayer.heldItemSlot
+            hotbarSlot = session.thePlayer.heldItemSlot
             itemInHand = ItemData.AIR
             playerPosition = session.thePlayer.vec3Position()
             clickPosition = Vector3f.ZERO

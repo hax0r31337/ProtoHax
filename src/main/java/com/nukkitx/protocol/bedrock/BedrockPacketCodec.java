@@ -38,6 +38,8 @@ public final class BedrockPacketCodec {
     @Getter
     private final int raknetProtocolVersion;
 
+    public boolean hasDecodeFailure = false;
+
     public static Builder builder() {
         return new Builder();
     }
@@ -60,6 +62,7 @@ public final class BedrockPacketCodec {
         try {
             serializer.deserialize(buf, this.helper, packet, session);
         } catch (Exception e) {
+            hasDecodeFailure = true;
             throw new PacketSerializeException("Error whilst deserializing " + packet, e);
         }
 

@@ -9,6 +9,7 @@ import com.nukkitx.protocol.bedrock.BedrockPacketCodec
 import com.nukkitx.protocol.bedrock.DummyBedrockSession
 import com.nukkitx.protocol.bedrock.annotation.Incompressible
 import com.nukkitx.protocol.bedrock.wrapper.BedrockWrapperSerializerV11
+import com.nukkitx.protocol.bedrock.wrapper.BedrockWrapperSerializerV9_10
 import com.nukkitx.protocol.bedrock.wrapper.compression.CompressionSerializer
 import com.nukkitx.protocol.bedrock.wrapper.compression.NoCompression
 import dev.sora.relay.utils.CipherPair
@@ -16,6 +17,7 @@ import io.netty.buffer.ByteBuf
 import io.netty.buffer.ByteBufAllocator
 import io.netty.buffer.Unpooled
 import io.netty.channel.EventLoop
+import io.netty.util.internal.logging.InternalLoggerFactory
 import java.nio.ByteBuffer
 import java.util.*
 import java.util.zip.Deflater
@@ -35,6 +37,8 @@ class RakNetRelaySession(val clientsideSession: RakNetServerSession,
 
     var clientCipher: CipherPair? = null
     var serverCipher: CipherPair? = null
+
+    private val log = InternalLoggerFactory.getInstance(RakNetRelaySession::class.java)
 
     init {
         listener.session = this
@@ -94,23 +98,7 @@ class RakNetRelaySession(val clientsideSession: RakNetServerSession,
         }
         try {
             serializer.serialize(compressed, packetCodec, listOf(packet), Deflater.DEFAULT_COMPRESSION, bedrockSession)
-
-            val finalPayload = ByteBufAllocator.DEFAULT.ioBuffer(1 + compressed.readableBytes() + 8)
-            finalPayload.writeByte(0xfe) // Wrapped packet ID
-
-            val cipherPair = if (isClientside) clientCipher else serverCipher
-            if (cipherPair != null) {
-                val trailer = ByteBuffer.wrap(this.generateTrailer(compressed, cipherPair))
-                val outBuffer = finalPayload.internalNioBuffer(1, compressed.readableBytes() + 8)
-                val inBuffer = compressed.internalNioBuffer(compressed.readerIndex(), compressed.readableBytes())
-
-                cipherPair.encryptionCipher.update(inBuffer, outBuffer)
-                cipherPair.encryptionCipher.update(trailer, outBuffer)
-                finalPayload.writerIndex(finalPayload.writerIndex() + compressed.readableBytes() + 8)
-            } else {
-                finalPayload.writeBytes(compressed)
-            }
-            (if (isClientside) clientsideSession else serversideSession).send(finalPayload)
+            sendSerialized(compressed, isClientside)
         } catch (e: Exception) {
             e.printStackTrace()
         } finally {
@@ -119,6 +107,25 @@ class RakNetRelaySession(val clientsideSession: RakNetServerSession,
                 (serializer as BedrockWrapperSerializerV11).compressionSerializer = compression
             }
         }
+    }
+
+    private fun sendSerialized(compressed: ByteBuf, isClientside: Boolean) {
+        val finalPayload = ByteBufAllocator.DEFAULT.ioBuffer(1 + compressed.readableBytes() + 8)
+        finalPayload.writeByte(0xfe) // Wrapped packet ID
+
+        val cipherPair = if (isClientside) clientCipher else serverCipher
+        if (cipherPair != null) {
+            val trailer = ByteBuffer.wrap(this.generateTrailer(compressed, cipherPair))
+            val outBuffer = finalPayload.internalNioBuffer(1, compressed.readableBytes() + 8)
+            val inBuffer = compressed.internalNioBuffer(compressed.readerIndex(), compressed.readableBytes())
+
+            cipherPair.encryptionCipher.update(inBuffer, outBuffer)
+            cipherPair.encryptionCipher.update(trailer, outBuffer)
+            finalPayload.writerIndex(finalPayload.writerIndex() + compressed.readableBytes() + 8)
+        } else {
+            finalPayload.writeBytes(compressed)
+        }
+        (if (isClientside) clientsideSession else serversideSession).send(finalPayload)
     }
 
     private fun readPacketFromBuffer(buffer: ByteBuf, isClientside: Boolean) {
@@ -154,7 +161,19 @@ class RakNetRelaySession(val clientsideSession: RakNetServerSession,
 
         if (buffer.isReadable) {
             val packets = mutableListOf<BedrockPacket>()
-            (if (isClientside) clientSerializer else serverSerializer).deserialize(buffer, packetCodec, packets, bedrockSession)
+            val data = readBuf(buffer)
+            (if (isClientside) clientSerializer else serverSerializer).also {
+                packetCodec.hasDecodeFailure = false
+                val buf = Unpooled.copiedBuffer(data)
+                it.deserialize(buf, packetCodec, packets, bedrockSession)
+                buf.release()
+            }
+            if (packetCodec.hasDecodeFailure) {
+                val buf = Unpooled.wrappedBuffer(data)
+                sendSerialized(buf, !isClientside)
+                log.warn("skipping packets because of failure whilst decode")
+                return
+            }
             packets.forEach {
                 val hold = if (isClientside) {
                     listener.onPacketOutbound(it)

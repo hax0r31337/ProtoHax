@@ -24,8 +24,8 @@ abstract class Entity(open val entityId: Long) {
     open var motionY = 0.0
     open var motionZ = 0.0
 
-    val attributeList = mutableListOf<AttributeData>()
-    val metadataList = EntityDataMap()
+//    val attributeList = mutableListOf<AttributeData>()
+//    val metadataList = EntityDataMap()
 
     // TODO: inventory
 
@@ -83,7 +83,7 @@ abstract class Entity(open val entityId: Long) {
     }
 
     open fun reset() {
-        attributeList.clear()
-        metadataList.clear()
+//        attributeList.clear()
+//        metadataList.clear()
     }
 }
