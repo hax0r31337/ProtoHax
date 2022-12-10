@@ -18,7 +18,6 @@ import io.netty.buffer.Unpooled
 import io.netty.channel.EventLoop
 import java.nio.ByteBuffer
 import java.util.*
-import java.util.concurrent.atomic.AtomicLong
 import java.util.zip.Deflater
 
 

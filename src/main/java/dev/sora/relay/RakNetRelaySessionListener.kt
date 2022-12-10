@@ -3,9 +3,7 @@ package dev.sora.relay
 import com.nukkitx.network.raknet.RakNetSession
 import com.nukkitx.protocol.bedrock.BedrockPacket
 import com.nukkitx.protocol.bedrock.data.PacketCompressionAlgorithm
-import com.nukkitx.protocol.bedrock.packet.ClientToServerHandshakePacket
 import com.nukkitx.protocol.bedrock.packet.NetworkSettingsPacket
-import com.nukkitx.protocol.bedrock.packet.ServerToClientHandshakePacket
 import com.nukkitx.protocol.bedrock.wrapper.BedrockWrapperSerializer
 import com.nukkitx.protocol.bedrock.wrapper.BedrockWrapperSerializerV11
 import com.nukkitx.protocol.bedrock.wrapper.BedrockWrapperSerializers
@@ -39,8 +37,12 @@ open class RakNetRelaySessionListener {
         }
 
         childListener.forEach {
-            if (!it.onPacketInbound(packet)) {
-                return false
+            try {
+                if (!it.onPacketInbound(packet)) {
+                    return false
+                }
+            } catch (t: Throwable) {
+                t.printStackTrace()
             }
         }
 
@@ -53,8 +55,12 @@ open class RakNetRelaySessionListener {
      */
     open fun onPacketOutbound(packet: BedrockPacket): Boolean {
         childListener.forEach {
-            if (!it.onPacketOutbound(packet)) {
-                return false
+            try {
+                if (!it.onPacketOutbound(packet)) {
+                    return false
+                }
+            } catch (t: Throwable) {
+                t.printStackTrace()
             }
         }
         return true

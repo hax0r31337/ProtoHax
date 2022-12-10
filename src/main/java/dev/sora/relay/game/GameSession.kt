@@ -2,24 +2,18 @@ package dev.sora.relay.game
 
 import com.google.gson.JsonParser
 import com.nukkitx.protocol.bedrock.BedrockPacket
-import com.nukkitx.protocol.bedrock.packet.DisconnectPacket
 import com.nukkitx.protocol.bedrock.packet.LoginPacket
-import com.nukkitx.protocol.bedrock.packet.MovePlayerPacket
-import com.nukkitx.protocol.bedrock.packet.PlayerAuthInputPacket
 import com.nukkitx.protocol.bedrock.packet.RespawnPacket
 import com.nukkitx.protocol.bedrock.packet.StartGamePacket
-import com.nukkitx.protocol.bedrock.packet.TransferPacket
 import dev.sora.relay.RakNetRelaySession
 import dev.sora.relay.RakNetRelaySessionListener
-import dev.sora.relay.cheat.BasicThing
 import dev.sora.relay.game.entity.EntityPlayerSP
 import dev.sora.relay.game.event.EventManager
 import dev.sora.relay.game.event.impl.EventPacketInbound
 import dev.sora.relay.game.event.impl.EventPacketOutbound
 import dev.sora.relay.game.event.impl.EventTick
 import dev.sora.relay.game.world.WorldClient
-import java.util.Base64
-import java.util.UUID
+import java.util.*
 
 class GameSession : RakNetRelaySessionListener.PacketListener {
 
@@ -59,19 +53,7 @@ class GameSession : RakNetRelaySessionListener.PacketListener {
             return false
         }
 
-        if (packet is MovePlayerPacket) {
-            thePlayer.move(packet.position)
-            thePlayer.rotate(packet.rotation)
-            if (packet.runtimeEntityId != thePlayer.entityId) {
-                thePlayer.entityId = packet.runtimeEntityId
-                BasicThing.chat(this, "runtimeEntityId mismatch, desync occur? (client=${packet.runtimeEntityId}, relay=${thePlayer.entityId})")
-            }
-            onTick()
-        } else if (packet is PlayerAuthInputPacket) {
-            thePlayer.move(packet.position)
-            thePlayer.rotate(packet.rotation)
-            onTick()
-        } else if (packet is LoginPacket) {
+        if (packet is LoginPacket) {
             val body = JsonParser.parseString(packet.chainData.toString()).asJsonObject.getAsJsonArray("chain")
             for (chain in body) {
                 val chainBody = JsonParser.parseString(Base64.getDecoder().decode(chain.asString.split(".")[1]).toString(Charsets.UTF_8)).asJsonObject
@@ -82,6 +64,8 @@ class GameSession : RakNetRelaySessionListener.PacketListener {
                     displayName = xData.get("displayName").asString
                 }
             }
+        } else {
+            thePlayer.handleClientPacket(packet, this)
         }
 
         return true

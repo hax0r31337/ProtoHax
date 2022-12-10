@@ -1,9 +1,6 @@
 package dev.sora.relay.cheat.module
 
-import dev.sora.relay.cheat.module.impl.ModuleFly
-import dev.sora.relay.cheat.module.impl.ModuleKillAura
-import dev.sora.relay.cheat.module.impl.ModuleSpammer
-import dev.sora.relay.cheat.module.impl.ModuleVelocity
+import dev.sora.relay.cheat.module.impl.*
 import dev.sora.relay.game.GameSession
 
 class ModuleManager(private val session: GameSession) {
@@ -21,5 +18,7 @@ class ModuleManager(private val session: GameSession) {
         registerModule(ModuleVelocity())
         registerModule(ModuleKillAura())
         registerModule(ModuleSpammer())
+        registerModule(ModuleBGM())
+        registerModule(ModuleDisabler())
     }
 }

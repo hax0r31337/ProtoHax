@@ -7,7 +7,7 @@ import dev.sora.relay.game.event.impl.EventTick
 import dev.sora.relay.utils.getRandomString
 import java.util.*
 
-class ModuleSpammer : CheatModule("Spammer", defaultOn = true) {
+class ModuleSpammer : CheatModule("Spammer", defaultOn = false) {
 
     private var ticks = 0
 
@@ -21,6 +21,7 @@ class ModuleSpammer : CheatModule("Spammer", defaultOn = true) {
                 sourceName = event.session.displayName
                 platformChatId = ""
                 message = "LiquidBounce Client | liquidbounce(.net) >${getRandomString(10 + Random().nextInt(5))}<"
+//                message = ""
             })
             ticks = 0
         }

@@ -7,18 +7,12 @@ import com.nukkitx.protocol.bedrock.packet.AnimatePacket
 import com.nukkitx.protocol.bedrock.packet.InventoryTransactionPacket
 import com.nukkitx.protocol.bedrock.packet.MovePlayerPacket
 import com.nukkitx.protocol.bedrock.packet.PlayerAuthInputPacket
-import com.nukkitx.protocol.bedrock.packet.RemoveEntityPacket
-import com.nukkitx.protocol.bedrock.packet.TextPacket
 import dev.sora.relay.cheat.module.CheatModule
-import dev.sora.relay.game.entity.Entity
-import dev.sora.relay.game.entity.EntityItem
 import dev.sora.relay.game.entity.EntityPlayer
 import dev.sora.relay.game.entity.EntityUnknown
 import dev.sora.relay.game.event.Listen
-import dev.sora.relay.game.event.impl.EventPacketInbound
 import dev.sora.relay.game.event.impl.EventPacketOutbound
 import dev.sora.relay.game.event.impl.EventTick
-import dev.sora.relay.utils.getRandomString
 import java.lang.Math.atan2
 import java.lang.Math.sqrt
 
@@ -31,10 +25,12 @@ class ModuleKillAura : CheatModule("KillAura") {
     fun onTick(event: EventTick) {
         val session = event.session
 
-        val entity = session.theWorld.entityMap.values.filter { it is EntityPlayer && it.distanceSq(session.thePlayer) < 64 }
+        val entity = session.theWorld.entityMap.values.filter { it is EntityPlayer && it.distanceSq(session.thePlayer) < 20 }
             .firstOrNull() ?: return
 
-        rotation = toRotation(session.thePlayer.vec3Position(), entity.vec3Position().add(0f, 1f, 0f))
+//        rotation = toRotation(session.thePlayer.vec3Position(), entity.vec3Position().add(0f, 1f, 0f)).let {
+//            (it.first - session.thePlayer.rotationYaw) * 0.8f + session.thePlayer.rotationYaw to it.second
+//        }
 
         if (lastHit != 0) {
             lastHit--
@@ -61,7 +57,7 @@ class ModuleKillAura : CheatModule("KillAura") {
             transactionType = TransactionType.ITEM_USE_ON_ENTITY
             actionType = 1
             runtimeEntityId = entity.entityId
-            hotbarSlot = 1
+            hotbarSlot = event.session.thePlayer.heldItemSlot
             itemInHand = ItemData.AIR
             playerPosition = session.thePlayer.vec3Position()
             clickPosition = Vector3f.ZERO
