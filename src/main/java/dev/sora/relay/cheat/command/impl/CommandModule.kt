@@ -9,7 +9,7 @@ import dev.sora.relay.cheat.value.*
  * Module command
  * @author SenkJu
  */
-class CommandModule(private val module: CheatModule) : Command(module.name) {
+class CommandModule(private val module: CheatModule) : Command(module.name.lowercase()) {
 
     private val values: List<Value<*>> = module.getValues()
     private fun chatSyntax(syntax: String) = chat("Syntax: ${CommandManager.PREFIX}${alias.first()} $syntax")

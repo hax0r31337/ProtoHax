@@ -15,6 +15,7 @@ import dev.sora.relay.RakNetRelaySessionListener
 import dev.sora.relay.utils.CipherPair
 import dev.sora.relay.utils.HttpUtils
 import dev.sora.relay.utils.JoseStuff
+import dev.sora.relay.utils.logInfo
 import io.netty.util.AsciiString
 import java.io.InputStreamReader
 import java.security.KeyPair
@@ -45,12 +46,10 @@ class RakNetRelaySessionListenerMicrosoft(val accessToken: String, private val s
 
     override fun onPacketOutbound(packet: BedrockPacket): Boolean {
         if (packet is LoginPacket) {
-            println(packet.chainData.toString())
-            packet.chainData = AsciiString(getChain(accessToken).also {
-                println(it)
-            })
+            packet.chainData = AsciiString(getChain(accessToken))
             val skinBody = packet.skinData.toString().split(".")[1]
             packet.skinData = AsciiString(toJWTRaw(skinBody, keyPair))
+            logInfo("login success")
         }
 
         return true
@@ -68,7 +67,6 @@ class RakNetRelaySessionListenerMicrosoft(val accessToken: String, private val s
             put("nbf", (Instant.now().epochSecond - TimeUnit.HOURS.toSeconds(6)).toInt())
             put("identityPublicKey", identityPubKey.get("x5u").asString)
         }.toJSONString().toByteArray(Charsets.UTF_8)), keyPair)
-        println(jwt)
 
         rawChain.add("chain", JsonArray().also {
             it.add(jwt)

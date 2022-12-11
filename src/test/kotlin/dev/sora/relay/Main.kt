@@ -3,9 +3,9 @@ package dev.sora.relay
 import com.google.gson.JsonParser
 import com.nukkitx.network.raknet.RakNetServerSession
 import com.nukkitx.protocol.bedrock.BedrockPacket
+import com.nukkitx.protocol.bedrock.packet.TransferPacket
 import com.nukkitx.protocol.bedrock.v560.Bedrock_v560
 import dev.sora.relay.cheat.command.CommandManager
-import dev.sora.relay.cheat.command.impl.CommandToggle
 import dev.sora.relay.cheat.module.ModuleManager
 import dev.sora.relay.game.GameSession
 import dev.sora.relay.session.RakNetRelaySessionListenerMicrosoft
@@ -28,7 +28,6 @@ fun main(args: Array<String>) {
             "MCPE;RakNet Relay;557;1.19.20;0;10;${relay.server.guid};Bedrock level;Survival;1;19132;19132;".toByteArray()
 
         override fun onSessionCreation(serverSession: RakNetServerSession): InetSocketAddress {
-//            return InetSocketAddress("127.0.0.1", 19136)
             return dst
         }
 
@@ -38,24 +37,16 @@ fun main(args: Array<String>) {
             session.listener.childListener.add(RakNetRelaySessionListenerMicrosoft(getMSAccessToken(), session))
             session.listener.childListener.add(object : RakNetRelaySessionListener.PacketListener {
                 override fun onPacketInbound(packet: BedrockPacket): Boolean {
-//                    if(packet !is MovePlayerPacket && packet !is AnimatePacket) {
-//                        println(packet.toString().let {
-//                            if (it.contains("\n")) it.split("\n")[0] else it
-//                        })
-//                    }
-//                    if (packet is TransferPacket) {
-//                        println("Transfer: ${packet.address}:${packet.port}")
-//                        dst = InetSocketAddress(packet.address, packet.port)
-//                        packet.address = "192.168.2.103"
-//                        packet.port = 19132
-//                    }
+                    if (packet is TransferPacket) {
+                        println("Transfer: ${packet.address}:${packet.port}")
+                        dst = InetSocketAddress(packet.address, packet.port)
+                        packet.address = "192.168.2.103"
+                        packet.port = 19132
+                    }
                     return true
                 }
 //
                 override fun onPacketOutbound(packet: BedrockPacket): Boolean {
-//                    if (packet !is PlayerAuthInputPacket) {
-//                        println(packet)
-//                    }
                     return true
                 }
             })

@@ -13,6 +13,7 @@ import com.nukkitx.protocol.bedrock.wrapper.BedrockWrapperSerializerV9_10
 import com.nukkitx.protocol.bedrock.wrapper.compression.CompressionSerializer
 import com.nukkitx.protocol.bedrock.wrapper.compression.NoCompression
 import dev.sora.relay.utils.CipherPair
+import dev.sora.relay.utils.logInfo
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.ByteBufAllocator
 import io.netty.buffer.Unpooled
@@ -37,6 +38,8 @@ class RakNetRelaySession(val clientsideSession: RakNetServerSession,
 
     var clientCipher: CipherPair? = null
     var serverCipher: CipherPair? = null
+
+    private val pendingPackets = mutableListOf<ByteBuf>()
 
     private val log = InternalLoggerFactory.getInstance(RakNetRelaySession::class.java)
 
@@ -125,7 +128,15 @@ class RakNetRelaySession(val clientsideSession: RakNetServerSession,
         } else {
             finalPayload.writeBytes(compressed)
         }
-        (if (isClientside) clientsideSession else serversideSession).send(finalPayload)
+        if (isClientside) {
+            clientsideSession.send(finalPayload)
+        } else {
+            if (serverState != RakNetState.CONNECTED) {
+                pendingPackets.add(finalPayload)
+            } else {
+                serversideSession.send(finalPayload)
+            }
+        }
     }
 
     private fun readPacketFromBuffer(buffer: ByteBuf, isClientside: Boolean) {
@@ -193,10 +204,7 @@ class RakNetRelaySession(val clientsideSession: RakNetServerSession,
     internal inner class RakNetRelayClientListener : RakNetSessionListener {
         override fun onSessionChangeState(state: RakNetState) {
             clientState = state
-            println(state)
-            while (state == RakNetState.CONNECTED && serverState != RakNetState.CONNECTED) {
-                safeSleep(1L)
-            }
+            logInfo("client connection state: $state")
         }
 
         override fun onDisconnect(reason: DisconnectReason) {
@@ -215,11 +223,17 @@ class RakNetRelaySession(val clientsideSession: RakNetServerSession,
     }
 
     internal inner class RakNetRelayServerListener : RakNetSessionListener {
+
         override fun onSessionChangeState(state: RakNetState) {
             serverState = state
-            println(state)
-            while (state == RakNetState.CONNECTED && clientState != RakNetState.CONNECTED) {
-                safeSleep(1L)
+            logInfo("server connection state: $state")
+            // no need for waiting client, cuz client always sends the first packet
+            if (state == RakNetState.CONNECTED && pendingPackets.isNotEmpty()) {
+                logInfo("pending packets: ${pendingPackets.size}")
+                pendingPackets.forEach {
+                    serversideSession.send(it)
+                }
+                pendingPackets.clear()
             }
         }
 
