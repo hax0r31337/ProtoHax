@@ -33,14 +33,14 @@ dependencies {
     embed 'io.netty:netty-transport:4.1.85.Final'
     embed 'com.google.code.findbugs:jsr305:3.0.2'
     embed 'net.jodah:expiringmap:0.5.10'
-    embed 'com.github.mccheatz:minecraft-msftauth:4c414a872d'
+    embed 'com.github.mccheatz:minecraft-msftauth:7dcece934a'
 
     compileOnly 'org.projectlombok:lombok:1.18.24'
     annotationProcessor 'org.projectlombok:lombok:1.18.24'
 }
 
 compileKotlin {
-    kotlinOptions.jvmTarget = '11'
+    kotlinOptions.jvmTarget = '1.8'
 }
 
 shadowJar {
