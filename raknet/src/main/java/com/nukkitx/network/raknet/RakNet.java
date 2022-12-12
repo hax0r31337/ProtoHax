@@ -41,6 +41,10 @@ public abstract class RakNet implements AutoCloseable {
         Bootstraps.setupBootstrap(this.bootstrap, true);
     }
 
+    RakNet(Bootstrap bootstrap) {
+        this.bootstrap = bootstrap;
+    }
+
     public CompletableFuture<Void> bind() {
         Preconditions.checkState(this.running.compareAndSet(false, true), "RakNet has already been started");
         CompletableFuture<Void> future = this.bindInternal();

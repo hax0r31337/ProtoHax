@@ -4,6 +4,7 @@ import com.nukkitx.network.raknet.pipeline.ClientMessageHandler;
 import com.nukkitx.network.raknet.pipeline.RakExceptionHandler;
 import com.nukkitx.network.raknet.pipeline.RakOutboundHandler;
 import com.nukkitx.network.util.EventLoops;
+import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.*;
 import io.netty.channel.socket.DatagramPacket;
@@ -42,8 +43,14 @@ public class RakNetClient extends RakNet {
         this(bindAddress, EventLoops.commonGroup());
     }
 
-    public RakNetClient(@Nullable InetSocketAddress bindAddress, EventLoopGroup eventLoopGroup) {
+    public RakNetClient(InetSocketAddress bindAddress, EventLoopGroup eventLoopGroup) {
         super(eventLoopGroup);
+        this.bindAddress = bindAddress;
+        this.exceptionHandlers.put("DEFAULT", (t) -> log.error("An exception occurred in RakNet Client, address="+bindAddress, t));
+    }
+
+    public RakNetClient(@Nullable InetSocketAddress bindAddress, Bootstrap bootstrap) {
+        super(bootstrap);
         this.bindAddress = bindAddress;
         this.exceptionHandlers.put("DEFAULT", (t) -> log.error("An exception occurred in RakNet Client, address="+bindAddress, t));
     }

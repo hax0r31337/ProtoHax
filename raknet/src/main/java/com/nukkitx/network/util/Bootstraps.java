@@ -18,23 +18,23 @@ public final class Bootstraps {
         bootstrap.channel(channel);
     }
 
-    public static void setupServerBootstrap(ServerBootstrap bootstrap) {
-        Class<? extends ServerSocketChannel> channel = EventLoops.getServerSocketChannel();
-        bootstrap.channel(channel);
-    }
-
-    private static int[] fromString(String ver) {
-        String[] parts = ver.split("\\.");
-        if (parts.length < 2) {
-            throw new IllegalArgumentException("At least 2 version numbers required");
-        }
-
-        return new int[]{
-                Integer.parseInt(parts[0]),
-                Integer.parseInt(parts[1]),
-                parts.length == 2 ? 0 : Integer.parseInt(parts[2])
-        };
-    }
+//    public static void setupServerBootstrap(ServerBootstrap bootstrap) {
+//        Class<? extends ServerSocketChannel> channel = EventLoops.getServerSocketChannel();
+//        bootstrap.channel(channel);
+//    }
+//
+//    private static int[] fromString(String ver) {
+//        String[] parts = ver.split("\\.");
+//        if (parts.length < 2) {
+//            throw new IllegalArgumentException("At least 2 version numbers required");
+//        }
+//
+//        return new int[]{
+//                Integer.parseInt(parts[0]),
+//                Integer.parseInt(parts[1]),
+//                parts.length == 2 ? 0 : Integer.parseInt(parts[2])
+//        };
+//    }
 
     public static CompletableFuture<Void> allOf(ChannelFuture... futures) {
         if (futures == null || futures.length == 0) {

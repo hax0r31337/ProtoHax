@@ -7,15 +7,18 @@ import com.nukkitx.network.raknet.RakNetServerSession
 import com.nukkitx.network.util.EventLoops
 import com.nukkitx.protocol.bedrock.BedrockPacketCodec
 import com.nukkitx.protocol.bedrock.compat.BedrockCompat
+import io.netty.bootstrap.Bootstrap
+import io.netty.buffer.ByteBufAllocator
 import io.netty.channel.ChannelHandlerContext
+import io.netty.channel.ChannelOption
 import io.netty.channel.EventLoopGroup
 import io.netty.channel.socket.DatagramPacket
-import java.net.DatagramSocket
+import io.netty.channel.socket.nio.NioDatagramChannel
 import java.net.InetSocketAddress
-import java.util.*
+import java.nio.channels.DatagramChannel
 
-class RakNetRelay(listen: InetSocketAddress, private val eventLoopGroup: EventLoopGroup = EventLoops.commonGroup(),
-                  private val packetCodec: BedrockPacketCodec = BedrockCompat.COMPAT_CODEC) {
+class RakNetRelay(listen: InetSocketAddress, val eventLoopGroup: EventLoopGroup = EventLoops.commonGroup(),
+                  val packetCodec: BedrockPacketCodec = BedrockCompat.COMPAT_CODEC) {
 
     val server = RakNetServer(listen, eventLoopGroup).apply {
         listener = RakNetRelayServerListener()
@@ -28,18 +31,23 @@ class RakNetRelay(listen: InetSocketAddress, private val eventLoopGroup: EventLo
 
     private fun onSession(serverSession: RakNetServerSession) {
         val serverAddress = listener?.onSessionCreation(serverSession) ?: InetSocketAddress("127.0.0.1", 19132)
-        val clientAddress = InetSocketAddress("0.0.0.0", try {
-            val socket = DatagramSocket()
-            val port = socket.localPort
-            socket.close()
-            port
-        } catch (e: Exception) {
-            Random().nextInt(65535)
-        })
-        val relayListener = listener?.onPrepareClientConnection(clientAddress) ?: RakNetRelaySessionListener()
+        val clientSocket = DatagramChannel.open()
+        val clientAddress = InetSocketAddress("0.0.0.0", clientSocket.socket().localPort)
+        val relayListener = listener?.onPrepareClientConnection(clientSocket) ?: RakNetRelaySessionListener()
+
+        // use custom bootstrap that allows we to use custom DatagramSocket
+        val bootstrap = Bootstrap().option(ChannelOption.ALLOCATOR, ByteBufAllocator.DEFAULT)
+        bootstrap.group(eventLoopGroup)
+        bootstrap.channelFactory {
+            NioDatagramChannel(clientSocket)
+        }
 
         // launch a raknet client
-        val client = RakNetClient(clientAddress, eventLoopGroup)
+        val client = if (bootstrap == null) {
+            RakNetClient(clientAddress, eventLoopGroup)
+        } else {
+            RakNetClient(clientAddress, bootstrap)
+        }
         client.protocolVersion = serverSession.protocolVersion
         client.bind().join()
 

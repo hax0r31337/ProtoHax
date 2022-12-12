@@ -1,7 +1,6 @@
 package dev.sora.relay.cheat.module.impl
 
 import com.nukkitx.protocol.bedrock.packet.MovePlayerPacket
-import com.nukkitx.protocol.bedrock.packet.PlayerAuthInputPacket
 import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.cheat.value.ListValue
 import dev.sora.relay.game.event.Listen

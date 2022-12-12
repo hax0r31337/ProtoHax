@@ -2,8 +2,6 @@ package dev.sora.relay.game.entity
 
 import com.nukkitx.math.vector.Vector3f
 import com.nukkitx.protocol.bedrock.BedrockPacket
-import com.nukkitx.protocol.bedrock.data.AttributeData
-import com.nukkitx.protocol.bedrock.data.entity.EntityDataMap
 import com.nukkitx.protocol.bedrock.packet.MoveEntityAbsolutePacket
 import kotlin.math.sqrt
 

@@ -9,8 +9,6 @@ import com.nukkitx.protocol.bedrock.packet.PlayerHotbarPacket
 import dev.sora.relay.RakNetRelaySession
 import dev.sora.relay.cheat.BasicThing
 import dev.sora.relay.game.GameSession
-import kotlin.math.cos
-import kotlin.math.sin
 
 class EntityPlayerSP : EntityPlayer(0L) {
 

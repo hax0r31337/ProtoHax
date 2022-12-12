@@ -9,7 +9,6 @@ import com.nukkitx.protocol.bedrock.BedrockPacketCodec
 import com.nukkitx.protocol.bedrock.DummyBedrockSession
 import com.nukkitx.protocol.bedrock.annotation.Incompressible
 import com.nukkitx.protocol.bedrock.wrapper.BedrockWrapperSerializerV11
-import com.nukkitx.protocol.bedrock.wrapper.BedrockWrapperSerializerV9_10
 import com.nukkitx.protocol.bedrock.wrapper.compression.CompressionSerializer
 import com.nukkitx.protocol.bedrock.wrapper.compression.NoCompression
 import dev.sora.relay.utils.CipherPair

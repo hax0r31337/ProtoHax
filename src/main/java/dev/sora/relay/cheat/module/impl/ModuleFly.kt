@@ -6,14 +6,9 @@ import com.nukkitx.protocol.bedrock.data.AbilityLayer
 import com.nukkitx.protocol.bedrock.data.PlayerPermission
 import com.nukkitx.protocol.bedrock.data.command.CommandPermission
 import com.nukkitx.protocol.bedrock.data.entity.EntityEventType
-import com.nukkitx.protocol.bedrock.packet.EntityEventPacket
-import com.nukkitx.protocol.bedrock.packet.MovePlayerPacket
-import com.nukkitx.protocol.bedrock.packet.RequestAbilityPacket
-import com.nukkitx.protocol.bedrock.packet.UpdateAbilitiesPacket
-import dev.sora.relay.RakNetRelaySession
+import com.nukkitx.protocol.bedrock.packet.*
 import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.cheat.value.ListValue
-import dev.sora.relay.game.entity.EntityPlayerSP
 import dev.sora.relay.game.event.Listen
 import dev.sora.relay.game.event.impl.EventPacketInbound
 import dev.sora.relay.game.event.impl.EventPacketOutbound
@@ -50,13 +45,18 @@ class ModuleFly : CheatModule("Fly") {
     fun onTick(event: EventTick) {
         if (modeValue.get() == "Mineplex") {
             event.session.netSession.inboundPacket(abilityPacket.apply {
-                uniqueEntityId = session.thePlayer.entityId
+                uniqueEntityId = event.session.thePlayer.entityId
             })
             if (!canFly) return
             val player = event.session.thePlayer
             val yaw = Math.toRadians(player.rotationYaw.toDouble())
             val value = 2.2f
             player.teleport(player.posX - sin(yaw) * value, launchY, player.posZ + cos(yaw) * value, event.session.netSession)
+        } else if (modeValue.get() == "Vanilla" && !canFly) {
+            canFly = true
+            event.session.netSession.inboundPacket(abilityPacket.apply {
+                uniqueEntityId = event.session.thePlayer.entityId
+            })
         }
     }
 
@@ -66,6 +66,10 @@ class ModuleFly : CheatModule("Fly") {
             event.cancel()
             event.session.netSession.inboundPacket(abilityPacket.apply {
                 uniqueEntityId = session.thePlayer.entityId
+            })
+        } else if (event.packet is StartGamePacket) {
+            event.session.netSession.inboundPacket(abilityPacket.apply {
+                uniqueEntityId = event.session.thePlayer.entityId
             })
         }
     }

@@ -13,7 +13,6 @@ import dev.sora.relay.cheat.value.ListValue
 import dev.sora.relay.game.GameSession
 import dev.sora.relay.game.entity.Entity
 import dev.sora.relay.game.entity.EntityPlayer
-import dev.sora.relay.game.entity.EntityUnknown
 import dev.sora.relay.game.event.Listen
 import dev.sora.relay.game.event.impl.EventPacketOutbound
 import dev.sora.relay.game.event.impl.EventTick

@@ -1,7 +1,9 @@
 package dev.sora.relay
 
 import com.nukkitx.network.raknet.RakNetServerSession
+import io.netty.bootstrap.Bootstrap
 import java.net.InetSocketAddress
+import java.nio.channels.DatagramChannel
 
 interface RakNetRelayListener {
     /**
@@ -12,7 +14,7 @@ interface RakNetRelayListener {
      */
     fun onQuery(address: InetSocketAddress): ByteArray?
 
-    fun onPrepareClientConnection(address: InetSocketAddress): RakNetRelaySessionListener {
+    fun onPrepareClientConnection(clientSocket: DatagramChannel): RakNetRelaySessionListener {
         return RakNetRelaySessionListener()
     }
 
@@ -21,4 +23,9 @@ interface RakNetRelayListener {
     fun onSession(session: RakNetRelaySession) {
 
     }
+
+    /**
+     * @return the bootstrap, if null will use the default one
+     */
+    fun getBootstrap(): Bootstrap? = null
 }

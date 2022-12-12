@@ -4,12 +4,10 @@ import com.nukkitx.protocol.bedrock.data.SoundEvent
 import com.nukkitx.protocol.bedrock.packet.LevelSoundEvent2Packet
 import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.game.event.Listen
-import dev.sora.relay.game.event.impl.EventPacketInbound
 import dev.sora.relay.game.event.impl.EventTick
 import dev.sora.relay.game.utils.NoteBlockUtils
 import java.io.ByteArrayInputStream
-import java.io.File
-import java.util.Base64
+import java.util.*
 
 class ModuleBGM : CheatModule("BGM") {
 
