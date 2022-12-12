@@ -1,5 +1,7 @@
 package dev.sora.relay.game.event
 
+import dev.sora.relay.utils.logError
+
 class EventManager {
 
     private val handlers = mutableMapOf<Class<out GameEvent>, MutableList<Handler>>()
@@ -23,7 +25,11 @@ class EventManager {
 
     fun emit(event: GameEvent) {
         for (handler in (handlers[event.javaClass] ?: return)) {
-            handler.invoke(event)
+            try {
+                handler.invoke(event)
+            } catch (t: Throwable) {
+                logError("event", t)
+            }
         }
     }
 }

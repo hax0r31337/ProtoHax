@@ -9,6 +9,7 @@ import dev.sora.relay.game.GameSession
 import dev.sora.relay.game.event.Listen
 import dev.sora.relay.game.event.Listener
 import dev.sora.relay.game.event.impl.EventPacketOutbound
+import dev.sora.relay.utils.logError
 
 class CommandManager(private val session: GameSession) : Listener {
 
@@ -40,7 +41,7 @@ class CommandManager(private val session: GameSession) : Listener {
         try {
             command.exec(args.copyOfRange(1, args.size))
         } catch (e: Exception) {
-            e.printStackTrace()
+            logError("execute command", e)
             BasicThing.chat(session, "An error occurred while executing the command($e)")
         }
     }

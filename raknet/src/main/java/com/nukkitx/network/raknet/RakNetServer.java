@@ -13,8 +13,6 @@ import io.netty.channel.*;
 import io.netty.channel.socket.DatagramPacket;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
-import net.jodah.expiringmap.ExpirationPolicy;
-import net.jodah.expiringmap.ExpiringMap;
 
 import javax.annotation.Nonnegative;
 import javax.annotation.Nullable;
@@ -39,7 +37,6 @@ public class RakNetServer extends RakNet {
 
     private final ConcurrentMap<InetAddress, Long> blockAddresses = new ConcurrentHashMap<>();
     final ConcurrentMap<InetSocketAddress, RakNetServerSession> sessionsByAddress = new ConcurrentHashMap<>();
-    final ExpiringMap<InetSocketAddress, InetSocketAddress> proxiedAddresses;
 
     private final InetSocketAddress bindAddress;
     private int maxConnections = 1024;
@@ -61,7 +58,6 @@ public class RakNetServer extends RakNet {
     public RakNetServer(InetSocketAddress bindAddress, EventLoopGroup eventLoopGroup) {
         super(eventLoopGroup);
         this.bindAddress = bindAddress;
-        this.proxiedAddresses = ExpiringMap.builder().expiration(30 + 1, TimeUnit.MINUTES).expirationPolicy(ExpirationPolicy.ACCESSED).build();
     }
 
     @Override
@@ -132,7 +128,6 @@ public class RakNetServer extends RakNet {
                     ctx.channel().eventLoop().next(), mtu, protocolVersion);
             if (this.sessionsByAddress.putIfAbsent(packet.sender(), session) == null) {
                 session.setState(RakNetState.INITIALIZING);
-                session.proxiedAddress = this.proxiedAddresses.get(packet.sender());
                 session.sendOpenConnectionReply1();
                 if (listener != null) {
                     listener.onSessionCreation(session);
@@ -161,18 +156,6 @@ public class RakNetServer extends RakNet {
 
     public boolean isBlocked(InetAddress address) {
         return this.blockAddresses.containsKey(address);
-    }
-
-    public void addProxiedAddress(InetSocketAddress address, InetSocketAddress presentAddress) {
-        this.proxiedAddresses.put(address, presentAddress);
-    }
-
-    public InetSocketAddress getProxiedAddress(InetSocketAddress address) {
-        return this.proxiedAddresses.get(address);
-    }
-
-    public int getProxiedAddressSize() {
-        return this.proxiedAddresses.size();
     }
 
     public int getSessionCount() {

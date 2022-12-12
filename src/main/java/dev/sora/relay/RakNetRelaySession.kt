@@ -13,6 +13,7 @@ import com.nukkitx.protocol.bedrock.wrapper.BedrockWrapperSerializerV9_10
 import com.nukkitx.protocol.bedrock.wrapper.compression.CompressionSerializer
 import com.nukkitx.protocol.bedrock.wrapper.compression.NoCompression
 import dev.sora.relay.utils.CipherPair
+import dev.sora.relay.utils.logError
 import dev.sora.relay.utils.logInfo
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.ByteBufAllocator
@@ -28,9 +29,6 @@ class RakNetRelaySession(val clientsideSession: RakNetServerSession,
                          val serversideSession: RakNetClientSession,
                          private val eventLoop: EventLoop, private val packetCodec: BedrockPacketCodec,
                          val listener: RakNetRelaySessionListener) {
-
-    private var clientState = RakNetState.INITIALIZING
-    private var serverState = RakNetState.INITIALIZING
 
     val clientSerializer = listener.provideSerializer(clientsideSession)
     val serverSerializer = listener.provideSerializer(serversideSession)
@@ -103,7 +101,7 @@ class RakNetRelaySession(val clientsideSession: RakNetServerSession,
             serializer.serialize(compressed, packetCodec, listOf(packet), Deflater.DEFAULT_COMPRESSION, bedrockSession)
             sendSerialized(compressed, isClientside)
         } catch (e: Exception) {
-            e.printStackTrace()
+            logError("serialize packet", e)
         } finally {
             compressed?.release()
             if (compression != null) {
@@ -131,7 +129,7 @@ class RakNetRelaySession(val clientsideSession: RakNetServerSession,
         if (isClientside) {
             clientsideSession.send(finalPayload)
         } else {
-            if (serverState != RakNetState.CONNECTED) {
+            if (serversideSession.state != RakNetState.CONNECTED) {
                 pendingPackets.add(finalPayload)
             } else {
                 serversideSession.send(finalPayload)
@@ -203,7 +201,6 @@ class RakNetRelaySession(val clientsideSession: RakNetServerSession,
 
     internal inner class RakNetRelayClientListener : RakNetSessionListener {
         override fun onSessionChangeState(state: RakNetState) {
-            clientState = state
             logInfo("client connection state: $state")
         }
 
@@ -211,11 +208,9 @@ class RakNetRelaySession(val clientsideSession: RakNetServerSession,
             if (!serversideSession.isClosed) {
                 serversideSession.disconnect(reason)
             }
-            clientState = RakNetState.CONNECTED
         }
 
         override fun onEncapsulated(packet: EncapsulatedPacket) {
-            if (clientState != RakNetState.CONNECTED) return
             readPacketFromBuffer(packet.buffer, true)
         }
 
@@ -225,7 +220,6 @@ class RakNetRelaySession(val clientsideSession: RakNetServerSession,
     internal inner class RakNetRelayServerListener : RakNetSessionListener {
 
         override fun onSessionChangeState(state: RakNetState) {
-            serverState = state
             logInfo("server connection state: $state")
             // no need for waiting client, cuz client always sends the first packet
             if (state == RakNetState.CONNECTED && pendingPackets.isNotEmpty()) {
@@ -241,11 +235,9 @@ class RakNetRelaySession(val clientsideSession: RakNetServerSession,
             if (!clientsideSession.isClosed) {
                 clientsideSession.disconnect(reason)
             }
-            serverState = RakNetState.CONNECTED
         }
 
         override fun onEncapsulated(packet: EncapsulatedPacket) {
-            if (serverState != RakNetState.CONNECTED) return
             readPacketFromBuffer(packet.buffer, false)
         }
 
@@ -258,13 +250,6 @@ class RakNetRelaySession(val clientsideSession: RakNetServerSession,
             val readerIndex = buf.readerIndex()
             buf.getBytes(readerIndex, bytes)
             return bytes
-        }
-
-        private fun safeSleep(interval: Long) {
-            try {
-                Thread.sleep(interval)
-            } catch (_: InterruptedException) {
-            }
         }
     }
 }

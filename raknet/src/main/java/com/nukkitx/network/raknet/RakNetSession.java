@@ -31,7 +31,6 @@ public abstract class RakNetSession implements SessionConnection<ByteBuf> {
     private static final InternalLogger log = InternalLoggerFactory.getInstance(RakNetSession.class);
 
     final InetSocketAddress address;
-    InetSocketAddress proxiedAddress = null;
     final Channel channel;
     final EventLoop eventLoop;
     final int protocolVersion;
@@ -149,8 +148,7 @@ public abstract class RakNetSession implements SessionConnection<ByteBuf> {
 
     @Override
     public InetSocketAddress getRealAddress() {
-        InetSocketAddress proxied = this.proxiedAddress;
-        return proxied == null ? this.address : proxied;
+        return this.address;
     }
 
     public int getMtu() {

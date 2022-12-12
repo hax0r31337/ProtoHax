@@ -10,6 +10,7 @@ import com.nukkitx.protocol.bedrock.wrapper.BedrockWrapperSerializers
 import com.nukkitx.protocol.bedrock.wrapper.compression.NoCompression
 import com.nukkitx.protocol.bedrock.wrapper.compression.SnappyCompression
 import com.nukkitx.protocol.bedrock.wrapper.compression.ZlibCompression
+import dev.sora.relay.utils.logError
 
 open class RakNetRelaySessionListener {
 
@@ -42,7 +43,7 @@ open class RakNetRelaySessionListener {
                     return false
                 }
             } catch (t: Throwable) {
-                t.printStackTrace()
+                logError("packet inbound", t)
             }
         }
 
@@ -60,7 +61,7 @@ open class RakNetRelaySessionListener {
                     return false
                 }
             } catch (t: Throwable) {
-                t.printStackTrace()
+                logError("packet outbound", t)
             }
         }
         return true

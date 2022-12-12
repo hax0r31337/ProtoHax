@@ -30,7 +30,6 @@ dependencies {
     embed 'com.google.code.gson:gson:2.10'
     embed 'io.netty:netty-transport:4.1.85.Final'
     embed 'com.google.code.findbugs:jsr305:3.0.2'
-    embed 'net.jodah:expiringmap:0.5.10'
     embed 'com.github.mccheatz:minecraft-msftauth:f039e45741'
 
     compileOnly 'org.projectlombok:lombok:1.18.24'
