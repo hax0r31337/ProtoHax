@@ -72,7 +72,7 @@ class RakNetRelaySession(val clientsideSession: RakNetServerSession,
 
     private fun generateTrailer(buf: ByteBuf, cipherPair: CipherPair): ByteArray? {
         val hash: Sha256 = Natives.SHA_256.get()
-        val counterBuf = ByteBufAllocator.DEFAULT.directBuffer(8)
+        val counterBuf = ByteBufAllocator.DEFAULT.buffer(8)
         return try {
             counterBuf.writeLongLE(cipherPair.sentEncryptedPacketCount.getAndIncrement())
             val keyBuffer = ByteBuffer.wrap(cipherPair.secretKey.encoded)
@@ -128,7 +128,7 @@ class RakNetRelaySession(val clientsideSession: RakNetServerSession,
         if (isClientside) {
             clientsideSession.send(finalPayload)
         } else {
-            if (serversideSession.state != RakNetState.CONNECTED) {
+            if (serversideSession.state != RakNetState.CONNECTED && serversideSession.state != RakNetState.UNCONNECTED) {
                 pendingPackets.add(finalPayload)
             } else {
                 serversideSession.send(finalPayload)
@@ -145,17 +145,30 @@ class RakNetRelaySession(val clientsideSession: RakNetServerSession,
             } else {
                 buffer.retain() // Handling on different thread
                 eventLoop.execute {
-                    try {
+                    val packets = try {
                         this.onWrappedPacket(buffer, isClientside)
                     } finally {
                         buffer.release()
+                    }
+                    packets.forEach {
+                        val hold = if (isClientside) {
+                            listener.onPacketOutbound(it)
+                        } else {
+                            listener.onPacketInbound(it)
+                        }
+                        if (!hold) return@forEach
+                        if (isClientside) {
+                            outboundPacket(it)
+                        } else {
+                            inboundPacket(it)
+                        }
                     }
                 }
             }
         }
     }
 
-    private fun onWrappedPacket(buffer: ByteBuf, isClientside: Boolean) {
+    private fun onWrappedPacket(buffer: ByteBuf, isClientside: Boolean): List<BedrockPacket> {
         val cipherPair = if (isClientside) clientCipher else serverCipher
         if (cipherPair != null) {
             val inBuffer: ByteBuffer = buffer.internalNioBuffer(buffer.readerIndex(), buffer.readableBytes())
@@ -176,22 +189,11 @@ class RakNetRelaySession(val clientsideSession: RakNetServerSession,
             if (packetCodec.hasDecodeFailure) {
                 sendSerialized(buffer, !isClientside)
                 log.warn("skipping packets because of failure whilst decode")
-                return
+                return emptyList()
             }
-            packets.forEach {
-                val hold = if (isClientside) {
-                    listener.onPacketOutbound(it)
-                } else {
-                    listener.onPacketInbound(it)
-                }
-                if (!hold) return@forEach
-                if (isClientside) {
-                    outboundPacket(it)
-                } else {
-                    inboundPacket(it)
-                }
-            }
+            return packets
         }
+        return emptyList()
     }
 
     internal inner class RakNetRelayClientListener : RakNetSessionListener {
@@ -200,9 +202,8 @@ class RakNetRelaySession(val clientsideSession: RakNetServerSession,
         }
 
         override fun onDisconnect(reason: DisconnectReason) {
-            if (!serversideSession.isClosed) {
-                serversideSession.disconnect(reason)
-            }
+            serversideSession.closeNoPacket()
+            logInfo("client disconnect: $reason")
         }
 
         override fun onEncapsulated(packet: EncapsulatedPacket) {
@@ -227,9 +228,8 @@ class RakNetRelaySession(val clientsideSession: RakNetServerSession,
         }
 
         override fun onDisconnect(reason: DisconnectReason) {
-            if (!clientsideSession.isClosed) {
-                clientsideSession.disconnect(reason)
-            }
+            clientsideSession.closeNoPacket()
+            logInfo("server disconnect: $reason")
         }
 
         override fun onEncapsulated(packet: EncapsulatedPacket) {

@@ -18,11 +18,13 @@ import java.util.*
 import kotlin.concurrent.schedule
 
 fun main(args: Array<String>) {
+    System.setProperty("io.netty.noUnsafe", "true")
     InternalLoggerFactory.setDefaultFactory(LoggerFactory())
     val gameSession = craftSession()
 
     val relay = RakNetRelay(InetSocketAddress("0.0.0.0", 19132), packetCodec = Bedrock_v560.V560_CODEC)
     var dst = InetSocketAddress("mco.mineplex.com", 19132)
+    dst = InetSocketAddress("127.0.0.1", 19136)
     relay.listener = object : RakNetRelayListener {
         override fun onQuery(address: InetSocketAddress) =
             "MCPE;RakNet Relay;560;1.19.50;0;10;${relay.server.guid};Bedrock level;Survival;1;19132;19132;".toByteArray()
