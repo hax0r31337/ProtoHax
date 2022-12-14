@@ -25,7 +25,7 @@ fun main(args: Array<String>) {
     var dst = InetSocketAddress("mco.mineplex.com", 19132)
     relay.listener = object : RakNetRelayListener {
         override fun onQuery(address: InetSocketAddress) =
-            "MCPE;RakNet Relay;557;1.19.20;0;10;${relay.server.guid};Bedrock level;Survival;1;19132;19132;".toByteArray()
+            "MCPE;RakNet Relay;560;1.19.50;0;10;${relay.server.guid};Bedrock level;Survival;1;19132;19132;".toByteArray()
 
         override fun onSessionCreation(serverSession: RakNetServerSession): InetSocketAddress {
             return dst

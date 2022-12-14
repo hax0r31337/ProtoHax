@@ -169,16 +169,12 @@ class RakNetRelaySession(val clientsideSession: RakNetServerSession,
 
         if (buffer.isReadable) {
             val packets = mutableListOf<BedrockPacket>()
-            val data = readBuf(buffer)
             (if (isClientside) clientSerializer else serverSerializer).also {
                 packetCodec.hasDecodeFailure = false
-                val buf = Unpooled.copiedBuffer(data)
-                it.deserialize(buf, packetCodec, packets, bedrockSession)
-                buf.release()
+                it.deserialize(buffer.duplicate(), packetCodec, packets, bedrockSession)
             }
             if (packetCodec.hasDecodeFailure) {
-                val buf = Unpooled.wrappedBuffer(data)
-                sendSerialized(buf, !isClientside)
+                sendSerialized(buffer, !isClientside)
                 log.warn("skipping packets because of failure whilst decode")
                 return
             }
