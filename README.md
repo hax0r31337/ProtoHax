@@ -1,2 +1,2 @@
-# BedrockRelay
-MITM library for Minecraft: PE
+# ProtoHax
+MITM cheating library for Minecraft: PE

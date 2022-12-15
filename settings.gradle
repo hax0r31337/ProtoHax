@@ -1,5 +1,5 @@
 
-rootProject.name = 'BedrockRelay'
+rootProject.name = 'ProtoHax'
 
 include 'raknet'
 include 'natives'
