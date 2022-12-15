@@ -11,16 +11,23 @@ abstract class AbstractConfigManager(val moduleManager: ModuleManager) {
 
     abstract fun listConfig(): List<String>
 
-    protected abstract fun loadConfigData(name: String): Reader
+    protected abstract fun loadConfigData(name: String): Reader?
 
     protected abstract fun saveConfigData(name: String, data: ByteArray)
 
-    fun loadConfig(name: String) {
+    protected abstract fun deleteConfig(name: String)
+
+    /**
+     * @return false if failed to load the config or config not exists
+     */
+    fun loadConfig(name: String): Boolean {
         try {
-            val json = JsonParser.parseReader(loadConfigData(name)).asJsonObject
+            val json = JsonParser.parseReader(loadConfigData(name) ?: return false).asJsonObject
             loadConfigSectionModule(json.getAsJsonObject("modules"))
+            return true
         } catch (t: Throwable) {
             logError("failed to load config", t)
+            return false
         }
     }
 

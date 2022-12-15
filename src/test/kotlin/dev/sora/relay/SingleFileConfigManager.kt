@@ -20,4 +20,8 @@ class SingleFileConfigManager(moduleManager: ModuleManager) : AbstractConfigMana
     override fun saveConfigData(name: String, data: ByteArray) {
         file.writeBytes(data)
     }
+
+    override fun deleteConfig(name: String) {
+        file.delete()
+    }
 }
