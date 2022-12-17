@@ -27,8 +27,8 @@ class ModuleBGM : CheatModule("BGM") {
         if (ticks + 20 > song.maxTicks) {
             ticks = 0
         }
-        val note = song.ticks[ticks++] ?: return
-        note.forEach { note ->
+        val notes = song.ticks[ticks++] ?: return
+        notes.forEach { note ->
             val pk = LevelSoundEvent2Packet().apply {
                 sound = SoundEvent.NOTE
                 position = event.session.thePlayer.vec3Position()
@@ -37,9 +37,7 @@ class ModuleBGM : CheatModule("BGM") {
                 isBabySound = false
                 isRelativeVolumeDisabled = false
             }
-            repeat(5000) {
-                event.session.netSession.outboundPacket(pk)
-            }
+            event.session.netSession.outboundPacket(pk)
         }
     }
 

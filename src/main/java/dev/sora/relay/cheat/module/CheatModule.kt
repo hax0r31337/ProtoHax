@@ -6,7 +6,7 @@ import dev.sora.relay.game.event.Listener
 
 abstract class CheatModule(val name: String,
                            val defaultOn: Boolean = false,
-                           private val canToggle: Boolean = true) : BasicThing(), Listener {
+                           val canToggle: Boolean = true) : BasicThing(), Listener {
 
     var state = defaultOn
         set(state) {
@@ -28,6 +28,10 @@ abstract class CheatModule(val name: String,
     open fun onEnable() {}
 
     open fun onDisable() {}
+
+    open fun toggle() {
+        this.state = !this.state
+    }
 
     fun getValues() = javaClass.declaredFields.map { field ->
         field.isAccessible = true
