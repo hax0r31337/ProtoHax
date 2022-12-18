@@ -106,6 +106,10 @@ class ModuleFly : CheatModule("Fly") {
                     Vector3f.from(it.x, launchY.toFloat(), it.z)
                 }
             }
+        } else {
+            if (event.packet is RequestAbilityPacket && event.packet.ability == Ability.FLYING) {
+                event.cancel()
+            }
         }
     }
 }
