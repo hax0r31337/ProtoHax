@@ -32,7 +32,7 @@ class ModuleFly : CheatModule("Fly") {
             abilitiesSet.addAll(Ability.values())
             abilityValues.addAll(arrayOf(Ability.BUILD, Ability.MINE, Ability.DOORS_AND_SWITCHES, Ability.OPEN_CONTAINERS, Ability.ATTACK_PLAYERS, Ability.ATTACK_MOBS, Ability.OPERATOR_COMMANDS, Ability.MAY_FLY, Ability.FLY_SPEED, Ability.WALK_SPEED))
             walkSpeed = 0.1f
-            flySpeed = 0.25f
+            flySpeed = 0.15f
         })
     }
 

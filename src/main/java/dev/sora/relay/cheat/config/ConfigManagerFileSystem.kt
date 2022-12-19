@@ -14,7 +14,7 @@ class ConfigManagerFileSystem(private val dir: File, private val suffix: String,
     override fun listConfig(): List<String> {
         return (dir.listFiles() ?: return emptyList())
             .filter { it.name.endsWith(suffix) }
-            .map { it.canonicalPath.let { it.substring(0, it.length - suffix.length) } }
+            .map { it.name.let { it.substring(0, it.length - suffix.length) } }
     }
 
     override fun loadConfigData(name: String): Reader? {

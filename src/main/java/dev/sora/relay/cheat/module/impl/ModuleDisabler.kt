@@ -14,12 +14,13 @@ class ModuleDisabler : CheatModule("disabler") {
     fun onPacketOutbound(event: EventPacketOutbound) {
         val packet = event.packet
         if (packet is MovePlayerPacket && modeValue.get() == "LifeBoat") {
+            packet.isOnGround = true
             event.session.netSession.outboundPacket(MovePlayerPacket().apply {
                 runtimeEntityId = packet.runtimeEntityId
                 position = packet.position.add(0f, 0.1f, 0f)
                 rotation = packet.rotation
                 mode = packet.mode
-                isOnGround = packet.isOnGround
+                isOnGround = false
             })
         }
     }

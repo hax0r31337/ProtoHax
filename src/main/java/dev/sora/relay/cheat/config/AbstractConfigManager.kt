@@ -15,7 +15,7 @@ abstract class AbstractConfigManager(val moduleManager: ModuleManager) {
 
     protected abstract fun saveConfigData(name: String, data: ByteArray)
 
-    protected abstract fun deleteConfig(name: String)
+    abstract fun deleteConfig(name: String)
 
     /**
      * @return false if failed to load the config or config not exists
