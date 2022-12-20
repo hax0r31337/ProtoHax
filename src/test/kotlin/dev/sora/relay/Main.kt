@@ -22,12 +22,12 @@ fun main(args: Array<String>) {
     InternalLoggerFactory.setDefaultFactory(LoggerFactory())
     val gameSession = craftSession()
 
-    val relay = RakNetRelay(InetSocketAddress("0.0.0.0", 19132), packetCodec = Bedrock_v560.V560_CODEC)
+    val relay = RakNetRelay(InetSocketAddress("0.0.0.0", 19136), packetCodec = Bedrock_v560.V560_CODEC)
     var dst = InetSocketAddress("mco.mineplex.com", 19132)
-    dst = InetSocketAddress("127.0.0.1", 19136)
+    dst = InetSocketAddress("127.0.0.1", 19132)
     relay.listener = object : RakNetRelayListener {
         override fun onQuery(address: InetSocketAddress) =
-            "MCPE;RakNet Relay;560;1.19.50;0;10;${relay.server.guid};Bedrock level;Survival;1;19132;19132;".toByteArray()
+            "MCPE;RakNet Relay;560;1.19.50;0;10;${relay.server.guid};Bedrock level;Survival;1;19136;19136;".toByteArray()
 
         override fun onSessionCreation(serverSession: RakNetServerSession): InetSocketAddress {
             return dst
@@ -36,7 +36,7 @@ fun main(args: Array<String>) {
         override fun onSession(session: RakNetRelaySession) {
             session.listener.childListener.add(gameSession)
             gameSession.netSession = session
-            session.listener.childListener.add(RakNetRelaySessionListenerMicrosoft(getMSAccessToken(), session))
+//            session.listener.childListener.add(RakNetRelaySessionListenerMicrosoft(getMSAccessToken(), session))
             session.listener.childListener.add(object : RakNetRelaySessionListener.PacketListener {
                 override fun onPacketInbound(packet: BedrockPacket): Boolean {
                     if (packet is TransferPacket) {

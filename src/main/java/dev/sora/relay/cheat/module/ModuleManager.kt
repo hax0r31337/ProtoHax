@@ -20,5 +20,8 @@ class ModuleManager(private val session: GameSession) {
         registerModule(ModuleSpammer())
         registerModule(ModuleBGM())
         registerModule(ModuleDisabler())
+        registerModule(ModuleOpFightBot())
+        registerModule(ModuleNoSkin())
+        registerModule(ModuleAntiBot)
     }
 }

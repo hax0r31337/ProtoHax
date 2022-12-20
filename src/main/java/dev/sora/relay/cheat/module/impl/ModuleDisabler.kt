@@ -6,7 +6,7 @@ import dev.sora.relay.cheat.value.ListValue
 import dev.sora.relay.game.event.Listen
 import dev.sora.relay.game.event.impl.EventPacketOutbound
 
-class ModuleDisabler : CheatModule("disabler") {
+class ModuleDisabler : CheatModule("Disabler") {
 
     private val modeValue = ListValue("Mode", arrayOf("LifeBoat"), "LifeBoat")
 

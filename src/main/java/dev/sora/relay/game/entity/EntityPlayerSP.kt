@@ -9,8 +9,9 @@ import com.nukkitx.protocol.bedrock.packet.PlayerHotbarPacket
 import dev.sora.relay.RakNetRelaySession
 import dev.sora.relay.cheat.BasicThing
 import dev.sora.relay.game.GameSession
+import java.util.*
 
-class EntityPlayerSP : EntityPlayer(0L) {
+class EntityPlayerSP : EntityPlayer(0L, UUID.randomUUID(), "") {
 
     override var entityId: Long = 0L
     var heldItemSlot = 0

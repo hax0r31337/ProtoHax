@@ -37,8 +37,10 @@ class GameSession : RakNetRelaySessionListener.PacketListener {
 
         if (packet is StartGamePacket) {
             thePlayer.entityId = packet.runtimeEntityId
+            theWorld.entityMap.clear()
         } else if (packet is RespawnPacket) {
             thePlayer.entityId = packet.runtimeEntityId
+            theWorld.entityMap.clear()
         }
         thePlayer.onPacket(packet)
         theWorld.onPacket(packet)

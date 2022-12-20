@@ -7,10 +7,13 @@ import dev.sora.relay.game.entity.Entity
 import dev.sora.relay.game.entity.EntityItem
 import dev.sora.relay.game.entity.EntityPlayer
 import dev.sora.relay.game.entity.EntityUnknown
+import dev.sora.relay.utils.logInfo
+import java.util.UUID
 
 class WorldClient(private val session: GameSession) {
 
     val entityMap = mutableMapOf<Long, Entity>()
+    val playerList = mutableMapOf<UUID, PlayerListPacket.Entry>()
 
     // TODO: chunk
 
@@ -25,7 +28,7 @@ class WorldClient(private val session: GameSession) {
                 move(packet.position)
             }
         } else if (packet is AddPlayerPacket) {
-            entityMap[packet.runtimeEntityId] = EntityPlayer(packet.runtimeEntityId).apply {
+            entityMap[packet.runtimeEntityId] = EntityPlayer(packet.runtimeEntityId, packet.uuid, packet.username).apply {
                 move(packet.position)
                 rotate(packet.rotation)
             }
@@ -33,6 +36,15 @@ class WorldClient(private val session: GameSession) {
             entityMap.remove(packet.uniqueEntityId)
         } else if (packet is TakeItemEntityPacket) {
             entityMap.remove(packet.itemRuntimeEntityId)
+        } else if (packet is PlayerListPacket) {
+            val add = packet.action == PlayerListPacket.Action.ADD
+            packet.entries.forEach {
+                if (add) {
+                    playerList[it.uuid] = it
+                } else {
+                    playerList.remove(it.uuid)
+                }
+            }
         } else {
             entityMap.values.forEach { entity ->
                 entity.onPacket(packet)

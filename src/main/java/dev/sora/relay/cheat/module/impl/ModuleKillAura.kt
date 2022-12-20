@@ -8,6 +8,8 @@ import com.nukkitx.protocol.bedrock.packet.InventoryTransactionPacket
 import com.nukkitx.protocol.bedrock.packet.MovePlayerPacket
 import com.nukkitx.protocol.bedrock.packet.PlayerAuthInputPacket
 import dev.sora.relay.cheat.module.CheatModule
+import dev.sora.relay.cheat.module.impl.ModuleAntiBot.isBot
+import dev.sora.relay.cheat.value.FloatValue
 import dev.sora.relay.cheat.value.IntValue
 import dev.sora.relay.cheat.value.ListValue
 import dev.sora.relay.game.GameSession
@@ -19,10 +21,12 @@ import dev.sora.relay.game.event.impl.EventTick
 import dev.sora.relay.utils.timing.ClickTimer
 import java.lang.Math.atan2
 import java.lang.Math.sqrt
+import kotlin.math.pow
 
 class ModuleKillAura : CheatModule("KillAura") {
 
     private val cpsValue = IntValue("CPS", 7, 1, 20)
+    private val rangeValue = FloatValue("Range", 3.7f, 2f, 7f)
     private val attackModeValue = ListValue("AttackMode", arrayOf("Single", "Multi"), "Single")
     private val rotationModeValue = ListValue("RotationMode", arrayOf("Lock", "None"), "Lock")
 
@@ -37,7 +41,8 @@ class ModuleKillAura : CheatModule("KillAura") {
 
         val session = event.session
 
-        val entityList = session.theWorld.entityMap.values.filter { it is EntityPlayer && it.distanceSq(session.thePlayer) < 20 }
+        val range = rangeValue.get().pow(2)
+        val entityList = session.theWorld.entityMap.values.filter { it is EntityPlayer && it.distanceSq(session.thePlayer) < range && !it.isBot(session) }
         if (entityList.isEmpty()) return
 
         val aimTarget = when(attackModeValue.get()) {
