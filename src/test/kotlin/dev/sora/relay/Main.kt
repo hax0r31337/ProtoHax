@@ -3,11 +3,13 @@ package dev.sora.relay
 import com.google.gson.JsonParser
 import com.nukkitx.network.raknet.RakNetServerSession
 import com.nukkitx.protocol.bedrock.BedrockPacket
+import com.nukkitx.protocol.bedrock.compat.BedrockCompat
 import com.nukkitx.protocol.bedrock.packet.TransferPacket
 import com.nukkitx.protocol.bedrock.v560.Bedrock_v560
 import dev.sora.relay.cheat.command.CommandManager
 import dev.sora.relay.cheat.module.ModuleManager
 import dev.sora.relay.game.GameSession
+import dev.sora.relay.session.RakNetRelaySessionListenerAutoCodec
 import dev.sora.relay.session.RakNetRelaySessionListenerMicrosoft
 import dev.sora.relay.utils.HttpUtils
 import dev.sora.relay.utils.logInfo
@@ -22,7 +24,7 @@ fun main(args: Array<String>) {
     InternalLoggerFactory.setDefaultFactory(LoggerFactory())
     val gameSession = craftSession()
 
-    val relay = RakNetRelay(InetSocketAddress("0.0.0.0", 19136), packetCodec = Bedrock_v560.V560_CODEC)
+    val relay = RakNetRelay(InetSocketAddress("0.0.0.0", 19136))
     var dst = InetSocketAddress("mco.mineplex.com", 19132)
     dst = InetSocketAddress("127.0.0.1", 19132)
     relay.listener = object : RakNetRelayListener {
@@ -37,6 +39,7 @@ fun main(args: Array<String>) {
             session.listener.childListener.add(gameSession)
             gameSession.netSession = session
 //            session.listener.childListener.add(RakNetRelaySessionListenerMicrosoft(getMSAccessToken(), session))
+            session.listener.childListener.add(RakNetRelaySessionListenerAutoCodec(session))
             session.listener.childListener.add(object : RakNetRelaySessionListener.PacketListener {
                 override fun onPacketInbound(packet: BedrockPacket): Boolean {
                     if (packet is TransferPacket) {

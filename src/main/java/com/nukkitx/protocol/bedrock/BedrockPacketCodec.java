@@ -28,9 +28,9 @@ public final class BedrockPacketCodec {
     private static final InternalLogger log = InternalLoggerFactory.getInstance(BedrockPacketCodec.class);
 
     @Getter
-    private final int protocolVersion;
+    public final int protocolVersion;
     @Getter
-    private final String minecraftVersion;
+    public final String minecraftVersion;
     private final BedrockPacketSerializer<BedrockPacket>[] serializers;
     private final Int2ObjectBiMap<Class<? extends BedrockPacket>> idBiMap;
     @Getter

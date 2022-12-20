@@ -26,7 +26,7 @@ import java.util.zip.Deflater
 
 class RakNetRelaySession(val clientsideSession: RakNetServerSession,
                          val serversideSession: RakNetClientSession,
-                         private val eventLoop: EventLoop, private val packetCodec: BedrockPacketCodec,
+                         private val eventLoop: EventLoop, var packetCodec: BedrockPacketCodec,
                          val listener: RakNetRelaySessionListener) {
 
     val clientSerializer = listener.provideSerializer(clientsideSession)
