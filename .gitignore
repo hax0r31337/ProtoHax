@@ -15,4 +15,4 @@ gradle-app.setting
 # gradle/wrapper/gradle-wrapper.properties
 
 .ms_refresh_token
-config1.json
+config.json
