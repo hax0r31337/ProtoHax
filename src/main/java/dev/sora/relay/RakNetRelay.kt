@@ -8,14 +8,10 @@ import com.nukkitx.network.util.EventLoops
 import com.nukkitx.protocol.bedrock.BedrockPacketCodec
 import com.nukkitx.protocol.bedrock.compat.BedrockCompat
 import io.netty.bootstrap.Bootstrap
-import io.netty.buffer.ByteBufAllocator
 import io.netty.channel.ChannelHandlerContext
-import io.netty.channel.ChannelInitializer
-import io.netty.channel.ChannelOption
 import io.netty.channel.EventLoopGroup
 import io.netty.channel.socket.DatagramPacket
 import io.netty.channel.socket.nio.NioDatagramChannel
-import io.netty.handler.proxy.Socks5ProxyHandler
 import java.net.InetSocketAddress
 import java.nio.channels.DatagramChannel
 
