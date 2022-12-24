@@ -7,7 +7,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'io.netty:netty-transport:4.1.85.Final'
+    implementation 'io.netty:netty-transport:4.1.86.Final'
     implementation 'com.google.code.findbugs:jsr305:3.0.2'
 
     compileOnly 'org.projectlombok:lombok:1.18.24'

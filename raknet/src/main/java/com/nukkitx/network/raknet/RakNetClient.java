@@ -34,23 +34,26 @@ public class RakNetClient extends RakNet {
     protected RakNetClientSession session;
     private Channel channel;
     private EventLoop tickingEventLoop;
+    private final NettyChannelInitializer handler;
 
     public RakNetClient() {
-        this(null, EventLoops.commonGroup());
+        this(null, EventLoops.commonGroup(), null);
     }
 
     public RakNetClient(InetSocketAddress bindAddress) {
-        this(bindAddress, EventLoops.commonGroup());
+        this(bindAddress, EventLoops.commonGroup(), null);
     }
 
-    public RakNetClient(InetSocketAddress bindAddress, EventLoopGroup eventLoopGroup) {
+    public RakNetClient(InetSocketAddress bindAddress, EventLoopGroup eventLoopGroup, NettyChannelInitializer handler) {
         super(eventLoopGroup);
+        this.handler = handler;
         this.bindAddress = bindAddress;
         this.exceptionHandlers.put("DEFAULT", (t) -> log.error("An exception occurred in RakNet Client, address="+bindAddress, t));
     }
 
-    public RakNetClient(@Nullable InetSocketAddress bindAddress, Bootstrap bootstrap) {
+    public RakNetClient(@Nullable InetSocketAddress bindAddress, Bootstrap bootstrap, NettyChannelInitializer handler) {
         super(bootstrap);
+        this.handler = handler;
         this.bindAddress = bindAddress;
         this.exceptionHandlers.put("DEFAULT", (t) -> log.error("An exception occurred in RakNet Client, address="+bindAddress, t));
     }
@@ -215,11 +218,18 @@ public class RakNetClient extends RakNet {
 
         @Override
         protected void initChannel(Channel channel) throws Exception {
+            if (handler != null) {
+                handler.initChannel(channel);
+            }
             ChannelPipeline pipeline = channel.pipeline();
             pipeline.addLast(RakOutboundHandler.NAME, new RakOutboundHandler(RakNetClient.this));
             pipeline.addLast(ClientMessageHandler.NAME, new ClientMessageHandler(RakNetClient.this));
             pipeline.addLast(RakExceptionHandler.NAME, new RakExceptionHandler(RakNetClient.this));
             RakNetClient.this.channel = channel;
         }
+    }
+
+    public interface NettyChannelInitializer {
+        public void initChannel(Channel channel);
     }
 }

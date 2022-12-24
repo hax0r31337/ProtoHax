@@ -10,10 +10,12 @@ import com.nukkitx.protocol.bedrock.compat.BedrockCompat
 import io.netty.bootstrap.Bootstrap
 import io.netty.buffer.ByteBufAllocator
 import io.netty.channel.ChannelHandlerContext
+import io.netty.channel.ChannelInitializer
 import io.netty.channel.ChannelOption
 import io.netty.channel.EventLoopGroup
 import io.netty.channel.socket.DatagramPacket
 import io.netty.channel.socket.nio.NioDatagramChannel
+import io.netty.handler.proxy.Socks5ProxyHandler
 import java.net.InetSocketAddress
 import java.nio.channels.DatagramChannel
 
@@ -36,18 +38,14 @@ class RakNetRelay(listen: InetSocketAddress, val eventLoopGroup: EventLoopGroup 
         val relayListener = listener?.onPrepareClientConnection(clientSocket) ?: RakNetRelaySessionListener()
 
         // use custom bootstrap that allows we to use custom DatagramSocket
-        val bootstrap = Bootstrap().option(ChannelOption.ALLOCATOR, ByteBufAllocator.DEFAULT)
-        bootstrap.group(eventLoopGroup)
-        bootstrap.channelFactory {
-            NioDatagramChannel(clientSocket)
+        val bootstrap = listener?.getBootstrap() ?: Bootstrap().apply {
+//            option(ChannelOption.ALLOCATOR, ByteBufAllocator.DEFAULT)
+            group(eventLoopGroup)
+            channelFactory { NioDatagramChannel(clientSocket) }
         }
 
         // launch a raknet client
-        val client = if (bootstrap == null) {
-            RakNetClient(clientAddress, eventLoopGroup)
-        } else {
-            RakNetClient(clientAddress, bootstrap)
-        }
+        val client = RakNetClient(clientAddress, bootstrap, null)
         client.protocolVersion = serverSession.protocolVersion
         client.bind().join()
 

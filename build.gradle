@@ -10,9 +10,15 @@ version = '1.1.0'
 repositories {
     mavenLocal()
     mavenCentral()
+    maven {
+        url = 'https://repository.liferay.com/nexus/content/repositories/public/'
+        content {
+            includeGroup('com.github.ravn')
+        }
+    }
     maven { url = 'https://repo.opencollab.dev/maven-releases/' }
     maven { url = 'https://repo.opencollab.dev/maven-snapshots/' }
-    maven { url = 'https://jitpack.io' }
+    maven { url = 'https://mccheatz.github.io/maven_repo/' }
 }
 
 configurations {
@@ -30,9 +36,9 @@ dependencies {
     embed project(':natives')
 
     embed 'com.google.code.gson:gson:2.10'
-    embed 'io.netty:netty-transport:4.1.85.Final'
+    embed 'io.netty:netty-transport:4.1.86.Final'
     embed 'com.google.code.findbugs:jsr305:3.0.2'
-    embed 'com.github.mccheatz:minecraft-msftauth:943c0f1a0c'
+    embed 'coelho.msftauth:minecraft-msftauth:2.1.1'
 
     compileOnly 'org.projectlombok:lombok:1.18.24'
     annotationProcessor 'org.projectlombok:lombok:1.18.24'
