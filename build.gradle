@@ -10,12 +10,6 @@ version = '1.1.1'
 repositories {
     mavenLocal()
     mavenCentral()
-    maven {
-        url = 'https://repository.liferay.com/nexus/content/repositories/public/'
-        content {
-            includeGroup('com.github.ravn')
-        }
-    }
     maven { url = 'https://repo.opencollab.dev/maven-releases/' }
     maven { url = 'https://repo.opencollab.dev/maven-snapshots/' }
     maven { url = 'https://mccheatz.github.io/maven_repo/' }

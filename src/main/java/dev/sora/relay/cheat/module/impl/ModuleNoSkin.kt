@@ -16,9 +16,11 @@ class ModuleNoSkin : CheatModule("NoSkin") {
 
         if (packet is PlayerListPacket) {
             packet.entries.forEach {
-                it.skin = generateSkin(it.skin)
+                if (it.skin != null) {
+                    it.skin = generateSkin(it.skin)
+                }
             }
-        } else if (packet is PlayerSkinPacket) {
+        } else if (packet is PlayerSkinPacket && packet.skin != null) {
             packet.skin = generateSkin(packet.skin)
         }
     }
