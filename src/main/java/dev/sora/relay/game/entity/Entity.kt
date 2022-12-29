@@ -22,6 +22,8 @@ abstract class Entity(open val entityId: Long) {
     open var motionY = 0.0
     open var motionZ = 0.0
 
+    var tickExists = 0L
+
 //    val attributeList = mutableListOf<AttributeData>()
 //    val metadataList = EntityDataMap()
 
@@ -75,6 +77,7 @@ abstract class Entity(open val entityId: Long) {
     open fun onPacket(packet: BedrockPacket) {
         if (packet is MoveEntityAbsolutePacket && packet.runtimeEntityId == entityId) {
             move(packet.position)
+            tickExists++
         } /* else if (packet is MoveEntityDeltaPacket && packet.runtimeEntityId == entityId) {
             // TODO
         } */

@@ -36,10 +36,12 @@ class EntityPlayerSP : EntityPlayer(0L, UUID.randomUUID(), "") {
                 entityId = packet.runtimeEntityId
             }
             session.onTick()
+            tickExists++
         } else if (packet is PlayerAuthInputPacket) {
             move(packet.position)
             rotate(packet.rotation)
             session.onTick()
+            tickExists++
         } else if (packet is PlayerHotbarPacket && packet.containerId == 0) {
             heldItemSlot = packet.selectedHotbarSlot
         } else if (packet is MobEquipmentPacket && packet.runtimeEntityId == entityId) {

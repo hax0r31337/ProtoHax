@@ -1,14 +1,17 @@
 package dev.sora.relay.cheat.module.impl
 
 import com.nukkitx.math.vector.Vector3f
+import com.nukkitx.protocol.bedrock.data.SoundEvent
 import com.nukkitx.protocol.bedrock.data.inventory.ItemData
 import com.nukkitx.protocol.bedrock.data.inventory.TransactionType
 import com.nukkitx.protocol.bedrock.packet.AnimatePacket
 import com.nukkitx.protocol.bedrock.packet.InventoryTransactionPacket
+import com.nukkitx.protocol.bedrock.packet.LevelSoundEvent2Packet
 import com.nukkitx.protocol.bedrock.packet.MovePlayerPacket
 import com.nukkitx.protocol.bedrock.packet.PlayerAuthInputPacket
 import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.cheat.module.impl.ModuleAntiBot.isBot
+import dev.sora.relay.cheat.value.BoolValue
 import dev.sora.relay.cheat.value.FloatValue
 import dev.sora.relay.cheat.value.IntValue
 import dev.sora.relay.cheat.value.ListValue
@@ -29,6 +32,8 @@ class ModuleKillAura : CheatModule("KillAura") {
     private val rangeValue = FloatValue("Range", 3.7f, 2f, 7f)
     private val attackModeValue = ListValue("AttackMode", arrayOf("Single", "Multi"), "Single")
     private val rotationModeValue = ListValue("RotationMode", arrayOf("Lock", "None"), "Lock")
+    private val swingValue = ListValue("Swing", arrayOf("Both", "Client", "Server", "None"), "Both")
+    private val swingSoundValue = BoolValue("SwingSound", false)
 
     private var rotation: Pair<Float, Float>? = null
 
@@ -70,8 +75,11 @@ class ModuleKillAura : CheatModule("KillAura") {
             runtimeEntityId = session.thePlayer.entityId
         }.also {
             // send the packet back to client in order to display the swing animation
-            session.netSession.inboundPacket(it)
-            session.netSession.outboundPacket(it)
+            val value = swingValue.get()
+            if (value == "Both" || value == "Client")
+                session.netSession.inboundPacket(it)
+            if (value == "Both" || value == "Server")
+                session.netSession.outboundPacket(it)
         }
 
         // attack
@@ -84,6 +92,16 @@ class ModuleKillAura : CheatModule("KillAura") {
             playerPosition = session.thePlayer.vec3Position()
             clickPosition = Vector3f.ZERO
         })
+
+        if (swingSoundValue.get()) {
+            session.netSession.outboundPacket(LevelSoundEvent2Packet().apply {
+                sound = SoundEvent.ATTACK_NODAMAGE
+                position = session.thePlayer.vec3Position()
+                identifier = ":"
+                isBabySound = false
+                isRelativeVolumeDisabled = false
+            })
+        }
     }
 
     @Listen
