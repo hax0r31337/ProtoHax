@@ -2,6 +2,7 @@ package dev.sora.relay.cheat.module.impl
 
 import com.nukkitx.protocol.bedrock.data.SoundEvent
 import com.nukkitx.protocol.bedrock.packet.LevelSoundEvent2Packet
+import com.nukkitx.protocol.bedrock.packet.LevelSoundEventPacket
 import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.game.event.Listen
 import dev.sora.relay.game.event.impl.EventTick
@@ -29,7 +30,7 @@ class ModuleBGM : CheatModule("BGM") {
         }
         val notes = song.ticks[ticks++] ?: return
         notes.forEach { note ->
-            val pk = LevelSoundEvent2Packet().apply {
+            val pk = LevelSoundEventPacket().apply {
                 sound = SoundEvent.NOTE
                 position = event.session.thePlayer.vec3Position()
                 extraData = note.inst.ordinal shl 8 or note.key.toInt()

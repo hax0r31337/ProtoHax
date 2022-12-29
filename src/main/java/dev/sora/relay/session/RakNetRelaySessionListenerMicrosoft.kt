@@ -24,9 +24,22 @@ import java.time.Instant
 import java.util.*
 import java.util.concurrent.TimeUnit
 
-class RakNetRelaySessionListenerMicrosoft(val accessToken: String, private val session: RakNetRelaySession) : RakNetRelaySessionListener.PacketListener {
+class RakNetRelaySessionListenerMicrosoft(val accessToken: String) : RakNetRelaySessionListener.PacketListener {
 
+    private var chain: AsciiString? = null
+        get() {
+            if (field == null) {
+                field = AsciiString(getChain(accessToken))
+            }
+            return field
+        }
     private val keyPair = EncryptionUtils.createKeyPair()
+
+    lateinit var session: RakNetRelaySession
+
+    fun forceFetchChain() {
+        chain
+    }
 
     override fun onPacketInbound(packet: BedrockPacket): Boolean {
         if (packet is ServerToClientHandshakePacket) {
@@ -46,7 +59,7 @@ class RakNetRelaySessionListenerMicrosoft(val accessToken: String, private val s
 
     override fun onPacketOutbound(packet: BedrockPacket): Boolean {
         if (packet is LoginPacket) {
-            packet.chainData = AsciiString(getChain(accessToken))
+            packet.chainData = AsciiString(chain)
             val skinBody = packet.skinData.toString().split(".")[1]
             packet.skinData = AsciiString(toJWTRaw(skinBody, keyPair))
             logInfo("login success")

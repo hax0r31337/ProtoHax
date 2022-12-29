@@ -4,11 +4,7 @@ import com.nukkitx.math.vector.Vector3f
 import com.nukkitx.protocol.bedrock.data.SoundEvent
 import com.nukkitx.protocol.bedrock.data.inventory.ItemData
 import com.nukkitx.protocol.bedrock.data.inventory.TransactionType
-import com.nukkitx.protocol.bedrock.packet.AnimatePacket
-import com.nukkitx.protocol.bedrock.packet.InventoryTransactionPacket
-import com.nukkitx.protocol.bedrock.packet.LevelSoundEvent2Packet
-import com.nukkitx.protocol.bedrock.packet.MovePlayerPacket
-import com.nukkitx.protocol.bedrock.packet.PlayerAuthInputPacket
+import com.nukkitx.protocol.bedrock.packet.*
 import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.cheat.module.impl.ModuleAntiBot.isBot
 import dev.sora.relay.cheat.value.BoolValue
@@ -33,7 +29,7 @@ class ModuleKillAura : CheatModule("KillAura") {
     private val attackModeValue = ListValue("AttackMode", arrayOf("Single", "Multi"), "Single")
     private val rotationModeValue = ListValue("RotationMode", arrayOf("Lock", "None"), "Lock")
     private val swingValue = ListValue("Swing", arrayOf("Both", "Client", "Server", "None"), "Both")
-    private val swingSoundValue = BoolValue("SwingSound", false)
+    private val swingSoundValue = BoolValue("SwingSound", true)
 
     private var rotation: Pair<Float, Float>? = null
 
@@ -94,10 +90,11 @@ class ModuleKillAura : CheatModule("KillAura") {
         })
 
         if (swingSoundValue.get()) {
-            session.netSession.outboundPacket(LevelSoundEvent2Packet().apply {
-                sound = SoundEvent.ATTACK_NODAMAGE
+            session.netSession.outboundPacket(LevelSoundEventPacket().apply {
+                sound = SoundEvent.ATTACK_STRONG
                 position = session.thePlayer.vec3Position()
-                identifier = ":"
+                extraData = -1
+                identifier = "minecraft:player"
                 isBabySound = false
                 isRelativeVolumeDisabled = false
             })
