@@ -26,6 +26,10 @@ import java.util.concurrent.TimeUnit
 
 class RakNetRelaySessionListenerMicrosoft(val accessToken: String) : RakNetRelaySessionListener.PacketListener {
 
+    constructor(accessToken: String, session: RakNetRelaySession) : this(accessToken) {
+        this.session = session
+    }
+
     private var chain: AsciiString? = null
         get() {
             if (field == null) {
