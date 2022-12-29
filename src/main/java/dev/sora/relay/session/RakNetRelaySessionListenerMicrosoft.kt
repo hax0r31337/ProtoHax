@@ -30,13 +30,20 @@ class RakNetRelaySessionListenerMicrosoft(val accessToken: String) : RakNetRelay
         this.session = session
     }
 
+    private var chainExpires = 0L
     private var chain: AsciiString? = null
         get() {
-            if (field == null) {
-                field = AsciiString(getChain(accessToken))
+            if (field == null || chainExpires < Instant.now().epochSecond) {
+                field = AsciiString(getChain(accessToken).also {
+                    val json = JsonParser.parseReader(Base64.getDecoder().decode(
+                        JsonParser.parseString(it).asJsonObject.getAsJsonArray("chain").get(0).asString.split(".")[1])
+                        .inputStream().reader()).asJsonObject
+                    chainExpires = json.get("exp").asLong
+                })
             }
             return field
         }
+
     private val keyPair = EncryptionUtils.createKeyPair()
 
     lateinit var session: RakNetRelaySession

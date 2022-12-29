@@ -77,6 +77,7 @@ abstract class Entity(open val entityId: Long) {
     open fun onPacket(packet: BedrockPacket) {
         if (packet is MoveEntityAbsolutePacket && packet.runtimeEntityId == entityId) {
             move(packet.position)
+            rotate(packet.rotation)
             tickExists++
         } /* else if (packet is MoveEntityDeltaPacket && packet.runtimeEntityId == entityId) {
             // TODO
