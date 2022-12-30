@@ -1,0 +1,3 @@
+[submodule "src/main/resources/assets/mcpedata"]
+	path = src/main/resources/assets/mcpedata
+	url = https://github.com/mccheatz/mcpedata.git
