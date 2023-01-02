@@ -23,6 +23,7 @@ class ModuleManager(private val session: GameSession) {
         registerModule(ModuleOpFightBot())
         registerModule(ModuleNoSkin())
         registerModule(ModuleDeviceSpoof())
+        registerModule(ModuleResourcePackSpoof())
         registerModule(ModuleAntiBot)
     }
 }

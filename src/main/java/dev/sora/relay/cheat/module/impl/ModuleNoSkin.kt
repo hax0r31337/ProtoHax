@@ -7,8 +7,13 @@ import com.nukkitx.protocol.bedrock.packet.PlayerSkinPacket
 import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.game.event.Listen
 import dev.sora.relay.game.event.impl.EventPacketInbound
+import dev.sora.relay.utils.logInfo
 
 class ModuleNoSkin : CheatModule("NoSkin") {
+
+    private val skinData by lazy {
+        ImageData.of(ByteArray(16384).also { for(i in it.indices) it[i] = Byte.MAX_VALUE })
+    }
 
     @Listen
     fun onPacketInbound(event: EventPacketInbound) {
@@ -26,8 +31,8 @@ class ModuleNoSkin : CheatModule("NoSkin") {
     }
 
     private fun generateSkin(skin: SerializedSkin): SerializedSkin {
-        return SerializedSkin.of(skin.skinId, skin.playFabId, SKIN_RESOURCE_PATCH, ImageData.of(ByteArray(16384)),
-            emptyList(), ImageData.EMPTY, SKIN_GEOMETRY_DATA, "", "",
+        return SerializedSkin.of(skin.skinId, skin.playFabId, SKIN_RESOURCE_PATCH, skinData,
+            emptyList(), ImageData.EMPTY, SKIN_GEOMETRY_DATA, "0.0.0", "",
             false, true, false, false, "", skin.fullSkinId,
             "wide", "#0", emptyList(), emptyList()
         )
