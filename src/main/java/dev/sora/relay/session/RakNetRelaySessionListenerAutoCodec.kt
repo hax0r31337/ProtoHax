@@ -5,7 +5,6 @@ import com.nukkitx.protocol.bedrock.BedrockPacketCodec
 import com.nukkitx.protocol.bedrock.compat.BedrockCompat
 import com.nukkitx.protocol.bedrock.packet.LoginPacket
 import com.nukkitx.protocol.bedrock.packet.RequestNetworkSettingsPacket
-import com.nukkitx.protocol.bedrock.v560.Bedrock_v560
 import dev.sora.relay.RakNetRelaySession
 import dev.sora.relay.RakNetRelaySessionListener
 import dev.sora.relay.utils.logInfo
@@ -20,10 +19,10 @@ class RakNetRelaySessionListenerAutoCodec(private val session: RakNetRelaySessio
     override fun onPacketOutbound(packet: BedrockPacket): Boolean {
         if (packet is RequestNetworkSettingsPacket) {
             session.packetCodec = pickProtocolCodec(packet.protocolVersion)
-            logInfo("selected codec (protocol=${session.packetCodec.protocolVersion}, mc=${session.packetCodec.minecraftVersion})")
+            logInfo("selected codec (clientProtocol=${packet.protocolVersion}, protocol=${session.packetCodec.protocolVersion}, mc=${session.packetCodec.minecraftVersion})")
         } else if (packet is LoginPacket) {
             session.packetCodec = pickProtocolCodec(packet.protocolVersion)
-            logInfo("selected codec (protocol=${session.packetCodec.protocolVersion}, mc=${session.packetCodec.minecraftVersion})")
+            logInfo("selected codec (clientProtocol=${packet.protocolVersion}, protocol=${session.packetCodec.protocolVersion}, mc=${session.packetCodec.minecraftVersion})")
         }
         return true
     }

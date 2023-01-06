@@ -151,10 +151,15 @@ class RakNetRelaySession(val clientsideSession: RakNetServerSession,
                         buffer.release()
                     }
                     packets.forEach {
-                        val hold = if (isClientside) {
-                            listener.onPacketOutbound(it)
-                        } else {
-                            listener.onPacketInbound(it)
+                        val hold = try {
+                            if (isClientside) {
+                                listener.onPacketOutbound(it)
+                            } else {
+                                listener.onPacketInbound(it)
+                            }
+                        } catch (t: Throwable) {
+                            logError("handling packets", t)
+                            true
                         }
                         if (!hold) return@forEach
                         if (isClientside) {

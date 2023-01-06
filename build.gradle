@@ -24,7 +24,6 @@ dependencies {
     embed('com.nukkitx.protocol:bedrock-v560:2.9.15-SNAPSHOT') {
         exclude group: 'com.nukkitx.network'
         exclude group: 'com.nukkitx', module: 'natives'
-        exclude group: 'org.lanternpowered'
     }
     embed project(':raknet')
     embed project(':natives')
