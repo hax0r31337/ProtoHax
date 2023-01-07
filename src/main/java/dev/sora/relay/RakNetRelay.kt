@@ -58,7 +58,7 @@ class RakNetRelay(listen: InetSocketAddress, val eventLoopGroup: EventLoopGroup 
             return true
         }
 
-        override fun onQuery(address: InetSocketAddress): ByteArray? {
+        override fun onQuery(address: InetSocketAddress): ByteArray {
             return listener?.onQuery(address) ?: ByteArray(0)
         }
 

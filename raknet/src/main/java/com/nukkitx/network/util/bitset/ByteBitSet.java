@@ -76,8 +76,7 @@ public class ByteBitSet implements BitSet {
     @Override
     public boolean equals(Object o) {
         if (o == this) return true;
-        if (!(o instanceof ByteBitSet)) return false;
-        ByteBitSet that = (ByteBitSet) o;
+        if (!(o instanceof ByteBitSet that)) return false;
         return this.bitset == that.get();
     }
 }

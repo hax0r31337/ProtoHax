@@ -116,7 +116,7 @@ object NoteBlockUtils {
         return byte1 + (byte2 shl 8) + (byte3 shl 16) + (byte4 shl 24)
     }
 
-    private fun readString(dataInputStream: DataInputStream): String? {
+    private fun readString(dataInputStream: DataInputStream): String {
         var length = readInt(dataInputStream)
         val builder = StringBuilder(length)
         while (length > 0) {
