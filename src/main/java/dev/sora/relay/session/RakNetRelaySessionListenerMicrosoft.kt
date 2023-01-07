@@ -12,10 +12,7 @@ import com.nukkitx.protocol.bedrock.packet.ServerToClientHandshakePacket
 import com.nukkitx.protocol.bedrock.util.EncryptionUtils
 import dev.sora.relay.RakNetRelaySession
 import dev.sora.relay.RakNetRelaySessionListener
-import dev.sora.relay.utils.CipherPair
-import dev.sora.relay.utils.HttpUtils
-import dev.sora.relay.utils.JoseStuff
-import dev.sora.relay.utils.logInfo
+import dev.sora.relay.utils.*
 import io.netty.util.AsciiString
 import java.io.InputStreamReader
 import java.security.KeyPair
@@ -35,7 +32,7 @@ class RakNetRelaySessionListenerMicrosoft(val accessToken: String) : RakNetRelay
         get() {
             if (field == null || chainExpires < Instant.now().epochSecond) {
                 field = AsciiString(getChain(accessToken).also {
-                    val json = JsonParser.parseReader(Base64.getDecoder().decode(
+                    val json = JsonParser.parseReader(base64Decode(
                         JsonParser.parseString(it).asJsonObject.getAsJsonArray("chain").get(0).asString.split(".")[1])
                         .inputStream().reader()).asJsonObject
                     chainExpires = json.get("exp").asLong
@@ -55,11 +52,11 @@ class RakNetRelaySessionListenerMicrosoft(val accessToken: String) : RakNetRelay
     override fun onPacketInbound(packet: BedrockPacket): Boolean {
         if (packet is ServerToClientHandshakePacket) {
             val jwtSplit = packet.jwt.split(".")
-            val headerObject = JsonParser.parseString(Base64.getDecoder().decode(jwtSplit[0]).toString(Charsets.UTF_8)).asJsonObject
-            val payloadObject = JsonParser.parseString(Base64.getDecoder().decode(jwtSplit[1]).toString(Charsets.UTF_8)).asJsonObject
+            val headerObject = JsonParser.parseString(base64Decode(jwtSplit[0]).toString(Charsets.UTF_8)).asJsonObject
+            val payloadObject = JsonParser.parseString(base64Decode(jwtSplit[1]).toString(Charsets.UTF_8)).asJsonObject
             val serverKey = EncryptionUtils.generateKey(headerObject.get("x5u").asString)
             val key = EncryptionUtils.getSecretKey(keyPair.private, serverKey,
-                Base64.getDecoder().decode(payloadObject.get("salt").asString))
+                base64Decode(payloadObject.get("salt").asString))
             session.serverCipher = CipherPair(key)
             session.outboundPacket(ClientToServerHandshakePacket())
             return false
@@ -84,7 +81,7 @@ class RakNetRelaySessionListenerMicrosoft(val accessToken: String) : RakNetRelay
         val chains = rawChain.get("chain").asJsonArray
 
         // add the self-signed jwt
-        val identityPubKey = JsonParser.parseString(Base64.getDecoder().decode(chains.get(0).asString.split(".")[0]).toString(Charsets.UTF_8)).asJsonObject
+        val identityPubKey = JsonParser.parseString(base64Decode(chains.get(0).asString.split(".")[0]).toString(Charsets.UTF_8)).asJsonObject
         val jwt = toJWTRaw(Base64.getEncoder().encodeToString(JSONObject().apply {
             put("certificateAuthority", true)
             put("exp", (Instant.now().epochSecond + TimeUnit.HOURS.toSeconds(6)).toInt())

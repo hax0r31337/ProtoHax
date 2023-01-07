@@ -57,7 +57,7 @@ class ModuleKillAura : CheatModule("KillAura") {
         }
 
         if (rotationModeValue.get() == "Lock") {
-            rotation = toRotation(session.thePlayer.vec3Position(), aimTarget.vec3Position().add(0f, 1f, 0f)).let {
+            rotation = toRotation(session.thePlayer.vec3Position, aimTarget.vec3Position.add(0f, 1f, 0f)).let {
                 (it.first - session.thePlayer.rotationYaw) * 0.8f + session.thePlayer.rotationYaw to it.second
             }
         }
@@ -85,14 +85,14 @@ class ModuleKillAura : CheatModule("KillAura") {
             runtimeEntityId = entity.entityId
             hotbarSlot = session.thePlayer.heldItemSlot
             itemInHand = ItemData.AIR
-            playerPosition = session.thePlayer.vec3Position()
+            playerPosition = session.thePlayer.vec3Position
             clickPosition = Vector3f.ZERO
         })
 
         if (swingSoundValue.get()) {
             session.netSession.outboundPacket(LevelSoundEventPacket().apply {
                 sound = SoundEvent.ATTACK_STRONG
-                position = session.thePlayer.vec3Position()
+                position = session.thePlayer.vec3Position
                 extraData = -1
                 identifier = "minecraft:player"
                 isBabySound = false

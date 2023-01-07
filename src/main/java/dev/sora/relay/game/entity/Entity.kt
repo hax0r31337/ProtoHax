@@ -17,6 +17,7 @@ abstract class Entity(open val entityId: Long) {
 
     open var rotationYaw = 0f
     open var rotationPitch = 0f
+    open var rotationYawHead = 0f
 
     open var motionX = 0.0
     open var motionY = 0.0
@@ -26,6 +27,12 @@ abstract class Entity(open val entityId: Long) {
 
 //    val attributeList = mutableListOf<AttributeData>()
 //    val metadataList = EntityDataMap()
+
+    val vec3Position: Vector3f
+        get() = Vector3f.from(posX, posY, posZ)
+
+    val vec3Rotation: Vector3f
+        get() = Vector3f.from(rotationPitch, rotationYaw, rotationYawHead)
 
     // TODO: inventory
 
@@ -52,6 +59,7 @@ abstract class Entity(open val entityId: Long) {
 
     open fun rotate(rotation: Vector3f) {
         rotate(rotation.y, rotation.x)
+        rotationYawHead = rotation.z
     }
 
     fun distanceSq(x: Double, y: Double, z: Double): Double {
@@ -69,10 +77,6 @@ abstract class Entity(open val entityId: Long) {
 
     fun distance(entity: Entity)
         = distance(entity.posX, entity.posY, entity.posZ)
-
-    fun vec3Position(): Vector3f {
-        return Vector3f.from(posX, posY, posZ)
-    }
 
     open fun onPacket(packet: BedrockPacket) {
         if (packet is MoveEntityAbsolutePacket && packet.runtimeEntityId == entityId) {

@@ -13,6 +13,7 @@ import dev.sora.relay.game.event.impl.EventPacketInbound
 import dev.sora.relay.game.event.impl.EventPacketOutbound
 import dev.sora.relay.game.event.impl.EventTick
 import dev.sora.relay.game.world.WorldClient
+import dev.sora.relay.utils.base64Decode
 import java.util.*
 
 class GameSession : RakNetRelaySessionListener.PacketListener {
@@ -58,7 +59,7 @@ class GameSession : RakNetRelaySessionListener.PacketListener {
         if (packet is LoginPacket) {
             val body = JsonParser.parseString(packet.chainData.toString()).asJsonObject.getAsJsonArray("chain")
             for (chain in body) {
-                val chainBody = JsonParser.parseString(Base64.getDecoder().decode(chain.asString.split(".")[1]).toString(Charsets.UTF_8)).asJsonObject
+                val chainBody = JsonParser.parseString(base64Decode(chain.asString.split(".")[1]).toString(Charsets.UTF_8)).asJsonObject
                 if (chainBody.has("extraData")) {
                     val xData = chainBody.getAsJsonObject("extraData")
                     xuid = xData.get("XUID").asString

@@ -2,7 +2,7 @@ package dev.sora.relay.game.entity
 
 import com.nukkitx.protocol.bedrock.BedrockPacket
 import com.nukkitx.protocol.bedrock.packet.MovePlayerPacket
-import java.util.UUID
+import java.util.*
 
 open class EntityPlayer(entityId: Long, val uuid: UUID, val username: String) : Entity(entityId) {
 

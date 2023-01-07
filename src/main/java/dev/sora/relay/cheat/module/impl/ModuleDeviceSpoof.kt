@@ -6,10 +6,11 @@ import com.nukkitx.protocol.bedrock.packet.LoginPacket
 import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.game.event.Listen
 import dev.sora.relay.game.event.impl.EventPacketOutbound
+import dev.sora.relay.utils.base64Decode
 import dev.sora.relay.utils.getRandomString
 import dev.sora.relay.utils.toHexString
 import io.netty.util.AsciiString
-import java.util.Base64
+import java.util.*
 import kotlin.random.Random
 
 class ModuleDeviceSpoof : CheatModule("DeviceSpoof") {
@@ -19,7 +20,7 @@ class ModuleDeviceSpoof : CheatModule("DeviceSpoof") {
         val packet = event.packet
 
         if (packet is LoginPacket) {
-            val body = JsonParser.parseString(Base64.getDecoder().decode(packet.skinData.toString().split(".")[1]).toString(Charsets.UTF_8)).asJsonObject
+            val body = JsonParser.parseString(base64Decode(packet.skinData.toString().split(".")[1]).toString(Charsets.UTF_8)).asJsonObject
             body.addProperty("ClientRandomId", Random.nextLong())
             body.addProperty("DeviceModel", getRandomString(5 + Random.nextInt(5)))
             body.addProperty("DeviceId", Random.nextBytes(ByteArray(16)).toHexString())

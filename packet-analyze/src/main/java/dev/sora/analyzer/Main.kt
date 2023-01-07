@@ -3,6 +3,7 @@ package dev.sora.analyzer
 import com.google.gson.JsonParser
 import com.nukkitx.network.raknet.RakNetServerSession
 import com.nukkitx.protocol.bedrock.BedrockPacket
+import com.nukkitx.protocol.bedrock.BedrockPacketCodec
 import dev.sora.relay.RakNetRelay
 import dev.sora.relay.RakNetRelayListener
 import dev.sora.relay.RakNetRelaySession
