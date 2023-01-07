@@ -29,7 +29,6 @@ class ModuleKillAura : CheatModule("KillAura") {
     private val attackModeValue = ListValue("AttackMode", arrayOf("Single", "Multi"), "Single")
     private val rotationModeValue = ListValue("RotationMode", arrayOf("Lock", "None"), "Lock")
     private val swingValue = ListValue("Swing", arrayOf("Both", "Client", "Server", "None"), "Both")
-    private val swingSoundValue = BoolValue("SwingSound", true)
 
     private var rotation: Pair<Float, Float>? = null
 
@@ -78,6 +77,15 @@ class ModuleKillAura : CheatModule("KillAura") {
                 session.netSession.outboundPacket(it)
         }
 
+        session.netSession.outboundPacket(LevelSoundEventPacket().apply {
+            sound = SoundEvent.ATTACK_STRONG
+            position = session.thePlayer.vec3Position
+            extraData = -1
+            identifier = "minecraft:player"
+            isBabySound = false
+            isRelativeVolumeDisabled = false
+        })
+
         // attack
         session.netSession.outboundPacket(InventoryTransactionPacket().apply {
             transactionType = TransactionType.ITEM_USE_ON_ENTITY
@@ -88,17 +96,6 @@ class ModuleKillAura : CheatModule("KillAura") {
             playerPosition = session.thePlayer.vec3Position
             clickPosition = Vector3f.ZERO
         })
-
-        if (swingSoundValue.get()) {
-            session.netSession.outboundPacket(LevelSoundEventPacket().apply {
-                sound = SoundEvent.ATTACK_STRONG
-                position = session.thePlayer.vec3Position
-                extraData = -1
-                identifier = "minecraft:player"
-                isBabySound = false
-                isRelativeVolumeDisabled = false
-            })
-        }
     }
 
     @Listen
