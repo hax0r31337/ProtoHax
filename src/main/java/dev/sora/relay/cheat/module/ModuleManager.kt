@@ -29,5 +29,6 @@ class ModuleManager(private val session: GameSession) {
         registerModule(ModuleNoFall())
         registerModule(ModuleAntiKick())
         registerModule(ModuleAutoSprint())
+        registerModule(ModuleNightVision())
     }
 }
