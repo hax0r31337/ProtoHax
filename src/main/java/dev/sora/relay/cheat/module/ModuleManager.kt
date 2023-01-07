@@ -27,5 +27,6 @@ class ModuleManager(private val session: GameSession) {
         registerModule(ModuleAntiBot)
         registerModule(ModuleEditionFaker())
         registerModule(ModuleNoFall())
+        registerModule(ModuleAntiKick())
     }
 }
