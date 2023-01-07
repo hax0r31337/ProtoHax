@@ -28,5 +28,6 @@ class ModuleManager(private val session: GameSession) {
         registerModule(ModuleEditionFaker())
         registerModule(ModuleNoFall())
         registerModule(ModuleAntiKick())
+        registerModule(ModuleAutoSprint())
     }
 }
