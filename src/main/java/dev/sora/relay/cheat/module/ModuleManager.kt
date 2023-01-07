@@ -30,5 +30,6 @@ class ModuleManager(private val session: GameSession) {
         registerModule(ModuleAntiKick())
         registerModule(ModuleAutoSprint())
         registerModule(ModuleNightVision())
+        registerModule(ModuleAntiDebuff())
     }
 }
