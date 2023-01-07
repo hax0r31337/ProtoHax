@@ -23,7 +23,7 @@ class ModuleEditionFaker : CheatModule("EditionFaker") {
             body.addProperty("DeviceOS",2) //iOS
             body.addProperty("CurrentInputMode",2) //Touch
             packet.skinData = AsciiString(".${Base64.getEncoder().encodeToString(Gson().toJson(body).toByteArray(Charsets.UTF_8))}.")
-        }else if(packet is PlayerAuthInputPacket){
+        } else if(packet is PlayerAuthInputPacket){
             packet.inputMode = InputMode.TOUCH
         }
     }

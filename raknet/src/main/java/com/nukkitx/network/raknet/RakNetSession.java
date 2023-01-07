@@ -61,7 +61,7 @@ public abstract class RakNetSession implements SessionConnection<ByteBuf> {
     private FastBinaryMinHeap<EncapsulatedPacket>[] orderingHeaps;
     @Getter
     @Setter
-    private final RakNetSessionListener listener = null;
+    private volatile RakNetSessionListener listener = null;
     private volatile long currentPingTime = -1;
     private volatile long lastPingTime = -1;
     private volatile long lastPongTime = -1;
