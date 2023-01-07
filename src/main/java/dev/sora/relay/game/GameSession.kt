@@ -77,4 +77,23 @@ class GameSession : RakNetRelaySessionListener.PacketListener {
     fun onTick() {
         eventManager.emit(EventTick(this))
     }
+
+    fun sendPacket(packet: BedrockPacket) {
+        val event = EventPacketOutbound(this, packet)
+        eventManager.emit(event)
+        if (event.isCanceled()) {
+            return
+        }
+
+        netSession.outboundPacket(packet)
+    }
+
+    fun sendPacketToClient(packet: BedrockPacket) {
+        val event = EventPacketInbound(this, packet)
+        eventManager.emit(event)
+        if (event.isCanceled()) {
+            return
+        }
+        netSession.outboundPacket(packet)
+    }
 }

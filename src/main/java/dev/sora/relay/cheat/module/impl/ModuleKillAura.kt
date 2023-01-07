@@ -74,10 +74,10 @@ class ModuleKillAura : CheatModule("KillAura") {
             if (value == "Both" || value == "Client")
                 session.netSession.inboundPacket(it)
             if (value == "Both" || value == "Server")
-                session.netSession.outboundPacket(it)
+                session.sendPacket(it)
         }
 
-        session.netSession.outboundPacket(LevelSoundEventPacket().apply {
+        session.sendPacket(LevelSoundEventPacket().apply {
             sound = SoundEvent.ATTACK_STRONG
             position = session.thePlayer.vec3Position
             extraData = -1
@@ -87,7 +87,7 @@ class ModuleKillAura : CheatModule("KillAura") {
         })
 
         // attack
-        session.netSession.outboundPacket(InventoryTransactionPacket().apply {
+        session.sendPacket(InventoryTransactionPacket().apply {
             transactionType = TransactionType.ITEM_USE_ON_ENTITY
             actionType = 1
             runtimeEntityId = entity.entityId

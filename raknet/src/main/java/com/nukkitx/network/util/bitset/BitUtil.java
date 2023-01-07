@@ -22,7 +22,7 @@ public class BitUtil {
     }
 
     public static long setBit(long bitset, int index, boolean value) {
-        return value ? bitset | (1L << index) : bitset & ~(1L << index);
+        return value ? bitset | (1 << index) : bitset & ~(1 << index);
     }
 
     public static byte flipBit(byte bitset, int index) {
@@ -38,6 +38,6 @@ public class BitUtil {
     }
 
     public static long flipBit(long bitset, int index) {
-        return bitset ^ (1L << index);
+        return bitset ^ (1 << index);
     }
 }

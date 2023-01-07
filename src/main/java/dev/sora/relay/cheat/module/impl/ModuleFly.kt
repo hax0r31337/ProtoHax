@@ -65,7 +65,7 @@ class ModuleFly : CheatModule("Fly") {
         if (event.packet is UpdateAbilitiesPacket) {
             event.cancel()
             event.session.netSession.inboundPacket(abilityPacket.apply {
-                uniqueEntityId = session.thePlayer.entityId
+                uniqueEntityId = event.session.thePlayer.entityId
             })
         } else if (event.packet is StartGamePacket) {
             event.session.netSession.inboundPacket(abilityPacket.apply {
@@ -81,14 +81,14 @@ class ModuleFly : CheatModule("Fly") {
                 canFly = !canFly
                 if (canFly) {
                     launchY = floor(session.thePlayer.posY) - 0.38
-                    event.session.netSession.inboundPacket(EntityEventPacket().apply {
+                    event.session.sendPacketToClient(EntityEventPacket().apply {
                         runtimeEntityId = event.session.thePlayer.entityId
                         type = EntityEventType.HURT
                         data = 0
                     })
                     val player = event.session.thePlayer
                     repeat(5) {
-                        event.session.netSession.outboundPacket(MovePlayerPacket().apply {
+                        event.session.sendPacket(MovePlayerPacket().apply {
                             runtimeEntityId = player.entityId
                             position = Vector3f.from(player.posX, launchY, player.posZ)
                             rotation = Vector3f.from(player.rotationPitch, player.rotationYaw, 0f)

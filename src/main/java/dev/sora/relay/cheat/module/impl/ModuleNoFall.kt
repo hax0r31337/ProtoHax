@@ -37,7 +37,7 @@ class ModuleNoFall : CheatModule("NoFall") {
 
         if(modeValue.get() == "Nukkit"){
             if(session.thePlayer.motionY >= 5.5){
-                session.netSession.outboundPacket(PlayerActionPacket().apply {
+                session.sendPacket(PlayerActionPacket().apply {
                     runtimeEntityId = session.thePlayer.entityId
                     action = PlayerActionType.START_GLIDE
                 })

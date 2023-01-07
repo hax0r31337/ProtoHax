@@ -37,7 +37,7 @@ class ModuleBGM : CheatModule("BGM") {
                 isBabySound = false
                 isRelativeVolumeDisabled = false
             }
-            event.session.netSession.outboundPacket(pk)
+            event.session.sendPacket(pk)
         }
     }
 

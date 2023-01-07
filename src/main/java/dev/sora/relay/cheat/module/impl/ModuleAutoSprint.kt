@@ -16,7 +16,7 @@ class ModuleAutoSprint : CheatModule("AutoSprint") {
 
         if(session.thePlayer.motionX > 0.01f || session.thePlayer.motionZ > 0.01f){
             if(!isSprint){
-                session.netSession.outboundPacket(PlayerActionPacket().apply {
+                session.sendPacket(PlayerActionPacket().apply {
                     runtimeEntityId = session.thePlayer.entityId
                     action = PlayerActionType.START_SPRINT
                 })

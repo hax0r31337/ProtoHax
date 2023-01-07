@@ -20,7 +20,7 @@ class ModuleSpammer : CheatModule("Spammer") {
     @Listen
     fun onTick(event: EventTick) {
         if (spamTimer.hasTimePassed(delayValue.get())) {
-            event.session.netSession.outboundPacket(TextPacket().apply {
+            event.session.sendPacket(TextPacket().apply {
                 type = TextPacket.Type.CHAT
                 xuid = event.session.xuid
                 sourceName = event.session.displayName

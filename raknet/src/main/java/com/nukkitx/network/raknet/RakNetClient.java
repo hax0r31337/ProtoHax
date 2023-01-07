@@ -230,6 +230,6 @@ public class RakNetClient extends RakNet {
     }
 
     public interface NettyChannelInitializer {
-        void initChannel(Channel channel);
+        public void initChannel(Channel channel);
     }
 }
