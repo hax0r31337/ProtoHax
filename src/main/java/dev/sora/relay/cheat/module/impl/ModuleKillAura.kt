@@ -14,6 +14,7 @@ import dev.sora.relay.cheat.value.ListValue
 import dev.sora.relay.game.GameSession
 import dev.sora.relay.game.entity.Entity
 import dev.sora.relay.game.entity.EntityPlayer
+import dev.sora.relay.game.entity.EntityPlayerSP
 import dev.sora.relay.game.event.Listen
 import dev.sora.relay.game.event.impl.EventPacketOutbound
 import dev.sora.relay.game.event.impl.EventTick
@@ -45,13 +46,19 @@ class ModuleKillAura : CheatModule("KillAura") {
         val entityList = session.theWorld.entityMap.values.filter { it is EntityPlayer && it.distanceSq(session.thePlayer) < range && !it.isBot(session) }
         if (entityList.isEmpty()) return
 
+        val swingMode = when(swingValue.get()) {
+            "Both" -> EntityPlayerSP.SwingMode.BOTH
+            "Client" -> EntityPlayerSP.SwingMode.CLIENTSIDE
+            "Server" -> EntityPlayerSP.SwingMode.SERVERSIDE
+            else -> EntityPlayerSP.SwingMode.NONE
+        }
         val aimTarget = when(attackModeValue.get()) {
             "Multi" -> {
-                entityList.forEach { attackEntity(it, event.session) }
+                entityList.forEach { session.thePlayer.attackEntity(it, event.session, swingMode) }
                 entityList.first()
             }
             else -> (entityList.minByOrNull { it.distanceSq(event.session.thePlayer) } ?: return).also {
-                attackEntity(it, event.session)
+                session.thePlayer.attackEntity(it, event.session, swingMode)
             }
         }
 
@@ -62,40 +69,6 @@ class ModuleKillAura : CheatModule("KillAura") {
         }
 
         clickTimer.update(cpsValue.get(), cpsValue.get() + 1)
-    }
-
-    private fun attackEntity(entity: Entity, session: GameSession) {
-        AnimatePacket().apply {
-            action = AnimatePacket.Action.SWING_ARM
-            runtimeEntityId = session.thePlayer.entityId
-        }.also {
-            // send the packet back to client in order to display the swing animation
-            val value = swingValue.get()
-            if (value == "Both" || value == "Client")
-                session.netSession.inboundPacket(it)
-            if (value == "Both" || value == "Server")
-                session.sendPacket(it)
-        }
-
-        session.sendPacket(LevelSoundEventPacket().apply {
-            sound = SoundEvent.ATTACK_STRONG
-            position = session.thePlayer.vec3Position
-            extraData = -1
-            identifier = "minecraft:player"
-            isBabySound = false
-            isRelativeVolumeDisabled = false
-        })
-
-        // attack
-        session.sendPacket(InventoryTransactionPacket().apply {
-            transactionType = TransactionType.ITEM_USE_ON_ENTITY
-            actionType = 1
-            runtimeEntityId = entity.entityId
-            hotbarSlot = session.thePlayer.heldItemSlot
-            itemInHand = ItemData.AIR
-            playerPosition = session.thePlayer.vec3Position
-            clickPosition = Vector3f.ZERO
-        })
     }
 
     @Listen

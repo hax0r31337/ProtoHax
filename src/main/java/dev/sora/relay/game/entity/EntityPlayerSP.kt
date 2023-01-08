@@ -2,10 +2,10 @@ package dev.sora.relay.game.entity
 
 import com.nukkitx.math.vector.Vector3f
 import com.nukkitx.protocol.bedrock.BedrockPacket
-import com.nukkitx.protocol.bedrock.packet.MobEquipmentPacket
-import com.nukkitx.protocol.bedrock.packet.MovePlayerPacket
-import com.nukkitx.protocol.bedrock.packet.PlayerAuthInputPacket
-import com.nukkitx.protocol.bedrock.packet.PlayerHotbarPacket
+import com.nukkitx.protocol.bedrock.data.SoundEvent
+import com.nukkitx.protocol.bedrock.data.inventory.ItemData
+import com.nukkitx.protocol.bedrock.data.inventory.TransactionType
+import com.nukkitx.protocol.bedrock.packet.*
 import dev.sora.relay.RakNetRelaySession
 import dev.sora.relay.cheat.BasicThing
 import dev.sora.relay.game.GameSession
@@ -47,5 +47,45 @@ class EntityPlayerSP : EntityPlayer(0L, UUID.randomUUID(), "") {
         } else if (packet is MobEquipmentPacket && packet.runtimeEntityId == entityId) {
             heldItemSlot = packet.hotbarSlot
         }
+    }
+
+    fun attackEntity(entity: Entity, session: GameSession, swingValue: SwingMode = SwingMode.BOTH) {
+        AnimatePacket().apply {
+            action = AnimatePacket.Action.SWING_ARM
+            runtimeEntityId = session.thePlayer.entityId
+        }.also {
+            // send the packet back to client in order to display the swing animation
+            if (swingValue == SwingMode.BOTH || swingValue == SwingMode.CLIENTSIDE)
+                session.netSession.inboundPacket(it)
+            if (swingValue == SwingMode.BOTH || swingValue == SwingMode.SERVERSIDE)
+                session.sendPacket(it)
+        }
+
+        session.sendPacket(LevelSoundEventPacket().apply {
+            sound = SoundEvent.ATTACK_STRONG
+            position = session.thePlayer.vec3Position
+            extraData = -1
+            identifier = "minecraft:player"
+            isBabySound = false
+            isRelativeVolumeDisabled = false
+        })
+
+        // attack
+        session.sendPacket(InventoryTransactionPacket().apply {
+            transactionType = TransactionType.ITEM_USE_ON_ENTITY
+            actionType = 1
+            runtimeEntityId = entity.entityId
+            hotbarSlot = session.thePlayer.heldItemSlot
+            itemInHand = ItemData.AIR
+            playerPosition = session.thePlayer.vec3Position
+            clickPosition = Vector3f.ZERO
+        })
+    }
+
+    enum class SwingMode {
+        CLIENTSIDE,
+        SERVERSIDE,
+        BOTH,
+        NONE
     }
 }
