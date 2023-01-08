@@ -8,18 +8,18 @@ import com.nukkitx.protocol.bedrock.data.command.CommandPermission
 import com.nukkitx.protocol.bedrock.data.entity.EntityEventType
 import com.nukkitx.protocol.bedrock.packet.*
 import dev.sora.relay.cheat.module.CheatModule
+import dev.sora.relay.cheat.value.FloatValue
 import dev.sora.relay.cheat.value.ListValue
 import dev.sora.relay.game.event.Listen
 import dev.sora.relay.game.event.impl.EventPacketInbound
 import dev.sora.relay.game.event.impl.EventPacketOutbound
 import dev.sora.relay.game.event.impl.EventTick
-import kotlin.math.cos
-import kotlin.math.floor
-import kotlin.math.sin
+import kotlin.math.*
 
 class ModuleFly : CheatModule("Fly") {
 
-    private val modeValue = ListValue("Mode", arrayOf("Vanilla", "Mineplex"), "Vanilla")
+    private val modeValue = ListValue("Mode", arrayOf("Vanilla", "Jetpack","Mineplex"), "Vanilla")
+    private val speedValue = FloatValue("Speed", 1.5f, 0.1f, 5f)
 
     private var launchY = 0.0
     private var canFly = false
@@ -43,19 +43,34 @@ class ModuleFly : CheatModule("Fly") {
 
     @Listen
     fun onTick(event: EventTick) {
+        val session = event.session
+
         if (modeValue.get() == "Mineplex") {
-            event.session.netSession.inboundPacket(abilityPacket.apply {
-                uniqueEntityId = event.session.thePlayer.entityId
+            session.netSession.inboundPacket(abilityPacket.apply {
+                uniqueEntityId = session.thePlayer.entityId
             })
             if (!canFly) return
-            val player = event.session.thePlayer
+            val player = session.thePlayer
             val yaw = Math.toRadians(player.rotationYaw.toDouble())
             val value = 2.2f
-            player.teleport(player.posX - sin(yaw) * value, launchY, player.posZ + cos(yaw) * value, event.session.netSession)
+            player.teleport(player.posX - sin(yaw) * value, launchY, player.posZ + cos(yaw) * value, session.netSession)
         } else if (modeValue.get() == "Vanilla" && !canFly) {
             canFly = true
-            event.session.netSession.inboundPacket(abilityPacket.apply {
-                uniqueEntityId = event.session.thePlayer.entityId
+            session.netSession.inboundPacket(abilityPacket.apply {
+                uniqueEntityId = session.thePlayer.entityId
+            })
+        } else if(modeValue.get() == "Jetpack"){
+            session.netSession.inboundPacket(SetEntityMotionPacket().apply {
+                runtimeEntityId = session.thePlayer.entityId
+
+                val calcYaw: Double = (session.thePlayer.rotationYawHead + 90) * (PI / 180)
+                val calcPitch: Double = (session.thePlayer.rotationPitch) * -(PI / 180)
+
+                motion = Vector3f.from(
+                    cos(calcYaw) * cos(calcPitch) * speedValue.get(),
+                    sin(calcPitch) * speedValue.get(),
+                    sin(calcYaw) * cos(calcPitch) * speedValue.get()
+                )
             })
         }
     }
