@@ -18,8 +18,8 @@ class ModuleInfiniteAura : CheatModule("InfiniteAura") {
     private val attackModeValue = ListValue("AttackMode", arrayOf("Single", "Multi"), "Single")
     private val swingValue = ListValue("Swing", arrayOf("Both", "Client", "Server", "None"), "Both")
     private val cpsValue = IntValue("CPS", 3, 1, 20)
-    private val rangeValue = FloatValue("Range", 3.7f, 10f, 128f)
-    private val tpDistanceValue = FloatValue("TPDistance", 6f, 2f, 20f)
+    private val rangeValue = FloatValue("Range", 10F, 10F, 128F)
+    private val tpDistanceValue = FloatValue("TPDistance", 6F, 2F, 20F)
 
     private val clickTimer = ClickTimer()
 
