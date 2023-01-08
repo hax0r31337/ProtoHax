@@ -7,6 +7,7 @@ import com.nukkitx.protocol.bedrock.packet.TransferPacket
 import dev.sora.relay.cheat.command.CommandManager
 import dev.sora.relay.cheat.module.ModuleManager
 import dev.sora.relay.game.GameSession
+import dev.sora.relay.game.utils.mapping.BlockMappingUtils
 import dev.sora.relay.session.RakNetRelaySessionListenerAutoCodec
 import dev.sora.relay.session.RakNetRelaySessionListenerMicrosoft
 import dev.sora.relay.utils.HttpUtils
@@ -22,6 +23,8 @@ import kotlin.concurrent.thread
 
 fun main(args: Array<String>) {
     System.setProperty("io.netty.noUnsafe", "true")
+    BlockMappingUtils.craftItemMapping(560)
+    return
     InternalLoggerFactory.setDefaultFactory(LoggerFactory())
     val gameSession = craftSession()
 

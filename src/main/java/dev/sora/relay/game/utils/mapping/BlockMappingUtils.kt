@@ -7,7 +7,8 @@ import java.io.DataInputStream
 
 object BlockMappingUtils : AbstractMappingUtils() {
 
-    override val resourcePath = "/assets/mcpedata/blocks"
+    override val resourcePath: String
+        get() = "/assets/mcpedata/blocks"
 
     override fun readMapping(version: Short): RuntimeMapping {
         if (!availableVersions.contains(version)) return emptyMapping

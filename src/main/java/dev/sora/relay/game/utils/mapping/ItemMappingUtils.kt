@@ -4,7 +4,8 @@ import com.google.gson.JsonParser
 
 object ItemMappingUtils : AbstractMappingUtils() {
 
-    override val resourcePath = "/assets/mcpedata/items"
+    override val resourcePath: String
+        get() = "/assets/mcpedata/items"
 
     override fun readMapping(version: Short): RuntimeMapping {
         if (!availableVersions.contains(version)) return emptyMapping
