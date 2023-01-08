@@ -29,6 +29,9 @@ class GameSession : RakNetRelaySessionListener.PacketListener {
     var identity = UUID.randomUUID().toString()
     var displayName = "Player"
 
+    val netSessionInitialized: Boolean
+        get() = this::netSession.isInitialized
+
     override fun onPacketInbound(packet: BedrockPacket): Boolean {
         val event = EventPacketInbound(this, packet)
         eventManager.emit(event)

@@ -13,6 +13,7 @@ abstract class BasicThing {
 
     companion object {
         fun chat(session: GameSession, msg: String) {
+            if (!session.netSessionInitialized) return
             session.netSession.inboundPacket(TextPacket().apply {
                 type = TextPacket.Type.RAW
                 isNeedsTranslation = false

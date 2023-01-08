@@ -22,15 +22,13 @@ class ModuleManager(private val session: GameSession) {
         registerModule(ModuleDisabler())
         registerModule(ModuleOpFightBot())
         registerModule(ModuleNoSkin())
-        registerModule(ModuleLoginIDSpoof())
+        registerModule(ModuleDeviceSpoof())
         registerModule(ModuleResourcePackSpoof())
         registerModule(ModuleAntiBot)
-        registerModule(ModuleEditionFaker())
         registerModule(ModuleNoFall())
         registerModule(ModuleAntiKick())
         registerModule(ModuleAutoSprint())
-        registerModule(ModuleNightVision())
-        registerModule(ModuleAntiDebuff())
+        registerModule(ModuleAntiBlind())
         registerModule(ModuleFastBreak())
     }
 }

@@ -5,15 +5,18 @@ import dev.sora.relay.game.event.Listen
 import com.nukkitx.protocol.bedrock.packet.MobEffectPacket
 import dev.sora.relay.cheat.value.IntValue
 import dev.sora.relay.game.event.impl.EventTick
+import dev.sora.relay.game.utils.constants.Effect
 
 class ModuleFastBreak : CheatModule("FastBreak") {
     private val amplifierValue = IntValue("levels", 5, 1, 128)
 
     @Listen
-    fun onTick(event: EventTick){
+    fun onTick(event: EventTick) {
+        if (event.session.thePlayer.tickExists % 20 != 0L) return
         event.session.netSession.inboundPacket(MobEffectPacket().apply {
             setEvent(MobEffectPacket.Event.ADD)
-            effectId = 3 //急迫
+            runtimeEntityId = event.session.thePlayer.entityId
+            effectId = Effect.HASTE
             amplifier = amplifierValue.get() - 1
             isParticles = false
             duration = 60
@@ -21,9 +24,11 @@ class ModuleFastBreak : CheatModule("FastBreak") {
     }
 
     override fun onDisable() {
+        if (!session.netSessionInitialized) return
         session.netSession.inboundPacket(MobEffectPacket().apply {
+            runtimeEntityId = session.thePlayer.entityId
             event = MobEffectPacket.Event.REMOVE
-            effectId = 3 //急迫
+            effectId = Effect.HASTE
         })
     }
 }

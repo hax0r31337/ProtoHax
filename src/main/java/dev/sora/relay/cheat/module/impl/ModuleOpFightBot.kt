@@ -18,7 +18,7 @@ class ModuleOpFightBot : CheatModule("OPFightBot") {
     private val rangeValue = FloatValue("Range", 1.5f, 1.5f, 4f)
     private val horizontalSpeedValue = FloatValue("HorizontalSpeed", 5f, 1f, 7f)
     private val verticalSpeedValue = FloatValue("VerticalSpeed", 4f, 1f, 7f)
-    private val strafeSpeedValue = IntValue("StrafeSpeed", 20, 90, 10)
+    private val strafeSpeedValue = IntValue("StrafeSpeed", 20, 10, 90)
 
     @Listen
     fun onTick(event: EventTick) {

@@ -10,6 +10,7 @@ class ModuleAntiKick : CheatModule("AntiKick") {
     @Listen
     fun onPacketOutbound(event: EventPacketInbound) {
         if (event.packet is DisconnectPacket) {
+            chat("disconnect: ${event.packet.kickMessage}")
             event.cancel()
         }
     }
