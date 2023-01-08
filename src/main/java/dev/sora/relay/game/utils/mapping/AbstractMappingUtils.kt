@@ -15,7 +15,7 @@ abstract class AbstractMappingUtils {
         var version: Short = -1
 
         for (i in availableVersions) {
-            if (i <= protocolVersion && version > i) {
+            if (version < i && protocolVersion <= i) {
                 version = i
             }
         }

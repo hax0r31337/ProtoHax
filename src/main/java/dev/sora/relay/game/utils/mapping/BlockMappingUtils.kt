@@ -4,6 +4,7 @@ import com.nukkitx.nbt.NBTInputStream
 import com.nukkitx.nbt.NbtList
 import com.nukkitx.nbt.NbtMap
 import java.io.DataInputStream
+import java.util.zip.GZIPInputStream
 
 object BlockMappingUtils : AbstractMappingUtils() {
 
@@ -14,7 +15,7 @@ object BlockMappingUtils : AbstractMappingUtils() {
         if (!availableVersions.contains(version)) return emptyMapping
 
         val tag = NBTInputStream(DataInputStream(
-            AbstractMappingUtils::class.java.getResourceAsStream("${resourcePath}/runtime_block_states_$version.dat")
+            GZIPInputStream(AbstractMappingUtils::class.java.getResourceAsStream("${resourcePath}/runtime_block_states_$version.dat"))
         )).readTag() as NbtList<NbtMap>
         val runtimeToBlock = mutableMapOf<Int, String>()
         val blockToRuntime = mutableMapOf<String, Int>()
