@@ -31,5 +31,6 @@ class ModuleManager(private val session: GameSession) {
         registerModule(ModuleAntiBlind())
         registerModule(ModuleFastBreak())
         registerModule(ModuleInfiniteAura())
+        registerModule(ModuleCriticals())
     }
 }
