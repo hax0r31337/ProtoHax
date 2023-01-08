@@ -63,7 +63,7 @@ class ModuleKillAura : CheatModule("KillAura") {
         }
 
         if (rotationModeValue.get() == "Lock") {
-            rotation = toRotation(session.thePlayer.vec3Position, aimTarget.vec3Position.add(0f, 1f, 0f)).let {
+            rotation = toRotation(session.thePlayer.vec3Position, aimTarget.vec3Position).let {
                 (it.first - session.thePlayer.rotationYaw) * 0.8f + session.thePlayer.rotationYaw to it.second
             }
         }
