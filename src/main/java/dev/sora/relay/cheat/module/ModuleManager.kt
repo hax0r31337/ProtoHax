@@ -27,10 +27,10 @@ class ModuleManager(private val session: GameSession) {
         registerModule(ModuleAntiBot)
         registerModule(ModuleNoFall())
         registerModule(ModuleAntiKick())
-        //registerModule(ModuleAutoSprint())
         registerModule(ModuleAntiBlind())
         registerModule(ModuleFastBreak())
         registerModule(ModuleInfiniteAura())
         registerModule(ModuleCriticals())
+        registerModule(ModuleCrasher())
     }
 }
