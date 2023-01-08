@@ -19,7 +19,7 @@ class ModuleFastBreak : CheatModule("FastBreak") {
             effectId = Effect.HASTE
             amplifier = amplifierValue.get() - 1
             isParticles = false
-            duration = 60
+            duration = 21 * 20
         })
     }
 

@@ -22,7 +22,7 @@ class ModuleAntiBlind : CheatModule("AntiBlind") {
             effectId = Effect.NIGHT_VISION
             amplifier = 0
             isParticles = false
-            duration = 100000
+            duration = 360000
         })
     }
 
