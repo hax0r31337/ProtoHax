@@ -8,6 +8,7 @@ import com.nukkitx.protocol.bedrock.data.command.CommandPermission
 import com.nukkitx.protocol.bedrock.data.entity.EntityEventType
 import com.nukkitx.protocol.bedrock.packet.*
 import dev.sora.relay.cheat.module.CheatModule
+import dev.sora.relay.cheat.value.BoolValue
 import dev.sora.relay.cheat.value.FloatValue
 import dev.sora.relay.cheat.value.ListValue
 import dev.sora.relay.game.event.Listen
@@ -18,8 +19,10 @@ import kotlin.math.*
 
 class ModuleFly : CheatModule("Fly") {
 
-    private val modeValue = ListValue("Mode", arrayOf("Vanilla", "Jetpack","Mineplex"), "Vanilla")
+    private val modeValue = ListValue("Mode", arrayOf("Vanilla", "Jetpack", "Mineplex"), "Vanilla")
     private val speedValue = FloatValue("Speed", 1.5f, 0.1f, 5f)
+    private val mineplexDirectValue = BoolValue("MineplexDirect", false)
+    private val mineplexMotionValue = BoolValue("MineplexMotion", false)
 
     private var launchY = 0.0
     private var canFly = false
@@ -38,6 +41,9 @@ class ModuleFly : CheatModule("Fly") {
 
     override fun onEnable() {
         canFly = false
+        if (modeValue.get() == "Mineplex" && mineplexDirectValue.get()) {
+            canFly = true
+        }
         launchY = session.thePlayer.posY
     }
 
@@ -52,8 +58,15 @@ class ModuleFly : CheatModule("Fly") {
             if (!canFly) return
             val player = session.thePlayer
             val yaw = Math.toRadians(player.rotationYaw.toDouble())
-            val value = 2.2f
-            player.teleport(player.posX - sin(yaw) * value, launchY, player.posZ + cos(yaw) * value, session.netSession)
+            val value = speedValue.get()
+            if (mineplexMotionValue.get()) {
+                session.netSession.inboundPacket(SetEntityMotionPacket().apply {
+                    runtimeEntityId = session.thePlayer.entityId
+                    motion = Vector3f.from(-sin(yaw) * value, 0.0, +cos(yaw) * value)
+                })
+            } else {
+                player.teleport(player.posX - sin(yaw) * value, launchY, player.posZ + cos(yaw) * value, session.netSession)
+            }
         } else if (modeValue.get() == "Vanilla" && !canFly) {
             canFly = true
             session.netSession.inboundPacket(abilityPacket.apply {
