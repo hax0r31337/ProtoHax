@@ -33,5 +33,6 @@ class ModuleManager(private val session: GameSession) {
         registerModule(ModuleCriticals())
         registerModule(ModuleCrasher())
         registerModule(ModuleBlink())
+        registerModule(ModulePacketLogger())
     }
 }
