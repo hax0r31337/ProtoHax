@@ -9,7 +9,7 @@ import dev.sora.relay.cheat.value.ListValue
 
 class ModuleVelocity : CheatModule("Velocity") {
 
-    private val modeValue = ListValue("Mode", arrayOf("Vanilla", "Simple"), "Vanilla")
+    private val modeValue = ListValue("Mode", arrayOf("Cancel", "Simple"), "Vanilla")
     private val horizontalValue = FloatValue("Horizontal", 0f, 0f, 1f)
     private val verticalValue = FloatValue("Vertical", 0f, 0f, 1f)
 

@@ -19,7 +19,7 @@ class ModuleNoFall : CheatModule("NoFall") {
         val session = event.session
 
         if(modeValue.get() == "OnGround"){
-            if(session.thePlayer.motionY >= 5.5){
+            if(session.thePlayer.motionY <= -5.5){
                 if (packet is MovePlayerPacket){
                     packet.isOnGround = true
                 }
@@ -36,14 +36,14 @@ class ModuleNoFall : CheatModule("NoFall") {
         val session = event.session
 
         if(modeValue.get() == "Nukkit"){
-            if(session.thePlayer.motionY >= 5.5){
+            if(session.thePlayer.motionY <= -5.5){
                 session.sendPacket(PlayerActionPacket().apply {
                     runtimeEntityId = session.thePlayer.entityId
                     action = PlayerActionType.START_GLIDE
                 })
             }
         }else if(modeValue.get() == "CubeCraft"){
-            if(session.thePlayer.motionY >= 5.5){
+            if(session.thePlayer.motionY <= -5.5){
 
             }
         }
