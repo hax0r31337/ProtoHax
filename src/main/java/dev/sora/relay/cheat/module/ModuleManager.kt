@@ -32,5 +32,6 @@ class ModuleManager(private val session: GameSession) {
         registerModule(ModuleInfiniteAura())
         registerModule(ModuleCriticals())
         registerModule(ModuleCrasher())
+        registerModule(ModuleBlink())
     }
 }
