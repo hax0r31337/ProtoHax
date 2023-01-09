@@ -1,6 +1,6 @@
 package dev.sora.relay.cheat.config
 
-import com.google.gson.Gson
+import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import dev.sora.relay.cheat.module.ModuleManager
@@ -8,6 +8,8 @@ import dev.sora.relay.utils.logError
 import java.io.Reader
 
 abstract class AbstractConfigManager(val moduleManager: ModuleManager) {
+
+    val DEFAULT_GSON = GsonBuilder().setPrettyPrinting().create()
 
     abstract fun listConfig(): List<String>
 
@@ -37,7 +39,7 @@ abstract class AbstractConfigManager(val moduleManager: ModuleManager) {
 
             json.add("modules", saveConfigSectionModule())
 
-            saveConfigData(name, Gson().toJson(json).toByteArray(Charsets.UTF_8))
+            saveConfigData(name, DEFAULT_GSON.toJson(json).toByteArray(Charsets.UTF_8))
         } catch (t: Throwable) {
             logError("failed to save config", t)
         }
