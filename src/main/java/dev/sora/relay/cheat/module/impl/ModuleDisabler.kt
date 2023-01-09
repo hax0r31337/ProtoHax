@@ -59,7 +59,7 @@ class ModuleDisabler : CheatModule("Disabler") {
         val session = event.session
 
         if(modeValue.get() == "Mineplex" || modeValue.get() == "CubeCraft"){
-            session.netSession.outboundPacket(MovePlayerPacket().apply {
+            session.sendPacket(MovePlayerPacket().apply {
                 runtimeEntityId = session.thePlayer.entityId
                 position = session.thePlayer.vec3Position
                 rotation = session.thePlayer.vec3Rotation
