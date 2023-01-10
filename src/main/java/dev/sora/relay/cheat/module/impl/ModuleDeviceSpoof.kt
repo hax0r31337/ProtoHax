@@ -9,6 +9,7 @@ import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.cheat.value.BoolValue
 import dev.sora.relay.game.event.Listen
 import dev.sora.relay.game.event.impl.EventPacketOutbound
+import dev.sora.relay.game.utils.constants.DeviceOS
 import dev.sora.relay.utils.toHexString
 import io.netty.util.AsciiString
 import java.util.Base64
@@ -30,9 +31,9 @@ class ModuleDeviceSpoof : CheatModule("DeviceSpoof") {
                 body.addProperty("DeviceId", Random.nextBytes(ByteArray(16)).toHexString())
             }
             if (platformValue.get()) {
-                body.addProperty("DeviceModel","iPhone14 Plus")
-                body.addProperty("DeviceOS",2) //iOS
-                body.addProperty("CurrentInputMode",2) //Touch
+                body.addProperty("DeviceModel","Nintendo Switch")
+                body.addProperty("DeviceOS", DeviceOS.NINTENDO)
+                body.addProperty("CurrentInputMode", 2) //Touch
             }
             packet.skinData = AsciiString(".${Base64.getEncoder().encodeToString(Gson().toJson(body).toByteArray(Charsets.UTF_8))}.")
         } else if (platformValue.get() && packet is PlayerAuthInputPacket) {
