@@ -10,7 +10,7 @@ class ModuleBlink : CheatModule("Blink") {
 
     @Listen
     fun onPacketOutbound(event: EventPacketOutbound){
-        packetList.plusElement(event.packet)
+        packetList.add(event.packet)
         event.cancel()
     }
 

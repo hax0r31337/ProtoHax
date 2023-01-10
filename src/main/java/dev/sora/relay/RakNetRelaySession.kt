@@ -207,7 +207,7 @@ class RakNetRelaySession(val clientsideSession: RakNetServerSession,
         }
 
         override fun onDisconnect(reason: DisconnectReason) {
-            serversideSession.closeNoPacket()
+            serversideSession.disconnect()
             logInfo("client disconnect: $reason")
         }
 
@@ -233,7 +233,7 @@ class RakNetRelaySession(val clientsideSession: RakNetServerSession,
         }
 
         override fun onDisconnect(reason: DisconnectReason) {
-            clientsideSession.closeNoPacket()
+            clientsideSession.disconnect()
             logInfo("server disconnect: $reason")
         }
 

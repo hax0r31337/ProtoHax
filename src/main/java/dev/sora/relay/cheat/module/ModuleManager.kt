@@ -26,14 +26,12 @@ class ModuleManager(private val session: GameSession) {
         registerModule(ModuleResourcePackSpoof())
         registerModule(ModuleAntiBot)
         registerModule(ModuleNoFall())
-        registerModule(ModuleAntiKick())
         registerModule(ModuleAntiBlind())
         registerModule(ModuleFastBreak())
         registerModule(ModuleInfiniteAura())
         registerModule(ModuleCriticals())
         registerModule(ModuleCrasher())
         registerModule(ModuleBlink())
-        registerModule(ModulePacketLogger())
         registerModule(ModuleFastUse())
     }
 }
