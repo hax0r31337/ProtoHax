@@ -54,11 +54,11 @@ class ModuleKillAura : CheatModule("KillAura") {
         }
         val aimTarget = when(attackModeValue.get()) {
             "Multi" -> {
-                entityList.forEach { session.thePlayer.attackEntity(it, event.session, swingMode) }
+                entityList.forEach { session.thePlayer.attackEntity(it, swingMode) }
                 entityList.first()
             }
             else -> (entityList.minByOrNull { it.distanceSq(event.session.thePlayer) } ?: return).also {
-                session.thePlayer.attackEntity(it, event.session, swingMode)
+                session.thePlayer.attackEntity(it, swingMode)
             }
         }
 

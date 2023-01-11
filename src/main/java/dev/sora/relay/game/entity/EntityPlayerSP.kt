@@ -11,7 +11,7 @@ import dev.sora.relay.cheat.BasicThing
 import dev.sora.relay.game.GameSession
 import java.util.*
 
-class EntityPlayerSP : EntityPlayer(0L, UUID.randomUUID(), "") {
+class EntityPlayerSP(private val session: GameSession) : EntityPlayer(0L, UUID.randomUUID(), "") {
 
     override var entityId: Long = 0L
     var heldItemSlot = 0
@@ -27,7 +27,7 @@ class EntityPlayerSP : EntityPlayer(0L, UUID.randomUUID(), "") {
         })
     }
 
-    fun handleClientPacket(packet: BedrockPacket, session: GameSession) {
+    fun handleClientPacket(packet: BedrockPacket) {
         if (packet is MovePlayerPacket) {
             move(packet.position)
             rotate(packet.rotation)
@@ -49,7 +49,7 @@ class EntityPlayerSP : EntityPlayer(0L, UUID.randomUUID(), "") {
         }
     }
 
-    fun attackEntity(entity: Entity, session: GameSession, swingValue: SwingMode = SwingMode.BOTH) {
+    fun attackEntity(entity: Entity, swingValue: SwingMode = SwingMode.BOTH) {
         AnimatePacket().apply {
             action = AnimatePacket.Action.SWING_ARM
             runtimeEntityId = session.thePlayer.entityId

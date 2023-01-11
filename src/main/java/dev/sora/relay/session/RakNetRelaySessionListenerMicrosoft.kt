@@ -21,13 +21,15 @@ import java.time.Instant
 import java.util.*
 import java.util.concurrent.TimeUnit
 
-class RakNetRelaySessionListenerMicrosoft(val accessToken: String) : RakNetRelaySessionListener.PacketListener {
+class RakNetRelaySessionListenerMicrosoft(val accessToken: String, val deviceInfo: DeviceInfo)
+    : RakNetRelaySessionListener.PacketListener {
 
-    constructor(accessToken: String, session: RakNetRelaySession) : this(accessToken) {
+    constructor(accessToken: String, deviceInfo: DeviceInfo, session: RakNetRelaySession) : this(accessToken, deviceInfo) {
         this.session = session
     }
 
     private var chainExpires = 0L
+    private var identityToken: String? = null
     private var chain: AsciiString? = null
         get() {
             if (field == null || chainExpires < Instant.now().epochSecond) {
@@ -97,32 +99,54 @@ class RakNetRelaySessionListenerMicrosoft(val accessToken: String) : RakNetRelay
         return Gson().toJson(rawChain)
     }
 
+    private fun fetchIdentityToken(accessToken: String): String {
+        if (identityToken == null) {
+
+            val deviceKey = XboxDeviceKey() // this key used to sign the post content
+
+            val userToken = XboxUserAuthRequest(
+                "http://auth.xboxlive.com", "JWT", "RPS",
+                "user.auth.xboxlive.com", "t=$accessToken"
+            ).request()
+            val deviceToken = XboxDeviceAuthRequest(
+                "http://auth.xboxlive.com", "JWT", deviceInfo.deviceType,
+                "0.0.0.0", deviceKey
+            ).request()
+            val titleToken = if (deviceInfo.allowDirectTitleTokenFetch) {
+                XboxTitleAuthRequest(
+                    "http://auth.xboxlive.com", "JWT", "RPS",
+                    "user.auth.xboxlive.com", "t=$accessToken", deviceToken.token, deviceKey
+                ).request()
+            } else {
+                val device = XboxDevice(deviceKey, deviceToken)
+                val sisuRequest = XboxSISUAuthenticateRequest(
+                    deviceInfo.appId, device, "service::user.auth.xboxlive.com::MBI_SSL",
+                    XboxSISUAuthenticateRequest.Query("phone"),
+                    "ms-xal-${deviceInfo.appId}://auth", "RETAIL"
+                ).request()
+                val sisuToken = XboxSISUAuthorizeRequest(
+                    "t=$accessToken", deviceInfo.appId, device, "RETAIL",
+                    sisuRequest.sessionId, "user.auth.xboxlive.com", "http://xboxlive.com"
+                ).request()
+                sisuToken.titleToken
+            }
+            val xstsToken = XboxXSTSAuthRequest(
+                "https://multiplayer.minecraft.net/",
+                "JWT",
+                "RETAIL",
+                listOf(userToken),
+                titleToken,
+                XboxDevice(deviceKey, deviceToken)
+            ).request()
+
+            // use the xsts token to generate the identity token
+            identityToken = xstsToken.toIdentityToken()
+        }
+        return identityToken!!
+    }
+
     private fun fetchChain(accessToken: String): InputStreamReader {
-        val key = XboxDeviceKey() // this key used to sign the post content
-
-        val userToken = XboxUserAuthRequest(
-            "http://auth.xboxlive.com", "JWT", "RPS",
-            "user.auth.xboxlive.com", "t=$accessToken"
-        ).request()
-        val deviceToken = XboxDeviceAuthRequest(
-            "http://auth.xboxlive.com", "JWT", "Nintendo",
-            "0.0.0.0", key
-        ).request()
-        val titleToken = XboxTitleAuthRequest(
-            "http://auth.xboxlive.com", "JWT", "RPS",
-            "user.auth.xboxlive.com", "t=$accessToken", deviceToken.token, key
-        ).request()
-        val xstsToken = XboxXSTSAuthRequest(
-            "https://multiplayer.minecraft.net/",
-            "JWT",
-            "RETAIL",
-            listOf(userToken),
-            titleToken,
-            XboxDevice(key, deviceToken)
-        ).request()
-
-        // use the xsts token to generate the identity token
-        val identityToken = xstsToken.toIdentityToken()
+        val identityToken = fetchIdentityToken(accessToken)
 
         // then, we can request the chain
         val data = JSONObject().apply {
@@ -132,7 +156,11 @@ class RakNetRelaySessionListenerMicrosoft(val accessToken: String) : RakNetRelay
             mapOf("Content-Type" to "application/json", "Authorization" to identityToken,
                 "User-Agent" to "MCPE/UWP", "Client-Version" to "1.19.50"))
 
-        return connection.inputStream.reader()
+        return connection.inputStream.reader().let {
+            val txt = it.readText()
+            println(txt)
+            txt.toByteArray().inputStream().reader()
+        }
     }
 
     private fun toJWTRaw(payload: String, keyPair: KeyPair): String {
@@ -151,5 +179,13 @@ class RakNetRelaySessionListenerMicrosoft(val accessToken: String) : RakNetRelay
         signature.update(dataToSign)
         val signatureBytes = JoseStuff.DERToJOSE(signature.sign())
         return Base64.getUrlEncoder().withoutPadding().encodeToString(signatureBytes)
+    }
+
+    data class DeviceInfo(val appId: String, val deviceType: String,
+                     val allowDirectTitleTokenFetch: Boolean = false)
+
+    companion object {
+        val DEVICE_ANDROID = DeviceInfo("0000000048183522", "Android", false)
+        val DEVICE_NINTENDO = DeviceInfo("00000000441cc96b", "Nintendo", true)
     }
 }

@@ -18,7 +18,7 @@ import java.util.*
 
 class GameSession : RakNetRelaySessionListener.PacketListener {
 
-    val thePlayer = EntityPlayerSP()
+    val thePlayer = EntityPlayerSP(this)
     val theWorld = WorldClient(this)
 
     val eventManager = EventManager()
@@ -71,7 +71,7 @@ class GameSession : RakNetRelaySessionListener.PacketListener {
                 }
             }
         } else {
-            thePlayer.handleClientPacket(packet, this)
+            thePlayer.handleClientPacket(packet)
         }
 
         return true

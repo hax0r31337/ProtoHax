@@ -8,6 +8,7 @@ import dev.sora.relay.cheat.command.CommandManager
 import dev.sora.relay.cheat.module.ModuleManager
 import dev.sora.relay.game.GameSession
 import dev.sora.relay.session.RakNetRelaySessionListenerAutoCodec
+import dev.sora.relay.session.RakNetRelaySessionListenerMicrosoft
 import dev.sora.relay.utils.HttpUtils
 import dev.sora.relay.utils.logInfo
 import io.netty.util.internal.logging.InternalLoggerFactory
@@ -15,6 +16,7 @@ import java.io.File
 import java.net.InetSocketAddress
 import java.util.*
 import kotlin.concurrent.schedule
+import kotlin.concurrent.thread
 
 fun main(args: Array<String>) {
     InternalLoggerFactory.setDefaultFactory(LoggerFactory())
@@ -23,12 +25,13 @@ fun main(args: Array<String>) {
     val relay = RakNetRelay(InetSocketAddress("0.0.0.0", 19132))
     var dst = InetSocketAddress("mco.mineplex.com", 19132)
     dst = InetSocketAddress("127.0.0.1", 19136)
-//    val msSession = RakNetRelaySessionListenerMicrosoft(getMSAccessToken()).also {
-//        thread {
-//            it.forceFetchChain()
-//            println("chain ok")
-//        }
-//    }
+    val deviceInfo = RakNetRelaySessionListenerMicrosoft.DEVICE_NINTENDO
+    val msSession = RakNetRelaySessionListenerMicrosoft(getMSAccessToken(deviceInfo.appId), deviceInfo).also {
+        thread {
+            it.forceFetchChain()
+            println("chain ok")
+        }
+    }
     relay.listener = object : RakNetRelayListener {
         override fun onQuery(address: InetSocketAddress) =
             "MCPE;RakNet Relay;560;1.19.50;0;10;${relay.server.guid};Bedrock level;Survival;1;19136;19136;".toByteArray()
@@ -65,12 +68,18 @@ fun main(args: Array<String>) {
     Thread.sleep(Long.MAX_VALUE)
 }
 
-private fun getMSAccessToken(): String {
+private fun getMSAccessToken(appId: String): String {
     val file = File(".ms_refresh_token")
-    val body = JsonParser.parseReader(
+    val token = file.readText(Charsets.UTF_8)
+    val body = JsonParser.parseReader(if (token.length == 45) {
         HttpUtils.make("https://login.live.com/oauth20_token.srf", "POST",
-        "client_id=00000000441cc96b&scope=service::user.auth.xboxlive.com::MBI_SSL&grant_type=refresh_token&redirect_uri=https://login.live.com/oauth20_desktop.srf&refresh_token=${file.readText(Charsets.UTF_8)}",
-        mapOf("Content-Type" to "application/x-www-form-urlencoded")).inputStream.reader(Charsets.UTF_8)).asJsonObject
+            "client_id=$appId&redirect_uri=https://login.live.com/oauth20_desktop.srf&grant_type=authorization_code&code=$token",
+            mapOf("Content-Type" to "application/x-www-form-urlencoded"))
+    } else {
+            HttpUtils.make("https://login.live.com/oauth20_token.srf", "POST",
+                "client_id=$appId&scope=service::user.auth.xboxlive.com::MBI_SSL&grant_type=refresh_token&redirect_uri=https://login.live.com/oauth20_desktop.srf&refresh_token=$token",
+                mapOf("Content-Type" to "application/x-www-form-urlencoded"))
+    }.inputStream.reader(Charsets.UTF_8)).asJsonObject
     file.writeText(body.get("refresh_token").asString)
     return body.get("access_token").asString
 }

@@ -44,13 +44,13 @@ class ModuleInfiniteAura : CheatModule("InfiniteAura") {
         if(attackModeValue.get() == "Single"){
             (entityList.minByOrNull { it.distanceSq(event.session.thePlayer) } ?: return).also {
                 Teleport(it,false)
-                session.thePlayer.attackEntity(it, session,swingMode)
+                session.thePlayer.attackEntity(it, swingMode)
                 Teleport(it,true)
             }
         }else if(attackModeValue.get() == "Multi"){
             entityList.forEach {
                 Teleport(it,false)
-                session.thePlayer.attackEntity(it,session,swingMode)
+                session.thePlayer.attackEntity(it, swingMode)
                 Teleport(it,true)
             }
             entityList.first()

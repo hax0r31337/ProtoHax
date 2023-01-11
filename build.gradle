@@ -31,7 +31,7 @@ dependencies {
     embed 'com.google.code.gson:gson:2.10'
     embed 'io.netty:netty-transport:4.1.86.Final'
     embed 'com.google.code.findbugs:jsr305:3.0.2'
-    embed 'coelho.msftauth:minecraft-msftauth:2.1.1'
+    embed 'coelho.msftauth:minecraft-msftauth:2.1.2'
 
     compileOnly 'org.projectlombok:lombok:1.18.24'
     annotationProcessor 'org.projectlombok:lombok:1.18.24'
