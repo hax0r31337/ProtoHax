@@ -1,6 +1,7 @@
 package dev.sora.relay
 
 import com.nukkitx.network.raknet.RakNetSession
+import com.nukkitx.network.util.DisconnectReason
 import com.nukkitx.protocol.bedrock.BedrockPacket
 import com.nukkitx.protocol.bedrock.data.PacketCompressionAlgorithm
 import com.nukkitx.protocol.bedrock.packet.NetworkSettingsPacket
@@ -67,14 +68,32 @@ open class RakNetRelaySessionListener {
         return true
     }
 
+    open fun onDisconnect(client: Boolean, reason: DisconnectReason) {
+        childListener.forEach {
+            try {
+                it.onDisconnect(client, reason)
+            } catch (t: Throwable) {
+                logError("disconnect handle", t)
+            }
+        }
+    }
+
     open fun provideSerializer(session: RakNetSession): BedrockWrapperSerializer {
         return BedrockWrapperSerializers.getSerializer(session.protocolVersion)
     }
 
     interface PacketListener {
 
-        fun onPacketInbound(packet: BedrockPacket): Boolean
+        fun onPacketInbound(packet: BedrockPacket): Boolean {
+            return true
+        }
 
-        fun onPacketOutbound(packet: BedrockPacket): Boolean
+        fun onPacketOutbound(packet: BedrockPacket): Boolean {
+            return true
+        }
+
+        fun onDisconnect(client: Boolean, reason: DisconnectReason) {
+
+        }
     }
 }

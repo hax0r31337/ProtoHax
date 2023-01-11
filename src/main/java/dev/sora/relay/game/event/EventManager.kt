@@ -1,5 +1,6 @@
-package dev.sora.relay.game.event
+package dev.sora.relay.game.event.Event
 
+import dev.sora.relay.game.event.GameEvent
 import dev.sora.relay.utils.logError
 
 class EventManager {

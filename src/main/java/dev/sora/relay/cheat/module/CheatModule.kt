@@ -2,7 +2,7 @@ package dev.sora.relay.cheat.module
 
 import dev.sora.relay.cheat.BasicThing
 import dev.sora.relay.cheat.value.Value
-import dev.sora.relay.game.event.Listener
+import dev.sora.relay.game.event.Event.Listener
 
 abstract class CheatModule(val name: String,
                            val defaultOn: Boolean = false,

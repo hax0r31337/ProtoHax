@@ -11,7 +11,7 @@ object BlockMappingUtils : AbstractMappingUtils() {
     override val resourcePath: String
         get() = "/assets/mcpedata/blocks"
 
-    override fun readMapping(version: Short): RuntimeMapping {
+    override fun readMapping(version: Short, vararg options: String): RuntimeMapping {
         if (!availableVersions.contains(version)) return emptyMapping
 
         val tag = NBTInputStream(DataInputStream(
@@ -20,18 +20,31 @@ object BlockMappingUtils : AbstractMappingUtils() {
         val runtimeToBlock = mutableMapOf<Int, String>()
         val blockToRuntime = mutableMapOf<String, Int>()
 
-        tag.forEach { subtag ->
-            val name = getBlockNameFromNbt(subtag)
-            val runtime = subtag.getInt("runtimeId")
+        if (options.contains("legacy")) {
+            tag.forEach { subtag ->
+                val name = getBlockNameFromNbt(subtag)
+                val runtime = subtag.getInt("id") shl 6 or subtag.getShort("data").toInt()
 
-            runtimeToBlock[runtime] = name
-            blockToRuntime[name] = runtime
+                runtimeToBlock[runtime] = name
+            }
+        } else {
+            tag.forEach { subtag ->
+                val name = getBlockNameFromNbt(subtag)
+                val runtime = subtag.getInt("runtimeId")
+
+                runtimeToBlock[runtime] = name
+                blockToRuntime[name] = runtime
+            }
         }
 
         return RuntimeMappingImpl(runtimeToBlock, blockToRuntime)
     }
 
-    private fun getBlockNameFromNbt(nbt: NbtMap): String {
+    override fun readMapping(version: Short): RuntimeMapping {
+        return readMapping(version, *emptyArray())
+    }
+
+    fun getBlockNameFromNbt(nbt: NbtMap): String {
         val sb = StringBuilder()
         sb.append(nbt.getString("name"))
         val stateMap = (nbt.getCompound("states") ?: NbtMap.builder().build())

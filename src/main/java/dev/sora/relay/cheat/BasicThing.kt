@@ -2,6 +2,7 @@ package dev.sora.relay.cheat
 
 import com.nukkitx.protocol.bedrock.packet.TextPacket
 import dev.sora.relay.game.GameSession
+import dev.sora.relay.utils.logInfo
 
 abstract class BasicThing {
 
@@ -13,6 +14,7 @@ abstract class BasicThing {
 
     companion object {
         fun chat(session: GameSession, msg: String) {
+            logInfo("chat >> $msg")
             if (!session.netSessionInitialized) return
             session.netSession.inboundPacket(TextPacket().apply {
                 type = TextPacket.Type.RAW

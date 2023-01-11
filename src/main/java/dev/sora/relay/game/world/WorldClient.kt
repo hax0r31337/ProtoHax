@@ -1,23 +1,39 @@
 package dev.sora.relay.game.world
 
-import com.nukkitx.protocol.bedrock.BedrockPacket
 import com.nukkitx.protocol.bedrock.packet.*
 import dev.sora.relay.game.GameSession
 import dev.sora.relay.game.entity.Entity
 import dev.sora.relay.game.entity.EntityItem
 import dev.sora.relay.game.entity.EntityPlayer
 import dev.sora.relay.game.entity.EntityUnknown
+import dev.sora.relay.game.event.Event.Listen
+import dev.sora.relay.game.event.EventDisconnect
+import dev.sora.relay.game.event.EventPacketInbound
 import java.util.*
 
-class WorldClient(private val session: GameSession) {
+class WorldClient(session: GameSession) : WorldwideBlockStorage(session) {
 
     val entityMap = mutableMapOf<Long, Entity>()
     val playerList = mutableMapOf<UUID, PlayerListPacket.Entry>()
 
-    // TODO: chunk
+    @Listen
+    override fun onDisconnect(event: EventDisconnect) {
+        entityMap.clear()
+        playerList.clear()
+        super.onDisconnect(event)
+    }
 
-    fun onPacket(packet: BedrockPacket) {
-        if (packet is AddEntityPacket) {
+    @Listen
+    override fun onPacketInbound(event: EventPacketInbound) {
+        val packet = event.packet
+
+        if (packet is StartGamePacket) {
+            entityMap.clear()
+            playerList.clear()
+            dimension = packet.dimensionId
+        } else if (packet is RespawnPacket) {
+            entityMap.clear()
+        } else if (packet is AddEntityPacket) {
             entityMap[packet.runtimeEntityId] = EntityUnknown(packet.runtimeEntityId, packet.identifier).apply {
                 move(packet.position)
                 rotate(packet.rotation)
@@ -44,10 +60,13 @@ class WorldClient(private val session: GameSession) {
                     playerList.remove(it.uuid)
                 }
             }
+        } else if (packet is ChangeDimensionPacket) {
+            dimension = packet.dimension
         } else {
             entityMap.values.forEach { entity ->
                 entity.onPacket(packet)
             }
         }
+        super.onPacketInbound(event)
     }
 }

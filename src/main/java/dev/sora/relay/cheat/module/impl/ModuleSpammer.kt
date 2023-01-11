@@ -4,8 +4,8 @@ import com.nukkitx.protocol.bedrock.packet.TextPacket
 import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.cheat.value.IntValue
 import dev.sora.relay.cheat.value.StringValue
-import dev.sora.relay.game.event.Listen
-import dev.sora.relay.game.event.impl.EventTick
+import dev.sora.relay.game.event.Event.Listen
+import dev.sora.relay.game.event.EventTick
 import dev.sora.relay.utils.getRandomString
 import dev.sora.relay.utils.timing.TheTimer
 import kotlin.random.Random

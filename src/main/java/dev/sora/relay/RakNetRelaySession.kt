@@ -207,8 +207,10 @@ class RakNetRelaySession(val clientsideSession: RakNetServerSession,
         }
 
         override fun onDisconnect(reason: DisconnectReason) {
+            if (reason == DisconnectReason.DISCONNECTED) return
             serversideSession.disconnect()
             logInfo("client disconnect: $reason")
+            listener.onDisconnect(true, reason)
         }
 
         override fun onEncapsulated(packet: EncapsulatedPacket) {
@@ -233,8 +235,10 @@ class RakNetRelaySession(val clientsideSession: RakNetServerSession,
         }
 
         override fun onDisconnect(reason: DisconnectReason) {
+            if (reason == DisconnectReason.DISCONNECTED) return
             clientsideSession.disconnect()
             logInfo("server disconnect: $reason")
+            listener.onDisconnect(false, reason)
         }
 
         override fun onEncapsulated(packet: EncapsulatedPacket) {

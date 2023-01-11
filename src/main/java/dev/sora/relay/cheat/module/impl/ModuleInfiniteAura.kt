@@ -9,8 +9,8 @@ import dev.sora.relay.cheat.value.ListValue
 import dev.sora.relay.game.entity.Entity
 import dev.sora.relay.game.entity.EntityPlayer
 import dev.sora.relay.game.entity.EntityPlayerSP
-import dev.sora.relay.game.event.Listen
-import dev.sora.relay.game.event.impl.EventTick
+import dev.sora.relay.game.event.Event.Listen
+import dev.sora.relay.game.event.EventTick
 import dev.sora.relay.utils.timing.ClickTimer
 import kotlin.math.pow
 

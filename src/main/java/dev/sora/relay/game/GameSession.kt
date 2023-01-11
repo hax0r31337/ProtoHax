@@ -1,6 +1,7 @@
 package dev.sora.relay.game
 
 import com.google.gson.JsonParser
+import com.nukkitx.network.util.DisconnectReason
 import com.nukkitx.protocol.bedrock.BedrockPacket
 import com.nukkitx.protocol.bedrock.packet.LoginPacket
 import com.nukkitx.protocol.bedrock.packet.RespawnPacket
@@ -8,10 +9,14 @@ import com.nukkitx.protocol.bedrock.packet.StartGamePacket
 import dev.sora.relay.RakNetRelaySession
 import dev.sora.relay.RakNetRelaySessionListener
 import dev.sora.relay.game.entity.EntityPlayerSP
-import dev.sora.relay.game.event.EventManager
-import dev.sora.relay.game.event.impl.EventPacketInbound
-import dev.sora.relay.game.event.impl.EventPacketOutbound
-import dev.sora.relay.game.event.impl.EventTick
+import dev.sora.relay.game.event.Event.EventManager
+import dev.sora.relay.game.event.EventDisconnect
+import dev.sora.relay.game.event.EventPacketInbound
+import dev.sora.relay.game.event.EventPacketOutbound
+import dev.sora.relay.game.event.EventTick
+import dev.sora.relay.game.utils.mapping.BlockMappingUtils
+import dev.sora.relay.game.utils.mapping.EmptyRuntimeMapping
+import dev.sora.relay.game.utils.mapping.RuntimeMapping
 import dev.sora.relay.game.world.WorldClient
 import dev.sora.relay.utils.base64Decode
 import java.util.*
@@ -26,11 +31,22 @@ class GameSession : RakNetRelaySessionListener.PacketListener {
     lateinit var netSession: RakNetRelaySession
 
     var xuid = ""
+        private set
     var identity = UUID.randomUUID().toString()
+        private set
     var displayName = "Player"
+        private set
+
+    var blockMapping: RuntimeMapping = EmptyRuntimeMapping()
+    var legacyBlockMapping: RuntimeMapping = EmptyRuntimeMapping()
 
     val netSessionInitialized: Boolean
         get() = this::netSession.isInitialized
+
+    init {
+        eventManager.registerListener(thePlayer)
+        eventManager.registerListener(theWorld)
+    }
 
     override fun onPacketInbound(packet: BedrockPacket): Boolean {
         val event = EventPacketInbound(this, packet)
@@ -38,16 +54,6 @@ class GameSession : RakNetRelaySessionListener.PacketListener {
         if (event.isCanceled()) {
             return false
         }
-
-        if (packet is StartGamePacket) {
-            thePlayer.entityId = packet.runtimeEntityId
-            theWorld.entityMap.clear()
-        } else if (packet is RespawnPacket) {
-            thePlayer.entityId = packet.runtimeEntityId
-            theWorld.entityMap.clear()
-        }
-        thePlayer.onPacket(packet)
-        theWorld.onPacket(packet)
 
         return true
     }
@@ -70,11 +76,15 @@ class GameSession : RakNetRelaySessionListener.PacketListener {
                     displayName = xData.get("displayName").asString
                 }
             }
-        } else {
-            thePlayer.handleClientPacket(packet)
+            blockMapping = BlockMappingUtils.craftMapping(packet.protocolVersion)
+            legacyBlockMapping = BlockMappingUtils.craftMapping(packet.protocolVersion, "legacy")
         }
 
         return true
+    }
+
+    override fun onDisconnect(client: Boolean, reason: DisconnectReason) {
+        eventManager.emit(EventDisconnect(this, client, reason))
     }
 
     fun onTick() {

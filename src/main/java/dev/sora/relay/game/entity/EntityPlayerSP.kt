@@ -9,9 +9,13 @@ import com.nukkitx.protocol.bedrock.packet.*
 import dev.sora.relay.RakNetRelaySession
 import dev.sora.relay.cheat.BasicThing
 import dev.sora.relay.game.GameSession
+import dev.sora.relay.game.event.Event.Listen
+import dev.sora.relay.game.event.Event.Listener
+import dev.sora.relay.game.event.EventPacketInbound
+import dev.sora.relay.game.event.EventPacketOutbound
 import java.util.*
 
-class EntityPlayerSP(private val session: GameSession) : EntityPlayer(0L, UUID.randomUUID(), "") {
+class EntityPlayerSP(private val session: GameSession) : EntityPlayer(0L, UUID.randomUUID(), ""), Listener {
 
     override var entityId: Long = 0L
     var heldItemSlot = 0
@@ -27,7 +31,21 @@ class EntityPlayerSP(private val session: GameSession) : EntityPlayer(0L, UUID.r
         })
     }
 
-    fun handleClientPacket(packet: BedrockPacket) {
+    @Listen
+    fun handleServerPacket(event: EventPacketInbound) {
+        val packet = event.packet
+
+        if (packet is StartGamePacket) {
+            entityId = packet.runtimeEntityId
+        } else if (packet is RespawnPacket) {
+            entityId = packet.runtimeEntityId
+        }
+        super.onPacket(packet)
+    }
+
+    @Listen
+    fun handleClientPacket(event: EventPacketOutbound) {
+        val packet = event.packet
         if (packet is MovePlayerPacket) {
             move(packet.position)
             rotate(packet.rotation)
@@ -88,4 +106,6 @@ class EntityPlayerSP(private val session: GameSession) : EntityPlayer(0L, UUID.r
         BOTH,
         NONE
     }
+
+    override fun listen() = true
 }
