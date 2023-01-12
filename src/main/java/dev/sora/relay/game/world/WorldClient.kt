@@ -38,6 +38,7 @@ class WorldClient(session: GameSession) : WorldwideBlockStorage(session) {
                 move(packet.position)
                 rotate(packet.rotation)
                 handleSetData(packet.metadata)
+                handleSetAttribute(packet.attributes)
             }
         } else if (packet is AddItemEntityPacket) {
             entityMap[packet.runtimeEntityId] = EntityItem(packet.runtimeEntityId).apply {

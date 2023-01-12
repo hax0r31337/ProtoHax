@@ -2,10 +2,12 @@ package dev.sora.relay.game.entity
 
 import com.nukkitx.math.vector.Vector3f
 import com.nukkitx.protocol.bedrock.BedrockPacket
+import com.nukkitx.protocol.bedrock.data.AttributeData
 import com.nukkitx.protocol.bedrock.data.entity.EntityDataMap
 import com.nukkitx.protocol.bedrock.packet.MoveEntityAbsolutePacket
 import com.nukkitx.protocol.bedrock.packet.MoveEntityDeltaPacket
 import com.nukkitx.protocol.bedrock.packet.SetEntityDataPacket
+import com.nukkitx.protocol.bedrock.packet.UpdateAttributesPacket
 import kotlin.math.sqrt
 
 abstract class Entity(open val entityId: Long) {
@@ -26,10 +28,11 @@ abstract class Entity(open val entityId: Long) {
     open var motionY = 0.0
     open var motionZ = 0.0
 
-    var tickExists = 0L
+    open var tickExists = 0L
+        protected set
 
-//    val attributeList = mutableListOf<AttributeData>()
-    val metadata = EntityDataMap()
+    open val attributes = mutableMapOf<String, AttributeData>()
+    open val metadata = EntityDataMap()
 
     val vec3Position: Vector3f
         get() = Vector3f.from(posX, posY, posZ)
@@ -100,12 +103,20 @@ abstract class Entity(open val entityId: Long) {
             tickExists++
         } else if (packet is SetEntityDataPacket && packet.runtimeEntityId == entityId) {
             handleSetData(packet.metadata)
+        } else if (packet is UpdateAttributesPacket && packet.runtimeEntityId == entityId) {
+            handleSetAttribute(packet.attributes)
         }
     }
 
-    internal fun handleSetData(map: EntityDataMap) {
+    internal open fun handleSetData(map: EntityDataMap) {
         map.forEach { (key, value) ->
             metadata[key] = value
+        }
+    }
+
+    internal open fun handleSetAttribute(attributeList: List<AttributeData>) {
+        attributeList.forEach {
+            attributes[it.name] = it
         }
     }
 
