@@ -2,7 +2,10 @@ package dev.sora.relay.game.entity
 
 import com.nukkitx.math.vector.Vector3f
 import com.nukkitx.protocol.bedrock.BedrockPacket
+import com.nukkitx.protocol.bedrock.data.entity.EntityDataMap
 import com.nukkitx.protocol.bedrock.packet.MoveEntityAbsolutePacket
+import com.nukkitx.protocol.bedrock.packet.MoveEntityDeltaPacket
+import com.nukkitx.protocol.bedrock.packet.SetEntityDataPacket
 import kotlin.math.sqrt
 
 abstract class Entity(open val entityId: Long) {
@@ -26,7 +29,7 @@ abstract class Entity(open val entityId: Long) {
     var tickExists = 0L
 
 //    val attributeList = mutableListOf<AttributeData>()
-//    val metadataList = EntityDataMap()
+    val metadata = EntityDataMap()
 
     val vec3Position: Vector3f
         get() = Vector3f.from(posX, posY, posZ)
@@ -57,9 +60,13 @@ abstract class Entity(open val entityId: Long) {
         this.rotationPitch = pitch
     }
 
+    open fun rotate(yaw: Float, pitch: Float, headYaw: Float) {
+        rotate(yaw, pitch)
+        rotationYawHead = headYaw
+    }
+
     open fun rotate(rotation: Vector3f) {
-        rotate(rotation.y, rotation.x)
-        rotationYawHead = rotation.z
+        rotate(rotation.y, rotation.x, rotation.z)
     }
 
     fun distanceSq(x: Double, y: Double, z: Double): Double {
@@ -83,13 +90,27 @@ abstract class Entity(open val entityId: Long) {
             move(packet.position)
             rotate(packet.rotation)
             tickExists++
-        } /* else if (packet is MoveEntityDeltaPacket && packet.runtimeEntityId == entityId) {
-            // TODO
-        } */
+        } else if (packet is MoveEntityDeltaPacket && packet.runtimeEntityId == entityId) {
+            move(posX + if (packet.flags.contains(MoveEntityDeltaPacket.Flag.HAS_X)) packet.x else 0f,
+                posY + if (packet.flags.contains(MoveEntityDeltaPacket.Flag.HAS_Y)) packet.y else 0f,
+                posZ + if (packet.flags.contains(MoveEntityDeltaPacket.Flag.HAS_Z)) packet.z else 0f)
+            rotate(rotationYaw + if (packet.flags.contains(MoveEntityDeltaPacket.Flag.HAS_YAW)) packet.yaw else 0f,
+                rotationPitch + if (packet.flags.contains(MoveEntityDeltaPacket.Flag.HAS_PITCH)) packet.pitch else 0f,
+                rotationYawHead + if (packet.flags.contains(MoveEntityDeltaPacket.Flag.HAS_HEAD_YAW)) packet.headYaw else 0f)
+            tickExists++
+        } else if (packet is SetEntityDataPacket && packet.runtimeEntityId == entityId) {
+            handleSetData(packet.metadata)
+        }
+    }
+
+    internal fun handleSetData(map: EntityDataMap) {
+        map.forEach { (key, value) ->
+            metadata[key] = value
+        }
     }
 
     open fun reset() {
 //        attributeList.clear()
-//        metadataList.clear()
+        metadata.clear()
     }
 }

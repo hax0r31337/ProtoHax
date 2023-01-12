@@ -1,7 +1,7 @@
 package dev.sora.relay.cheat.module.impl
 
 import dev.sora.relay.cheat.module.CheatModule
-import dev.sora.relay.game.event.Event.Listen
+import dev.sora.relay.game.event.Listen
 import dev.sora.relay.game.event.EventPacketInbound
 import com.nukkitx.protocol.bedrock.packet.MobEffectPacket
 import dev.sora.relay.cheat.value.BoolValue

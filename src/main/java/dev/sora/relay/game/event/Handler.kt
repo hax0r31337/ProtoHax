@@ -1,6 +1,5 @@
-package dev.sora.relay.game.event.Event
+package dev.sora.relay.game.event
 
-import dev.sora.relay.game.event.GameEvent
 import java.lang.reflect.Method
 
 interface Handler {

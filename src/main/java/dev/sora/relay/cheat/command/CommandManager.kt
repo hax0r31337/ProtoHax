@@ -6,8 +6,8 @@ import dev.sora.relay.cheat.command.impl.CommandModule
 import dev.sora.relay.cheat.command.impl.CommandToggle
 import dev.sora.relay.cheat.module.ModuleManager
 import dev.sora.relay.game.GameSession
-import dev.sora.relay.game.event.Event.Listen
-import dev.sora.relay.game.event.Event.Listener
+import dev.sora.relay.game.event.Listen
+import dev.sora.relay.game.event.Listener
 import dev.sora.relay.game.event.EventPacketOutbound
 import dev.sora.relay.utils.logError
 

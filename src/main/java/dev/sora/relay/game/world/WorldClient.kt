@@ -6,7 +6,7 @@ import dev.sora.relay.game.entity.Entity
 import dev.sora.relay.game.entity.EntityItem
 import dev.sora.relay.game.entity.EntityPlayer
 import dev.sora.relay.game.entity.EntityUnknown
-import dev.sora.relay.game.event.Event.Listen
+import dev.sora.relay.game.event.Listen
 import dev.sora.relay.game.event.EventDisconnect
 import dev.sora.relay.game.event.EventPacketInbound
 import java.util.*
@@ -37,15 +37,18 @@ class WorldClient(session: GameSession) : WorldwideBlockStorage(session) {
             entityMap[packet.runtimeEntityId] = EntityUnknown(packet.runtimeEntityId, packet.identifier).apply {
                 move(packet.position)
                 rotate(packet.rotation)
+                handleSetData(packet.metadata)
             }
         } else if (packet is AddItemEntityPacket) {
             entityMap[packet.runtimeEntityId] = EntityItem(packet.runtimeEntityId).apply {
                 move(packet.position)
+                handleSetData(packet.metadata)
             }
         } else if (packet is AddPlayerPacket) {
             entityMap[packet.runtimeEntityId] = EntityPlayer(packet.runtimeEntityId, packet.uuid, packet.username).apply {
                 move(packet.position)
                 rotate(packet.rotation)
+                handleSetData(packet.metadata)
             }
         } else if (packet is RemoveEntityPacket) {
             entityMap.remove(packet.uniqueEntityId)

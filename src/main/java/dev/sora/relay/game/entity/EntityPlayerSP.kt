@@ -1,7 +1,6 @@
 package dev.sora.relay.game.entity
 
 import com.nukkitx.math.vector.Vector3f
-import com.nukkitx.protocol.bedrock.BedrockPacket
 import com.nukkitx.protocol.bedrock.data.SoundEvent
 import com.nukkitx.protocol.bedrock.data.inventory.ItemData
 import com.nukkitx.protocol.bedrock.data.inventory.TransactionType
@@ -9,8 +8,9 @@ import com.nukkitx.protocol.bedrock.packet.*
 import dev.sora.relay.RakNetRelaySession
 import dev.sora.relay.cheat.BasicThing
 import dev.sora.relay.game.GameSession
-import dev.sora.relay.game.event.Event.Listen
-import dev.sora.relay.game.event.Event.Listener
+import dev.sora.relay.game.event.Listen
+import dev.sora.relay.game.event.Listener
+import dev.sora.relay.game.event.EventDisconnect
 import dev.sora.relay.game.event.EventPacketInbound
 import dev.sora.relay.game.event.EventPacketOutbound
 import java.util.*
@@ -32,11 +32,17 @@ class EntityPlayerSP(private val session: GameSession) : EntityPlayer(0L, UUID.r
     }
 
     @Listen
+    fun onDisconnect(event: EventDisconnect) {
+        reset()
+    }
+
+    @Listen
     fun handleServerPacket(event: EventPacketInbound) {
         val packet = event.packet
 
         if (packet is StartGamePacket) {
             entityId = packet.runtimeEntityId
+            reset()
         } else if (packet is RespawnPacket) {
             entityId = packet.runtimeEntityId
         }

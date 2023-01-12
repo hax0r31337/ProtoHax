@@ -4,12 +4,10 @@ import com.google.gson.JsonParser
 import com.nukkitx.network.util.DisconnectReason
 import com.nukkitx.protocol.bedrock.BedrockPacket
 import com.nukkitx.protocol.bedrock.packet.LoginPacket
-import com.nukkitx.protocol.bedrock.packet.RespawnPacket
-import com.nukkitx.protocol.bedrock.packet.StartGamePacket
 import dev.sora.relay.RakNetRelaySession
 import dev.sora.relay.RakNetRelaySessionListener
 import dev.sora.relay.game.entity.EntityPlayerSP
-import dev.sora.relay.game.event.Event.EventManager
+import dev.sora.relay.game.event.EventManager
 import dev.sora.relay.game.event.EventDisconnect
 import dev.sora.relay.game.event.EventPacketInbound
 import dev.sora.relay.game.event.EventPacketOutbound

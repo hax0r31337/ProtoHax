@@ -5,8 +5,8 @@ import com.nukkitx.protocol.bedrock.packet.ChunkRadiusUpdatedPacket
 import com.nukkitx.protocol.bedrock.packet.LevelChunkPacket
 import com.nukkitx.protocol.bedrock.packet.UpdateBlockPacket
 import dev.sora.relay.game.GameSession
-import dev.sora.relay.game.event.Event.Listen
-import dev.sora.relay.game.event.Event.Listener
+import dev.sora.relay.game.event.Listen
+import dev.sora.relay.game.event.Listener
 import dev.sora.relay.game.event.EventDisconnect
 import dev.sora.relay.game.event.EventPacketInbound
 import dev.sora.relay.game.utils.constants.Dimension
@@ -17,7 +17,7 @@ import kotlin.math.floor
 
 abstract class WorldwideBlockStorage(protected val session: GameSession) : Listener {
 
-    val chunks = mutableMapOf<Long, Chunk>()
+    protected val chunks = mutableMapOf<Long, Chunk>()
 
     var dimension = Dimension.OVERWORLD
         protected set
@@ -84,9 +84,6 @@ abstract class WorldwideBlockStorage(protected val session: GameSession) : Liste
      * get chunk by chunk position
      */
     fun getChunk(chunkX: Int, chunkZ: Int): Chunk? {
-//        chunks.values.forEach {
-//            println("C=${it.x} ${it.z}")
-//        }
         return chunks[Chunk.hash(chunkX, chunkZ)]
     }
 

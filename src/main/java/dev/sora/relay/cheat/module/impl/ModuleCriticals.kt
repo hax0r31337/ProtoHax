@@ -5,7 +5,7 @@ import com.nukkitx.protocol.bedrock.packet.InventoryTransactionPacket
 import com.nukkitx.protocol.bedrock.packet.MovePlayerPacket
 import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.cheat.value.ListValue
-import dev.sora.relay.game.event.Event.Listen
+import dev.sora.relay.game.event.Listen
 import dev.sora.relay.game.event.EventPacketOutbound
 
 class ModuleCriticals : CheatModule("Criticals") {
