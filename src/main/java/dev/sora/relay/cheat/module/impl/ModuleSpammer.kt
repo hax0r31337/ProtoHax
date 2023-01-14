@@ -4,8 +4,8 @@ import com.nukkitx.protocol.bedrock.packet.TextPacket
 import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.cheat.value.IntValue
 import dev.sora.relay.cheat.value.StringValue
-import dev.sora.relay.game.event.Listen
 import dev.sora.relay.game.event.EventTick
+import dev.sora.relay.game.event.Listen
 import dev.sora.relay.utils.getRandomString
 import dev.sora.relay.utils.timing.TheTimer
 import kotlin.random.Random
@@ -22,8 +22,8 @@ class ModuleSpammer : CheatModule("Spammer") {
         if (spamTimer.hasTimePassed(delayValue.get())) {
             event.session.sendPacket(TextPacket().apply {
                 type = TextPacket.Type.CHAT
-                xuid = event.session.xuid
-                sourceName = event.session.displayName
+                xuid = event.session.thePlayer.xuid
+                sourceName = event.session.thePlayer.username
                 platformChatId = ""
                 message = "${messageValue.get()} >${getRandomString(10 + Random.nextInt(5))}<"
             })

@@ -6,9 +6,9 @@ import dev.sora.relay.game.entity.Entity
 import dev.sora.relay.game.entity.EntityItem
 import dev.sora.relay.game.entity.EntityPlayer
 import dev.sora.relay.game.entity.EntityUnknown
-import dev.sora.relay.game.event.Listen
 import dev.sora.relay.game.event.EventDisconnect
 import dev.sora.relay.game.event.EventPacketInbound
+import dev.sora.relay.game.event.Listen
 import java.util.*
 
 class WorldClient(session: GameSession) : WorldwideBlockStorage(session) {
@@ -31,8 +31,6 @@ class WorldClient(session: GameSession) : WorldwideBlockStorage(session) {
             entityMap.clear()
             playerList.clear()
             dimension = packet.dimensionId
-        } else if (packet is RespawnPacket) {
-            entityMap.clear()
         } else if (packet is AddEntityPacket) {
             entityMap[packet.runtimeEntityId] = EntityUnknown(packet.runtimeEntityId, packet.identifier).apply {
                 move(packet.position)

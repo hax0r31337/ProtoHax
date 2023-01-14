@@ -4,13 +4,13 @@ import com.nukkitx.math.vector.Vector2f
 import com.nukkitx.protocol.bedrock.data.SoundEvent
 import com.nukkitx.protocol.bedrock.packet.LevelSoundEventPacket
 import com.nukkitx.protocol.bedrock.packet.MovePlayerPacket
-import com.nukkitx.protocol.bedrock.packet.PlayerAuthInputPacket
 import com.nukkitx.protocol.bedrock.packet.NetworkStackLatencyPacket
+import com.nukkitx.protocol.bedrock.packet.PlayerAuthInputPacket
 import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.cheat.value.ListValue
-import dev.sora.relay.game.event.Listen
 import dev.sora.relay.game.event.EventPacketOutbound
 import dev.sora.relay.game.event.EventTick
+import dev.sora.relay.game.event.Listen
 
 class ModuleDisabler : CheatModule("Disabler") {
 

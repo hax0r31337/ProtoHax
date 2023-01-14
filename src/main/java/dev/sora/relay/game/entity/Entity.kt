@@ -8,6 +8,7 @@ import com.nukkitx.protocol.bedrock.packet.MoveEntityAbsolutePacket
 import com.nukkitx.protocol.bedrock.packet.MoveEntityDeltaPacket
 import com.nukkitx.protocol.bedrock.packet.SetEntityDataPacket
 import com.nukkitx.protocol.bedrock.packet.UpdateAttributesPacket
+import dev.sora.relay.game.inventory.EntityInventory
 import kotlin.math.sqrt
 
 abstract class Entity(open val entityId: Long) {
@@ -34,13 +35,13 @@ abstract class Entity(open val entityId: Long) {
     open val attributes = mutableMapOf<String, AttributeData>()
     open val metadata = EntityDataMap()
 
+    open val inventory = EntityInventory(entityId)
+
     val vec3Position: Vector3f
         get() = Vector3f.from(posX, posY, posZ)
 
     val vec3Rotation: Vector3f
         get() = Vector3f.from(rotationPitch, rotationYaw, rotationYawHead)
-
-    // TODO: inventory
 
     open fun move(x: Double, y: Double, z: Double) {
         this.prevPosX = this.posX
@@ -105,6 +106,8 @@ abstract class Entity(open val entityId: Long) {
             handleSetData(packet.metadata)
         } else if (packet is UpdateAttributesPacket && packet.runtimeEntityId == entityId) {
             handleSetAttribute(packet.attributes)
+        } else {
+            inventory.handlePacket(packet)
         }
     }
 

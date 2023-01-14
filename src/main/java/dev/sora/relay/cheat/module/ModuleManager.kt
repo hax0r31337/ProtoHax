@@ -28,8 +28,6 @@ class ModuleManager(private val session: GameSession) {
         registerModule(ModuleNoFall())
         registerModule(ModuleAntiBlind())
         registerModule(ModuleFastBreak())
-        registerModule(ModuleInfiniteAura())
-        registerModule(ModuleCriticals())
         registerModule(ModuleCrasher())
         registerModule(ModuleBlink())
         registerModule(ModuleFastUse())

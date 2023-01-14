@@ -1,13 +1,13 @@
 package dev.sora.relay.cheat.module.impl
 
-import dev.sora.relay.cheat.module.CheatModule
-import dev.sora.relay.game.event.Listen
-import dev.sora.relay.game.event.EventPacketInbound
-import com.nukkitx.protocol.bedrock.packet.InventoryTransactionPacket
-import com.nukkitx.protocol.bedrock.data.inventory.TransactionType
-import com.nukkitx.protocol.bedrock.packet.EntityEventPacket
 import com.nukkitx.protocol.bedrock.data.entity.EntityEventType
 import com.nukkitx.protocol.bedrock.data.inventory.ItemData
+import com.nukkitx.protocol.bedrock.data.inventory.TransactionType
+import com.nukkitx.protocol.bedrock.packet.EntityEventPacket
+import com.nukkitx.protocol.bedrock.packet.InventoryTransactionPacket
+import dev.sora.relay.cheat.module.CheatModule
+import dev.sora.relay.game.event.EventPacketInbound
+import dev.sora.relay.game.event.Listen
 
 class ModuleFastUse : CheatModule("FastUse") {
     @Listen
@@ -27,7 +27,7 @@ class ModuleFastUse : CheatModule("FastUse") {
                     runtimeEntityId = event.session.thePlayer.entityId
                     transactionType = TransactionType.ITEM_USE
                     actionType = 1
-                    hotbarSlot = session.thePlayer.heldItemSlot
+                    hotbarSlot = session.thePlayer.inventory.heldItemSlot
                     itemInHand = ItemData.AIR
                     playerPosition = session.thePlayer.vec3Position
                     headPosition = null

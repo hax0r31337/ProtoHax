@@ -11,11 +11,14 @@ import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.cheat.value.BoolValue
 import dev.sora.relay.cheat.value.FloatValue
 import dev.sora.relay.cheat.value.ListValue
-import dev.sora.relay.game.event.Listen
 import dev.sora.relay.game.event.EventPacketInbound
 import dev.sora.relay.game.event.EventPacketOutbound
 import dev.sora.relay.game.event.EventTick
-import kotlin.math.*
+import dev.sora.relay.game.event.Listen
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.floor
+import kotlin.math.sin
 
 class ModuleFly : CheatModule("Fly") {
 

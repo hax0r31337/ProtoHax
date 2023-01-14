@@ -1,5 +1,6 @@
 package dev.sora.relay.game.entity
 
+import com.google.gson.JsonParser
 import com.nukkitx.math.vector.Vector3f
 import com.nukkitx.protocol.bedrock.data.SoundEvent
 import com.nukkitx.protocol.bedrock.data.inventory.ItemData
@@ -8,18 +9,23 @@ import com.nukkitx.protocol.bedrock.packet.*
 import dev.sora.relay.RakNetRelaySession
 import dev.sora.relay.cheat.BasicThing
 import dev.sora.relay.game.GameSession
-import dev.sora.relay.game.event.Listen
-import dev.sora.relay.game.event.Listener
-import dev.sora.relay.game.event.EventDisconnect
-import dev.sora.relay.game.event.EventPacketInbound
-import dev.sora.relay.game.event.EventPacketOutbound
+import dev.sora.relay.game.event.*
+import dev.sora.relay.game.inventory.PlayerInventory
+import dev.sora.relay.utils.base64Decode
 import java.util.*
 
 class EntityPlayerSP(private val session: GameSession) : EntityPlayer(0L, UUID.randomUUID(), ""), Listener {
 
     override var entityId: Long = 0L
-    var heldItemSlot = 0
         private set
+    override var uuid = UUID.randomUUID()
+        private set
+    override var username = ""
+        private set
+    var xuid = ""
+        private set
+
+    override val inventory = PlayerInventory(this)
 
     fun teleport(x: Double, y: Double, z: Double, netSession: RakNetRelaySession) {
         move(x, y, z)
@@ -36,6 +42,12 @@ class EntityPlayerSP(private val session: GameSession) : EntityPlayer(0L, UUID.r
         reset()
     }
 
+    override fun reset() {
+        super.reset()
+        inventory.reset()
+        username = ""
+    }
+
     @Listen
     fun handleServerPacket(event: EventPacketInbound) {
         val packet = event.packet
@@ -43,9 +55,9 @@ class EntityPlayerSP(private val session: GameSession) : EntityPlayer(0L, UUID.r
         if (packet is StartGamePacket) {
             entityId = packet.runtimeEntityId
             reset()
-        } else if (packet is RespawnPacket) {
+        } /* else if (packet is RespawnPacket) {
             entityId = packet.runtimeEntityId
-        }
+        }*/
         super.onPacket(packet)
     }
 
@@ -66,17 +78,28 @@ class EntityPlayerSP(private val session: GameSession) : EntityPlayer(0L, UUID.r
             rotate(packet.rotation)
             session.onTick()
             tickExists++
-        } else if (packet is PlayerHotbarPacket && packet.containerId == 0) {
-            heldItemSlot = packet.selectedHotbarSlot
-        } else if (packet is MobEquipmentPacket && packet.runtimeEntityId == entityId) {
-            heldItemSlot = packet.hotbarSlot
+        } else if (packet is LoginPacket) {
+
+            val body = JsonParser.parseString(packet.chainData.toString()).asJsonObject.getAsJsonArray("chain")
+            for (chain in body) {
+                val chainBody = JsonParser.parseString(base64Decode(chain.asString.split(".")[1]).toString(Charsets.UTF_8)).asJsonObject
+                if (chainBody.has("extraData")) {
+                    val xData = chainBody.getAsJsonObject("extraData")
+                    uuid = UUID.fromString(xData.get("identity").asString)
+                    username = xData.get("displayName").asString
+                    if (xData.has("XUID")) {
+                        xuid = xData.get("XUID").asString
+                    }
+                }
+            }
         }
+        inventory.handleClientPacket(packet)
     }
 
     fun attackEntity(entity: Entity, swingValue: SwingMode = SwingMode.BOTH) {
         AnimatePacket().apply {
             action = AnimatePacket.Action.SWING_ARM
-            runtimeEntityId = session.thePlayer.entityId
+            runtimeEntityId = entityId
         }.also {
             // send the packet back to client in order to display the swing animation
             if (swingValue == SwingMode.BOTH || swingValue == SwingMode.CLIENTSIDE)
@@ -87,7 +110,7 @@ class EntityPlayerSP(private val session: GameSession) : EntityPlayer(0L, UUID.r
 
         session.sendPacket(LevelSoundEventPacket().apply {
             sound = SoundEvent.ATTACK_STRONG
-            position = session.thePlayer.vec3Position
+            position = vec3Position
             extraData = -1
             identifier = "minecraft:player"
             isBabySound = false
@@ -99,9 +122,9 @@ class EntityPlayerSP(private val session: GameSession) : EntityPlayer(0L, UUID.r
             transactionType = TransactionType.ITEM_USE_ON_ENTITY
             actionType = 1
             runtimeEntityId = entity.entityId
-            hotbarSlot = session.thePlayer.heldItemSlot
+            hotbarSlot = inventory.heldItemSlot
             itemInHand = ItemData.AIR
-            playerPosition = session.thePlayer.vec3Position
+            playerPosition = vec3Position
             clickPosition = Vector3f.ZERO
         })
     }

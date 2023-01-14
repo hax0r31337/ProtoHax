@@ -5,10 +5,10 @@ import com.nukkitx.protocol.bedrock.packet.ChunkRadiusUpdatedPacket
 import com.nukkitx.protocol.bedrock.packet.LevelChunkPacket
 import com.nukkitx.protocol.bedrock.packet.UpdateBlockPacket
 import dev.sora.relay.game.GameSession
-import dev.sora.relay.game.event.Listen
-import dev.sora.relay.game.event.Listener
 import dev.sora.relay.game.event.EventDisconnect
 import dev.sora.relay.game.event.EventPacketInbound
+import dev.sora.relay.game.event.Listen
+import dev.sora.relay.game.event.Listener
 import dev.sora.relay.game.utils.constants.Dimension
 import dev.sora.relay.game.world.chunk.Chunk
 import dev.sora.relay.utils.logWarn

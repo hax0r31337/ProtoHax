@@ -4,7 +4,7 @@ import com.nukkitx.protocol.bedrock.BedrockPacket
 import com.nukkitx.protocol.bedrock.packet.MovePlayerPacket
 import java.util.*
 
-open class EntityPlayer(entityId: Long, val uuid: UUID, val username: String) : Entity(entityId) {
+open class EntityPlayer(entityId: Long, open val uuid: UUID, open val username: String) : Entity(entityId) {
 
     override fun onPacket(packet: BedrockPacket) {
         super.onPacket(packet)
