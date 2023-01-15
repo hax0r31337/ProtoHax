@@ -1,11 +1,12 @@
 package dev.sora.relay.game.inventory
 
 import com.nukkitx.protocol.bedrock.BedrockPacket
+import com.nukkitx.protocol.bedrock.data.inventory.ContainerId
 import com.nukkitx.protocol.bedrock.data.inventory.ItemData
 import com.nukkitx.protocol.bedrock.packet.MobArmorEquipmentPacket
 import com.nukkitx.protocol.bedrock.packet.MobEquipmentPacket
 
-open class EntityInventory(val entityId: Long) : AbstractInventory() {
+open class EntityInventory(val entityId: Long) : AbstractInventory(0) {
 
     override val capacity: Int
         get() = 6
@@ -34,7 +35,7 @@ open class EntityInventory(val entityId: Long) : AbstractInventory() {
         if (packet is MobEquipmentPacket && packet.runtimeEntityId == entityId) {
             if (packet.containerId == 0) {
                 hand = packet.item
-            } else if (packet.containerId == CONTAINER_ID_OFFHAND) {
+            } else if (packet.containerId == ContainerId.OFFHAND) {
                 offhand = packet.item
             }
         } else if (packet is MobArmorEquipmentPacket && packet.runtimeEntityId == entityId) {
@@ -45,8 +46,7 @@ open class EntityInventory(val entityId: Long) : AbstractInventory() {
         }
     }
 
-    companion object {
-        const val CONTAINER_ID_OFFHAND = 119
-        const val CONTAINER_ID_ARMOR = 120
+    override fun getNetworkSlotInfo(slot: Int): Pair<Int, Int> {
+        error("not supported")
     }
 }

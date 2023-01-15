@@ -10,6 +10,8 @@ import dev.sora.relay.RakNetRelaySession
 import dev.sora.relay.cheat.BasicThing
 import dev.sora.relay.game.GameSession
 import dev.sora.relay.game.event.*
+import dev.sora.relay.game.inventory.AbstractInventory
+import dev.sora.relay.game.inventory.ContainerInventory
 import dev.sora.relay.game.inventory.PlayerInventory
 import dev.sora.relay.utils.base64Decode
 import java.util.*
@@ -25,7 +27,9 @@ class EntityPlayerSP(private val session: GameSession) : EntityPlayer(0L, UUID.r
     var xuid = ""
         private set
 
-    override val inventory = PlayerInventory(this)
+    override val inventory = PlayerInventory()
+    var openContainer: AbstractInventory? = null
+        private set
 
     fun teleport(x: Double, y: Double, z: Double, netSession: RakNetRelaySession) {
         move(x, y, z)
@@ -57,7 +61,25 @@ class EntityPlayerSP(private val session: GameSession) : EntityPlayer(0L, UUID.r
             reset()
         } /* else if (packet is RespawnPacket) {
             entityId = packet.runtimeEntityId
-        }*/
+        }*/ else if (packet is ContainerOpenPacket) {
+            openContainer = if (packet.id.toInt() == 0) {
+                inventory
+            } else {
+                ContainerInventory(packet.id.toInt(), packet.type).also {
+                    session.eventManager.emit(EventContainerOpen(session, it))
+                }
+            }
+        } else if (packet is ContainerClosePacket && packet.id.toInt() == openContainer?.containerId) {
+            openContainer?.also {
+                session.eventManager.emit(EventContainerOpen(session, it))
+            }
+            openContainer = null
+        }
+        openContainer?.also {
+            if (it is ContainerInventory) {
+                it.handlePacket(packet)
+            }
+        }
         super.onPacket(packet)
     }
 
@@ -79,7 +101,6 @@ class EntityPlayerSP(private val session: GameSession) : EntityPlayer(0L, UUID.r
             session.onTick()
             tickExists++
         } else if (packet is LoginPacket) {
-
             val body = JsonParser.parseString(packet.chainData.toString()).asJsonObject.getAsJsonArray("chain")
             for (chain in body) {
                 val chainBody = JsonParser.parseString(base64Decode(chain.asString.split(".")[1]).toString(Charsets.UTF_8)).asJsonObject
@@ -94,6 +115,11 @@ class EntityPlayerSP(private val session: GameSession) : EntityPlayer(0L, UUID.r
             }
         }
         inventory.handleClientPacket(packet)
+        openContainer?.also {
+            if (it is ContainerInventory) {
+                it.handleClientPacket(packet)
+            }
+        }
     }
 
     fun attackEntity(entity: Entity, swingValue: SwingMode = SwingMode.BOTH) {

@@ -1,17 +1,16 @@
 package dev.sora.relay.game.inventory
 
 import com.nukkitx.protocol.bedrock.BedrockPacket
-import com.nukkitx.protocol.bedrock.data.inventory.InventoryActionData
-import com.nukkitx.protocol.bedrock.data.inventory.InventorySource
-import com.nukkitx.protocol.bedrock.data.inventory.ItemData
+import com.nukkitx.protocol.bedrock.data.inventory.*
 import com.nukkitx.protocol.bedrock.packet.InventoryContentPacket
 import com.nukkitx.protocol.bedrock.packet.InventorySlotPacket
 import com.nukkitx.protocol.bedrock.packet.InventoryTransactionPacket
 import com.nukkitx.protocol.bedrock.packet.MobEquipmentPacket
 import com.nukkitx.protocol.bedrock.packet.PlayerHotbarPacket
+import com.nukkitx.protocol.bedrock.packet.UpdateBlockPacket
 import dev.sora.relay.game.entity.EntityPlayerSP
 
-class PlayerInventory(private val player: EntityPlayerSP) : EntityInventory(0L) {
+class PlayerInventory : EntityInventory(0L) {
 
     var heldItemSlot = 0
         private set
@@ -24,15 +23,14 @@ class PlayerInventory(private val player: EntityPlayerSP) : EntityInventory(0L) 
             heldItemSlot = packet.selectedHotbarSlot
         } else if (packet is MobEquipmentPacket && packet.runtimeEntityId == entityId) {
             heldItemSlot = packet.hotbarSlot
-            println(packet)
-        } else if (packet is InventoryTransactionPacket) {
+        } else if (packet is InventoryTransactionPacket && packet.transactionType == TransactionType.NORMAL) {
             packet.actions.filter { it is InventoryActionData && it.source.type == InventorySource.Type.CONTAINER }.forEach {
-                val containerId = try {
-                    getOffsetByContainerId(it.source.containerId)
-                } catch (t: Throwable) {
-                    return@forEach
-                }
+                val containerId = getOffsetByContainerId(it.source.containerId)
+                if (containerId == -1) return@forEach
                 content[it.slot+containerId] = it.toItem
+            }
+            packet.actions.forEach {
+                println(it)
             }
         }
     }
@@ -40,18 +38,22 @@ class PlayerInventory(private val player: EntityPlayerSP) : EntityInventory(0L) 
     override fun handlePacket(packet: BedrockPacket) {
         super.handlePacket(packet)
         if (packet is InventorySlotPacket) {
-            content[packet.slot+getOffsetByContainerId(packet.containerId)] = packet.item
+            val offset = getOffsetByContainerId(packet.containerId)
+            if (offset == -1) return
+            content[packet.slot+offset] = packet.item
         } else if (packet is InventoryContentPacket) {
-            fillContent(packet.contents, getOffsetByContainerId(packet.containerId))
+            val offset = getOffsetByContainerId(packet.containerId)
+            if (offset == -1) return
+            fillContent(packet.contents, offset)
         }
     }
 
     private fun getOffsetByContainerId(container: Int): Int {
         return when(container) {
             0 -> 0
-            CONTAINER_ID_OFFHAND -> 40
-            CONTAINER_ID_ARMOR ->36
-            else -> error("invalid container id: $container")
+            ContainerId.ARMOR -> 36
+            ContainerId.OFFHAND -> 40
+            else -> -1
         }
     }
 
@@ -65,6 +67,13 @@ class PlayerInventory(private val player: EntityPlayerSP) : EntityInventory(0L) 
         for (i in content.indices) {
             content[i] = ItemData.AIR
         }
+    }
+
+    override fun getNetworkSlotInfo(slot: Int): Pair<Int, Int> {
+        return if (slot < 36) 0 to slot
+        else if (slot < 40) ContainerId.ARMOR to slot - 36
+        else if (slot == 40) ContainerId.OFFHAND to 0
+        else error("invalid slot: $slot")
     }
 
     override var hand: ItemData
