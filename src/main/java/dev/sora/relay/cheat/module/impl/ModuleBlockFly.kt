@@ -5,6 +5,7 @@ import com.nukkitx.math.vector.Vector3i
 import com.nukkitx.protocol.bedrock.data.inventory.ItemData
 import com.nukkitx.protocol.bedrock.data.inventory.TransactionType
 import com.nukkitx.protocol.bedrock.packet.InventoryTransactionPacket
+import com.nukkitx.protocol.bedrock.packet.UpdateBlockPacket
 import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.cheat.value.ListValue
 import dev.sora.relay.game.entity.EntityPlayerSP
@@ -24,11 +25,11 @@ class ModuleBlockFly : CheatModule("BlockFly") {
     fun onTick(event: EventTick) {
         val session = event.session
         val world = session.theWorld
-        chat(world.getBlockAt(
-            kotlin.math.floor(session.thePlayer.posX).toInt(),
-            kotlin.math.floor(session.thePlayer.posY - 2.62).toInt(),
-            kotlin.math.floor(session.thePlayer.posZ).toInt()
-        ))
+//        chat(world.getBlockAt(
+//            kotlin.math.floor(session.thePlayer.posX).toInt(),
+//            kotlin.math.floor(session.thePlayer.posY - 2.62).toInt(),
+//            kotlin.math.floor(session.thePlayer.posZ).toInt()
+//        ))
         val airId = session.blockMapping.runtime("minecraft:air")
         val possibilities = searchBlocks(session.thePlayer.posX, session.thePlayer.posY - 1.62,
             session.thePlayer.posZ, 1, world, airId)
@@ -36,11 +37,11 @@ class ModuleBlockFly : CheatModule("BlockFly") {
         val facing = getFacing(block, world, airId) ?: return
 
         val id = session.blockMapping.runtime("minecraft:planks[wood_type=oak]")
-//        session.netSession.inboundPacket(UpdateBlockPacket().apply {
-//            blockPosition = block
-//            runtimeId = id
-//        })
-//        session.theWorld.setBlockIdAt(block.x, block.y, block.z, id)
+       session.netSession.inboundPacket(UpdateBlockPacket().apply {
+           blockPosition = block
+           runtimeId = id
+       })
+       session.theWorld.setBlockIdAt(block.x, block.y, block.z, id)
         session.sendPacket(InventoryTransactionPacket().apply {
             transactionType = TransactionType.ITEM_USE
             actionType = 0

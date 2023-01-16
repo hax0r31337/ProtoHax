@@ -15,5 +15,6 @@ gradle-app.setting
 # # Work around https://youtrack.jetbrains.com/issue/IDEA-116898
 # gradle/wrapper/gradle-wrapper.properties
 
-.ms_refresh_token
-config.json
+/.ms_refresh_token
+/config.json
+/resource_packs
