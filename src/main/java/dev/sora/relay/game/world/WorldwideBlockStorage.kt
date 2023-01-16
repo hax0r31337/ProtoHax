@@ -12,6 +12,7 @@ import dev.sora.relay.game.event.Listen
 import dev.sora.relay.game.event.Listener
 import dev.sora.relay.game.utils.constants.Dimension
 import dev.sora.relay.game.world.chunk.Chunk
+import dev.sora.relay.utils.logInfo
 import dev.sora.relay.utils.logWarn
 import io.netty.buffer.Unpooled
 import kotlin.math.floor
@@ -55,6 +56,7 @@ abstract class WorldwideBlockStorage(protected val session: GameSession) : Liste
     }
 
     private fun chunkOutOfRangeCheck() {
+        return
         if (viewDistance < 0) return
         val playerChunkX = floor(session.thePlayer.posX).toInt() shr 4
         val playerChunkZ = floor(session.thePlayer.posZ).toInt() shr 4
