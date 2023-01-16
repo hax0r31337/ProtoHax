@@ -4,6 +4,7 @@ import com.google.gson.JsonParser
 import com.nukkitx.protocol.bedrock.data.ResourcePackType
 import com.nukkitx.protocol.bedrock.packet.*
 import dev.sora.relay.cheat.module.CheatModule
+import dev.sora.relay.cheat.value.BoolValue
 import dev.sora.relay.game.event.EventPacketInbound
 import dev.sora.relay.game.event.EventPacketOutbound
 import dev.sora.relay.game.event.Listen
@@ -18,6 +19,7 @@ object ModuleResourcePackSpoof : CheatModule("ResourcePackSpoof") {
 
     private const val RESOURCE_PACK_CHUNK_SIZE = 8 * 1024
 
+    private val acceptServerPacks = BoolValue("AcceptServerPacks", false)
     var resourcePackProvider: IResourcePackProvider = EmptyResourcePackProvider()
 
     @Listen
@@ -25,20 +27,21 @@ object ModuleResourcePackSpoof : CheatModule("ResourcePackSpoof") {
         val packet = event.packet
 
         if (packet is ResourcePacksInfoPacket) {
-            println(packet)
-            packet.resourcePackInfos.clear()
-            packet.behaviorPackInfos.clear()
+            if (!acceptServerPacks.get()) {
+                packet.resourcePackInfos.clear()
+                packet.behaviorPackInfos.clear()
+            }
             // this will make the client download the resource pack
             packet.resourcePackInfos.addAll(resourcePackProvider.getEntry())
-            packet.isForcedToAccept = false
         } else if (packet is ResourcePackStackPacket) {
-            packet.resourcePacks.clear()
-            packet.behaviorPacks.clear()
+            if (!acceptServerPacks.get()) {
+                packet.resourcePacks.clear()
+                packet.behaviorPacks.clear()
+            }
             // this will make the client load the resource pack
             packet.resourcePacks.addAll(resourcePackProvider.getEntry().map {
                 ResourcePackStackPacket.Entry(it.packId, it.packVersion, it.subPackName)
             })
-            packet.isForcedToAccept = true
         }
     }
 
@@ -48,8 +51,7 @@ object ModuleResourcePackSpoof : CheatModule("ResourcePackSpoof") {
 
         if (packet is ResourcePackClientResponsePacket) {
             if (packet.status == ResourcePackClientResponsePacket.Status.SEND_PACKS) {
-                event.cancel()
-                packet.packIds.forEach {
+                packet.packIds.map { it }.forEach {
                     val entry = resourcePackProvider.getPackById(it) ?: return@forEach
                     event.session.netSession.inboundPacket(ResourcePackDataInfoPacket().apply {
                         packId = UUID.fromString(entry.first.packId)
@@ -60,6 +62,10 @@ object ModuleResourcePackSpoof : CheatModule("ResourcePackSpoof") {
                         hash = MessageDigest.getInstance("SHA-256").digest(entry.second)
                         type = ResourcePackType.RESOURCE
                     })
+                    packet.packIds.remove(it)
+                }
+                if (packet.packIds.isEmpty()) {
+                    packet.status = ResourcePackClientResponsePacket.Status.HAVE_ALL_PACKS
                 }
             }
         } else if (packet is ResourcePackChunkRequestPacket) {
