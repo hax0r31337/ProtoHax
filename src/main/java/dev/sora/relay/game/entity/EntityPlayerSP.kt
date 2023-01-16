@@ -122,7 +122,7 @@ class EntityPlayerSP(private val session: GameSession) : EntityPlayer(0L, UUID.r
         }
     }
 
-    fun attackEntity(entity: Entity, swingValue: SwingMode = SwingMode.BOTH) {
+    fun swing(swingValue: SwingMode = SwingMode.BOTH) {
         AnimatePacket().apply {
             action = AnimatePacket.Action.SWING_ARM
             runtimeEntityId = entityId
@@ -133,6 +133,10 @@ class EntityPlayerSP(private val session: GameSession) : EntityPlayer(0L, UUID.r
             if (swingValue == SwingMode.BOTH || swingValue == SwingMode.SERVERSIDE)
                 session.sendPacket(it)
         }
+    }
+
+    fun attackEntity(entity: Entity, swingValue: SwingMode = SwingMode.BOTH) {
+        swing(swingValue)
 
         session.sendPacket(LevelSoundEventPacket().apply {
             sound = SoundEvent.ATTACK_STRONG

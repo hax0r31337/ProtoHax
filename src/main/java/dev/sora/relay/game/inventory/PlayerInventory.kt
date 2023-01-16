@@ -19,9 +19,9 @@ class PlayerInventory : EntityInventory(0L) {
         get() = 41 // 36 (inventory) + 4 (armor) + 1 (off-hand)
 
     fun handleClientPacket(packet: BedrockPacket) {
-        if (packet is PlayerHotbarPacket && packet.containerId == 0) {
+        if (packet is PlayerHotbarPacket) {
             heldItemSlot = packet.selectedHotbarSlot
-        } else if (packet is MobEquipmentPacket && packet.runtimeEntityId == entityId) {
+        } else if (packet is MobEquipmentPacket) {
             heldItemSlot = packet.hotbarSlot
         } else if (packet is InventoryTransactionPacket && packet.transactionType == TransactionType.NORMAL) {
             packet.actions.filter { it is InventoryActionData && it.source.type == InventorySource.Type.CONTAINER }.forEach {
@@ -29,15 +29,14 @@ class PlayerInventory : EntityInventory(0L) {
                 if (containerId == -1) return@forEach
                 content[it.slot+containerId] = it.toItem
             }
-            packet.actions.forEach {
-                println(it)
-            }
         }
     }
 
     override fun handlePacket(packet: BedrockPacket) {
         super.handlePacket(packet)
-        if (packet is InventorySlotPacket) {
+        if (packet is PlayerHotbarPacket) {
+            heldItemSlot = packet.selectedHotbarSlot
+        } else if (packet is InventorySlotPacket) {
             val offset = getOffsetByContainerId(packet.containerId)
             if (offset == -1) return
             content[packet.slot+offset] = packet.item

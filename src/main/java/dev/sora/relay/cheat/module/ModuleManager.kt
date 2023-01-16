@@ -31,5 +31,6 @@ class ModuleManager(private val session: GameSession) {
         registerModule(ModuleCrasher())
         registerModule(ModuleBlink())
         registerModule(ModuleFastUse())
+        registerModule(ModuleScaffold())
     }
 }

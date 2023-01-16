@@ -1,5 +1,6 @@
 package dev.sora.relay.game.world
 
+import com.nukkitx.math.vector.Vector3i
 import com.nukkitx.protocol.bedrock.packet.ChangeDimensionPacket
 import com.nukkitx.protocol.bedrock.packet.ChunkRadiusUpdatedPacket
 import com.nukkitx.protocol.bedrock.packet.LevelChunkPacket
@@ -70,6 +71,12 @@ abstract class WorldwideBlockStorage(protected val session: GameSession) : Liste
     fun getBlockAt(x: Int, y: Int, z: Int): String {
         return session.blockMapping.game(getBlockIdAt(x, y, z))
     }
+
+    fun getBlockAt(vec: Vector3i)
+        = getBlockAt(vec.x, vec.y, vec.z)
+
+    fun getBlockIdAt(vec: Vector3i)
+            = getBlockIdAt(vec.x, vec.y, vec.z)
 
     fun setBlockIdAt(x: Int, y: Int, z: Int, id: Int) {
         val chunk = getChunkAt(x, z) ?: return
