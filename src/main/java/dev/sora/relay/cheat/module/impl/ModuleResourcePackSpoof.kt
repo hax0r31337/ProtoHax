@@ -48,6 +48,7 @@ object ModuleResourcePackSpoof : CheatModule("ResourcePackSpoof") {
 
         if (packet is ResourcePackClientResponsePacket) {
             if (packet.status == ResourcePackClientResponsePacket.Status.SEND_PACKS) {
+                event.cancel()
                 packet.packIds.forEach {
                     val entry = resourcePackProvider.getPackById(it) ?: return@forEach
                     event.session.netSession.inboundPacket(ResourcePackDataInfoPacket().apply {
