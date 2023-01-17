@@ -39,9 +39,9 @@ object ModuleResourcePackSpoof : CheatModule("ResourcePackSpoof") {
                 packet.behaviorPacks.clear()
             }
             // this will make the client load the resource pack
-            packet.resourcePacks.addAll(resourcePackProvider.getEntry().map {
-                ResourcePackStackPacket.Entry(it.packId, it.packVersion, it.subPackName)
-            })
+//            packet.resourcePacks.addAll(resourcePackProvider.getEntry().map {
+//                ResourcePackStackPacket.Entry(it.packId, it.packVersion, it.subPackName)
+//            })
         }
     }
 
@@ -65,7 +65,7 @@ object ModuleResourcePackSpoof : CheatModule("ResourcePackSpoof") {
                     packet.packIds.remove(it)
                 }
                 if (packet.packIds.isEmpty()) {
-                    packet.status = ResourcePackClientResponsePacket.Status.HAVE_ALL_PACKS
+                    event.cancel()
                 }
             }
         } else if (packet is ResourcePackChunkRequestPacket) {
@@ -79,6 +79,7 @@ object ModuleResourcePackSpoof : CheatModule("ResourcePackSpoof") {
             })
             event.cancel()
         }
+        println(packet)
     }
 
 
