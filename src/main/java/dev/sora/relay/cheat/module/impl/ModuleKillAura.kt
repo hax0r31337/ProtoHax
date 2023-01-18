@@ -25,6 +25,7 @@ class ModuleKillAura : CheatModule("KillAura") {
     private val attackModeValue = ListValue("AttackMode", arrayOf("Single", "Multi"), "Single")
     private val rotationModeValue = ListValue("RotationMode", arrayOf("Lock", "None"), "Lock")
     private val swingValue = ListValue("Swing", arrayOf("Both", "Client", "Server", "None"), "Both")
+    private val failRateValue = FloatValue("FailRate", 0f, 0f, 1f)
 
     private var rotation: Pair<Float, Float>? = null
 
@@ -47,13 +48,18 @@ class ModuleKillAura : CheatModule("KillAura") {
             "Server" -> EntityPlayerSP.SwingMode.SERVERSIDE
             else -> EntityPlayerSP.SwingMode.NONE
         }
-        val aimTarget = when(attackModeValue.get()) {
-            "Multi" -> {
-                entityList.forEach { session.thePlayer.attackEntity(it, swingMode) }
-                entityList.first()
-            }
-            else -> (entityList.minByOrNull { it.distanceSq(event.session.thePlayer) } ?: return).also {
-                session.thePlayer.attackEntity(it, swingMode)
+        val aimTarget = if (Math.random() <= failRateValue.get()) {
+            session.thePlayer.swing(swingMode)
+            entityList.first()
+        } else {
+            when(attackModeValue.get()) {
+                "Multi" -> {
+                    entityList.forEach { session.thePlayer.attackEntity(it, swingMode) }
+                    entityList.first()
+                }
+                else -> (entityList.minByOrNull { it.distanceSq(event.session.thePlayer) } ?: return).also {
+                    session.thePlayer.attackEntity(it, swingMode)
+                }
             }
         }
 
