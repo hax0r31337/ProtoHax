@@ -79,7 +79,6 @@ object ModuleResourcePackSpoof : CheatModule("ResourcePackSpoof") {
             })
             event.cancel()
         }
-        println(packet)
     }
 
 

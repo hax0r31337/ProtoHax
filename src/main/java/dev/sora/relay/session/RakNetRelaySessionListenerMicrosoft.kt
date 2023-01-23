@@ -158,7 +158,6 @@ class RakNetRelaySessionListenerMicrosoft(val accessToken: String, val deviceInf
 
         return connection.inputStream.reader().let {
             val txt = it.readText()
-            println(txt)
             txt.toByteArray().inputStream().reader()
         }
     }

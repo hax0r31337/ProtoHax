@@ -32,7 +32,6 @@ class ModuleManager(private val session: GameSession) {
         registerModule(ModuleBlink())
         registerModule(ModuleFastUse())
         registerModule(ModuleBlockFly())
-        registerModule(ModuleGodMode())
         registerModule(ModuleComboOneHitExploit())
     }
 }
