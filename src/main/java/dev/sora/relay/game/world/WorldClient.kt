@@ -45,7 +45,7 @@ class WorldClient(session: GameSession) : WorldwideBlockStorage(session) {
             }
         } else if (packet is AddPlayerPacket) {
             entityMap[packet.runtimeEntityId] = EntityPlayer(packet.runtimeEntityId, packet.uuid, packet.username).apply {
-                move(packet.position.sub(0f, 1.62f, 0f))
+                move(packet.position.add(0f, 1.62f, 0f))
                 rotate(packet.rotation)
                 handleSetData(packet.metadata)
             }
