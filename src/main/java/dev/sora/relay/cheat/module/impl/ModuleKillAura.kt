@@ -5,6 +5,7 @@ import com.nukkitx.protocol.bedrock.packet.MovePlayerPacket
 import com.nukkitx.protocol.bedrock.packet.PlayerAuthInputPacket
 import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.cheat.module.impl.ModuleAntiBot.isBot
+import dev.sora.relay.cheat.value.BoolValue
 import dev.sora.relay.cheat.value.FloatValue
 import dev.sora.relay.cheat.value.IntValue
 import dev.sora.relay.cheat.value.ListValue
@@ -25,9 +26,9 @@ class ModuleKillAura : CheatModule("KillAura") {
     private val attackModeValue = ListValue("AttackMode", arrayOf("Single", "Multi"), "Single")
     private val rotationModeValue = ListValue("RotationMode", arrayOf("Lock", "None"), "Lock")
     private val swingValue = ListValue("Swing", arrayOf("Both", "Client", "Server", "None"), "Both")
+    private val swingSoundValue = BoolValue("SwingSound", true)
     private val failRateValue = FloatValue("FailRate", 0f, 0f, 1f)
-
-    private var rotation: Pair<Float, Float>? = null
+    private val failSoundValue = BoolValue("FailSound", true)
 
     private val clickTimer = ClickTimer()
 
@@ -49,41 +50,27 @@ class ModuleKillAura : CheatModule("KillAura") {
             else -> EntityPlayerSP.SwingMode.NONE
         }
         val aimTarget = if (Math.random() <= failRateValue.get()) {
-            session.thePlayer.swing(swingMode)
+            session.thePlayer.swing(swingMode, failSoundValue.get())
             entityList.first()
         } else {
             when(attackModeValue.get()) {
                 "Multi" -> {
-                    entityList.forEach { session.thePlayer.attackEntity(it, swingMode) }
+                    entityList.forEach { session.thePlayer.attackEntity(it, swingMode, swingSoundValue.get()) }
                     entityList.first()
                 }
                 else -> (entityList.minByOrNull { it.distanceSq(event.session.thePlayer) } ?: return).also {
-                    session.thePlayer.attackEntity(it, swingMode)
+                    session.thePlayer.attackEntity(it, swingMode, swingSoundValue.get())
                 }
             }
         }
 
         if (rotationModeValue.get() == "Lock") {
-            rotation = toRotation(session.thePlayer.vec3Position, aimTarget.vec3Position).let {
+            session.thePlayer.silentRotation = toRotation(session.thePlayer.vec3Position, aimTarget.vec3Position).let {
                 (it.first - session.thePlayer.rotationYaw) * 0.8f + session.thePlayer.rotationYaw to it.second
             }
         }
 
         clickTimer.update(cpsValue.get(), cpsValue.get() + 1)
-    }
-
-    @Listen
-    fun onPacketOutbound(event: EventPacketOutbound) {
-        val rotation = rotation ?: return
-        val packet = event.packet
-
-        if (packet is PlayerAuthInputPacket) {
-            packet.rotation = Vector3f.from(rotation.first, rotation.second, packet.rotation.z)
-            this.rotation = null
-        } else if (packet is MovePlayerPacket) {
-            packet.rotation = Vector3f.from(rotation.first, rotation.second, packet.rotation.z)
-            this.rotation = null
-        }
     }
 
     private fun toRotation(from: Vector3f, to: Vector3f): Pair<Float, Float> {

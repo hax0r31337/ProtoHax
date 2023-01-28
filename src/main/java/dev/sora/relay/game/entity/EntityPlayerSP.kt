@@ -31,6 +31,8 @@ class EntityPlayerSP(private val session: GameSession) : EntityPlayer(0L, UUID.r
     var openContainer: AbstractInventory? = null
         private set
 
+    var silentRotation: Pair<Float, Float>? = null
+
     fun teleport(x: Double, y: Double, z: Double, netSession: RakNetRelaySession) {
         move(x, y, z)
         netSession.inboundPacket(MovePlayerPacket().apply {
@@ -95,11 +97,19 @@ class EntityPlayerSP(private val session: GameSession) : EntityPlayer(0L, UUID.r
             }
             session.onTick()
             tickExists++
+            silentRotation?.let {
+                packet.rotation = Vector3f.from(it.first, it.second, packet.rotation.z)
+                silentRotation = null
+            }
         } else if (packet is PlayerAuthInputPacket) {
             move(packet.position)
             rotate(packet.rotation)
             session.onTick()
             tickExists++
+            silentRotation?.let {
+                packet.rotation = Vector3f.from(it.first, it.second, packet.rotation.z)
+                silentRotation = null
+            }
         } else if (packet is LoginPacket) {
             val body = JsonParser.parseString(packet.chainData.toString()).asJsonObject.getAsJsonArray("chain")
             for (chain in body) {
@@ -122,7 +132,7 @@ class EntityPlayerSP(private val session: GameSession) : EntityPlayer(0L, UUID.r
         }
     }
 
-    fun swing(swingValue: SwingMode = SwingMode.BOTH) {
+    fun swing(swingValue: SwingMode = SwingMode.BOTH, sound: Boolean = false) {
         AnimatePacket().apply {
             action = AnimatePacket.Action.SWING_ARM
             runtimeEntityId = entityId
@@ -133,19 +143,32 @@ class EntityPlayerSP(private val session: GameSession) : EntityPlayer(0L, UUID.r
             if (swingValue == SwingMode.BOTH || swingValue == SwingMode.SERVERSIDE)
                 session.sendPacket(it)
         }
+        if (sound) {
+            // this sound will be send to server if no object interacted
+            session.sendPacket(LevelSoundEventPacket().apply {
+                this.sound = SoundEvent.ATTACK_NODAMAGE
+                position = vec3Position
+                extraData = -1
+                identifier = "minecraft:player"
+                isBabySound = false
+                isRelativeVolumeDisabled = false
+            })
+        }
     }
 
-    fun attackEntity(entity: Entity, swingValue: SwingMode = SwingMode.BOTH) {
+    fun attackEntity(entity: Entity, swingValue: SwingMode = SwingMode.BOTH, sound: Boolean = false) {
         swing(swingValue)
 
-        session.sendPacket(LevelSoundEventPacket().apply {
-            sound = SoundEvent.ATTACK_STRONG
-            position = vec3Position
-            extraData = -1
-            identifier = "minecraft:player"
-            isBabySound = false
-            isRelativeVolumeDisabled = false
-        })
+        if (sound) {
+            session.sendPacket(LevelSoundEventPacket().apply {
+                this.sound = SoundEvent.ATTACK_STRONG
+                position = vec3Position
+                extraData = -1
+                identifier = "minecraft:player"
+                isBabySound = false
+                isRelativeVolumeDisabled = false
+            })
+        }
 
         // attack
         session.sendPacket(InventoryTransactionPacket().apply {

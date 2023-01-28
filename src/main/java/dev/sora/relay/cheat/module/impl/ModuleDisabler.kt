@@ -1,8 +1,6 @@
 package dev.sora.relay.cheat.module.impl
 
 import com.nukkitx.math.vector.Vector2f
-import com.nukkitx.protocol.bedrock.data.SoundEvent
-import com.nukkitx.protocol.bedrock.packet.LevelSoundEventPacket
 import com.nukkitx.protocol.bedrock.packet.MovePlayerPacket
 import com.nukkitx.protocol.bedrock.packet.NetworkStackLatencyPacket
 import com.nukkitx.protocol.bedrock.packet.PlayerAuthInputPacket
@@ -14,19 +12,13 @@ import dev.sora.relay.game.event.Listen
 
 class ModuleDisabler : CheatModule("Disabler") {
 
-    private val modeValue = ListValue("Mode", arrayOf("CPSCancel","Lifeboat","Mineplex","CubeCraft"), "Lifeboat")
+    private val modeValue = ListValue("Mode", arrayOf("Lifeboat","Mineplex","CubeCraft"), "Lifeboat")
 
     @Listen
     fun onPacketOutbound(event: EventPacketOutbound) {
         val packet = event.packet
 
-        if(modeValue.get() == "CPSCancel"){
-            if (packet is LevelSoundEventPacket){
-                if(packet.sound == SoundEvent.ATTACK_STRONG || packet.sound == SoundEvent.ATTACK_NODAMAGE)
-                    event.cancel()
-            }
-        }
-        else if(modeValue.get() == "Lifeboat"){
+        if(modeValue.get() == "Lifeboat"){
             if (packet is MovePlayerPacket) {
                 packet.isOnGround = true
                 event.session.netSession.outboundPacket(MovePlayerPacket().apply {
