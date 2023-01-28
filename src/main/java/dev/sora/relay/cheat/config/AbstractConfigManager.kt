@@ -31,7 +31,7 @@ abstract class AbstractConfigManager(val moduleManager: ModuleManager) {
     /**
      * @return false if failed to load the config or config not exists
      */
-    fun loadConfig(name: String): Boolean {
+    open fun loadConfig(name: String): Boolean {
         try {
             val json = JsonParser.parseReader((loadConfigData(name) ?: return false).reader(Charsets.UTF_8)).asJsonObject
             loadConfigSectionModule(json.getAsJsonObject("modules"))
@@ -42,7 +42,7 @@ abstract class AbstractConfigManager(val moduleManager: ModuleManager) {
         }
     }
 
-    fun saveConfig(name: String) {
+    open fun saveConfig(name: String) {
         try {
             val json = JsonObject()
 
@@ -54,7 +54,7 @@ abstract class AbstractConfigManager(val moduleManager: ModuleManager) {
         }
     }
 
-    protected fun loadConfigSectionModule(json: JsonObject) {
+    protected open fun loadConfigSectionModule(json: JsonObject) {
         moduleManager.modules.forEach {
             if (!json.has(it.name)) return@forEach
             val moduleJson = json.getAsJsonObject(it.name)
@@ -73,7 +73,7 @@ abstract class AbstractConfigManager(val moduleManager: ModuleManager) {
         }
     }
 
-    protected fun saveConfigSectionModule(): JsonObject {
+    protected open fun saveConfigSectionModule(): JsonObject {
         val json = JsonObject()
 
         moduleManager.modules.forEach {

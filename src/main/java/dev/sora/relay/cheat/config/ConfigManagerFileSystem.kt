@@ -1,6 +1,8 @@
 package dev.sora.relay.cheat.config
 
 import dev.sora.relay.cheat.module.ModuleManager
+import dev.sora.relay.utils.logError
+import dev.sora.relay.utils.logInfo
 import java.io.File
 import java.io.InputStream
 
@@ -11,6 +13,10 @@ class ConfigManagerFileSystem(private val dir: File, private val suffix: String,
             dir.mkdirs()
     }
 
+    fun getConfigFile(name: String): File {
+        return File(dir, "$name.json")
+    }
+
     override fun listConfig(): List<String> {
         return (dir.listFiles() ?: return emptyList())
             .filter { it.name.endsWith(suffix) }
@@ -18,7 +24,7 @@ class ConfigManagerFileSystem(private val dir: File, private val suffix: String,
     }
 
     override fun loadConfigData(name: String): InputStream? {
-        val configFile = File(dir, "$name.json")
+        val configFile = getConfigFile(name)
         if (!configFile.exists()) {
             return null
         }
@@ -26,14 +32,37 @@ class ConfigManagerFileSystem(private val dir: File, private val suffix: String,
     }
 
     override fun saveConfigData(name: String, data: ByteArray) {
-        val configFile = File(dir, "$name.json")
+        val configFile = getConfigFile(name)
         configFile.writeBytes(data)
     }
 
     override fun deleteConfig(name: String): Boolean {
-        val configFile = File(dir, "$name.json")
+        val configFile = getConfigFile(name)
         if (configFile.exists())
             return configFile.delete()
         return false
+    }
+
+    override fun copyConfig(src: String, dst: String): Boolean {
+        val srcFile = getConfigFile(src)
+        if (!srcFile.exists()) return false
+        val dstFile = getConfigFile(dst)
+        if (dstFile.exists()) return false
+        return try {
+            srcFile.copyTo(dstFile)
+            true
+        } catch (t: Throwable) {
+            logError("error whilst copy config", t)
+            false
+        }
+    }
+
+    override fun renameConfig(src: String, dst: String): Boolean {
+        val srcFile = getConfigFile(src)
+        if (!srcFile.exists()) return false
+        val dstFile = getConfigFile(dst)
+        if (dstFile.exists()) return false
+        srcFile.renameTo(dstFile)
+        return true
     }
 }

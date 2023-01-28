@@ -25,4 +25,12 @@ class SingleFileConfigManager(moduleManager: ModuleManager) : AbstractConfigMana
         file.delete()
         return false
     }
+
+    override fun copyConfig(src: String, dst: String): Boolean {
+        return false
+    }
+
+    override fun renameConfig(src: String, dst: String): Boolean {
+        return false
+    }
 }
