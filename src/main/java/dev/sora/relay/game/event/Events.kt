@@ -4,7 +4,6 @@ import com.nukkitx.network.util.DisconnectReason
 import com.nukkitx.protocol.bedrock.BedrockPacket
 import dev.sora.relay.game.GameSession
 import dev.sora.relay.game.inventory.AbstractInventory
-import dev.sora.relay.game.inventory.ContainerInventory
 
 abstract class GameEvent(val session: GameSession)
 

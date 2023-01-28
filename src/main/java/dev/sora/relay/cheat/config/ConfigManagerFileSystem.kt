@@ -2,7 +2,7 @@ package dev.sora.relay.cheat.config
 
 import dev.sora.relay.cheat.module.ModuleManager
 import java.io.File
-import java.io.Reader
+import java.io.InputStream
 
 class ConfigManagerFileSystem(private val dir: File, private val suffix: String, moduleManager: ModuleManager) : AbstractConfigManager(moduleManager) {
 
@@ -17,12 +17,12 @@ class ConfigManagerFileSystem(private val dir: File, private val suffix: String,
             .map { it.name.let { it.substring(0, it.length - suffix.length) } }
     }
 
-    override fun loadConfigData(name: String): Reader? {
+    override fun loadConfigData(name: String): InputStream? {
         val configFile = File(dir, "$name.json")
         if (!configFile.exists()) {
             return null
         }
-        return configFile.reader(Charsets.UTF_8)
+        return configFile.inputStream()
     }
 
     override fun saveConfigData(name: String, data: ByteArray) {
@@ -30,9 +30,10 @@ class ConfigManagerFileSystem(private val dir: File, private val suffix: String,
         configFile.writeBytes(data)
     }
 
-    override fun deleteConfig(name: String) {
+    override fun deleteConfig(name: String): Boolean {
         val configFile = File(dir, "$name.json")
         if (configFile.exists())
-            configFile.delete()
+            return configFile.delete()
+        return false
     }
 }

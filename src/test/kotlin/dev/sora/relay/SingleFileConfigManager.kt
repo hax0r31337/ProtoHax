@@ -3,7 +3,7 @@ package dev.sora.relay
 import dev.sora.relay.cheat.config.AbstractConfigManager
 import dev.sora.relay.cheat.module.ModuleManager
 import java.io.File
-import java.io.Reader
+import java.io.InputStream
 
 class SingleFileConfigManager(moduleManager: ModuleManager) : AbstractConfigManager(moduleManager) {
 
@@ -13,15 +13,16 @@ class SingleFileConfigManager(moduleManager: ModuleManager) : AbstractConfigMana
         return listOf("default")
     }
 
-    override fun loadConfigData(name: String): Reader {
-        return file.reader(Charsets.UTF_8)
+    override fun loadConfigData(name: String): InputStream {
+        return file.inputStream()
     }
 
     override fun saveConfigData(name: String, data: ByteArray) {
         file.writeBytes(data)
     }
 
-    override fun deleteConfig(name: String) {
+    override fun deleteConfig(name: String): Boolean {
         file.delete()
+        return false
     }
 }

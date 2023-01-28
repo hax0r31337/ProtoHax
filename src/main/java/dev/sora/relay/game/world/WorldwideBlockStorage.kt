@@ -12,7 +12,6 @@ import dev.sora.relay.game.event.Listen
 import dev.sora.relay.game.event.Listener
 import dev.sora.relay.game.utils.constants.Dimension
 import dev.sora.relay.game.world.chunk.Chunk
-import dev.sora.relay.utils.logInfo
 import dev.sora.relay.utils.logWarn
 import io.netty.buffer.Unpooled
 import kotlin.math.floor

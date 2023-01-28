@@ -2,13 +2,7 @@ package dev.sora.relay.game.inventory
 
 import com.nukkitx.protocol.bedrock.BedrockPacket
 import com.nukkitx.protocol.bedrock.data.inventory.*
-import com.nukkitx.protocol.bedrock.packet.InventoryContentPacket
-import com.nukkitx.protocol.bedrock.packet.InventorySlotPacket
-import com.nukkitx.protocol.bedrock.packet.InventoryTransactionPacket
-import com.nukkitx.protocol.bedrock.packet.MobEquipmentPacket
-import com.nukkitx.protocol.bedrock.packet.PlayerHotbarPacket
-import com.nukkitx.protocol.bedrock.packet.UpdateBlockPacket
-import dev.sora.relay.game.entity.EntityPlayerSP
+import com.nukkitx.protocol.bedrock.packet.*
 
 class PlayerInventory : EntityInventory(0L) {
 

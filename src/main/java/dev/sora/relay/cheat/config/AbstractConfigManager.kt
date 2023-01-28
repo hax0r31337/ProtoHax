@@ -5,26 +5,35 @@ import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import dev.sora.relay.cheat.module.ModuleManager
 import dev.sora.relay.utils.logError
-import java.io.Reader
+import java.io.InputStream
 
 abstract class AbstractConfigManager(val moduleManager: ModuleManager) {
 
-    val DEFAULT_GSON = GsonBuilder().setPrettyPrinting().create()
-
     abstract fun listConfig(): List<String>
 
-    protected abstract fun loadConfigData(name: String): Reader?
+    protected abstract fun loadConfigData(name: String): InputStream?
 
     protected abstract fun saveConfigData(name: String, data: ByteArray)
 
-    abstract fun deleteConfig(name: String)
+    abstract fun deleteConfig(name: String): Boolean
+
+    open fun copyConfig(src: String, dst: String): Boolean {
+        val reader = loadConfigData(src) ?: return false
+        saveConfigData(dst, reader.readBytes())
+        return true
+    }
+
+    open fun renameConfig(src: String, dst: String): Boolean {
+        if (!copyConfig(src, dst)) return false
+        return deleteConfig(dst)
+    }
 
     /**
      * @return false if failed to load the config or config not exists
      */
     fun loadConfig(name: String): Boolean {
         try {
-            val json = JsonParser.parseReader(loadConfigData(name) ?: return false).asJsonObject
+            val json = JsonParser.parseReader((loadConfigData(name) ?: return false).reader(Charsets.UTF_8)).asJsonObject
             loadConfigSectionModule(json.getAsJsonObject("modules"))
             return true
         } catch (t: Throwable) {
@@ -83,5 +92,9 @@ abstract class AbstractConfigManager(val moduleManager: ModuleManager) {
         }
 
         return json
+    }
+
+    companion object {
+        val DEFAULT_GSON = GsonBuilder().setPrettyPrinting().create()
     }
 }
