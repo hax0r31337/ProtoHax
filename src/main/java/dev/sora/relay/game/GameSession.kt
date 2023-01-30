@@ -83,4 +83,8 @@ class GameSession : RakNetRelaySessionListener.PacketListener {
         }
         netSession.outboundPacket(packet)
     }
+
+    companion object {
+        const val RECOMMENDED_VERSION = "1.9.50.02"
+    }
 }
