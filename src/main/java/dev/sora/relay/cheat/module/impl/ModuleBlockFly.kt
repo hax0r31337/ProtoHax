@@ -17,7 +17,7 @@ import dev.sora.relay.game.world.WorldClient
 
 class ModuleBlockFly : CheatModule("BlockFly") {
 
-    private val swingValue = ListValue("Swing", arrayOf("Both", "Client", "Server", "None"), "Both")
+    private val swingValue = ListValue("Swing", arrayOf("Both", "Client", "Server", "None"), "Server")
 
     private val extendableFacing = arrayOf(EnumFacing.WEST, EnumFacing.EAST, EnumFacing.UP, EnumFacing.SOUTH, EnumFacing.NORTH)
 
@@ -25,11 +25,6 @@ class ModuleBlockFly : CheatModule("BlockFly") {
     fun onTick(event: EventTick) {
         val session = event.session
         val world = session.theWorld
-//        chat(world.getBlockAt(
-//            kotlin.math.floor(session.thePlayer.posX).toInt(),
-//            kotlin.math.floor(session.thePlayer.posY - 2.62).toInt(),
-//            kotlin.math.floor(session.thePlayer.posZ).toInt()
-//        ))
         val airId = session.blockMapping.runtime("minecraft:air")
         val possibilities = searchBlocks(session.thePlayer.posX, session.thePlayer.posY - 1.62,
             session.thePlayer.posZ, 1, world, airId)

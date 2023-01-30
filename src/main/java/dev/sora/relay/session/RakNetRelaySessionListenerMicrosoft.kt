@@ -16,8 +16,6 @@ import dev.sora.relay.RakNetRelaySessionListener
 import dev.sora.relay.utils.*
 import io.netty.util.AsciiString
 import java.io.InputStreamReader
-import java.lang.IllegalStateException
-import java.lang.RuntimeException
 import java.security.KeyPair
 import java.security.PublicKey
 import java.security.Signature
@@ -44,6 +42,7 @@ class RakNetRelaySessionListenerMicrosoft(val accessToken: String, val deviceInf
     private var chain: AsciiString? = null
         get() {
             if (field == null || chainExpires < Instant.now().epochSecond) {
+                println("FETCH")
                 field = AsciiString(fetchChain(identityToken, keyPair).also {
                     val json = JsonParser.parseReader(base64Decode(
                         JsonParser.parseString(it).asJsonObject.getAsJsonArray("chain").get(0).asString.split(".")[1])
@@ -60,7 +59,6 @@ class RakNetRelaySessionListenerMicrosoft(val accessToken: String, val deviceInf
 
     fun forceFetchChain() {
         chain
-        println(chain)
     }
 
     override fun onPacketInbound(packet: BedrockPacket): Boolean {

@@ -128,7 +128,7 @@ class RakNetRelaySession(val clientsideSession: RakNetServerSession,
         if (isClientside) {
             clientsideSession.send(finalPayload)
         } else {
-            if (serversideSession.state != RakNetState.CONNECTED && serversideSession.state != RakNetState.UNCONNECTED) {
+            if (serversideSession.state != RakNetState.CONNECTED) {
                 pendingPackets.add(finalPayload)
             } else {
                 serversideSession.send(finalPayload)

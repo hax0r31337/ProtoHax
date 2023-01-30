@@ -2,7 +2,6 @@ package dev.sora.relay.cheat.config
 
 import dev.sora.relay.cheat.module.ModuleManager
 import dev.sora.relay.utils.logError
-import dev.sora.relay.utils.logInfo
 import java.io.File
 import java.io.InputStream
 
