@@ -87,6 +87,7 @@ class RakNetRelaySessionListenerMicrosoft(val accessToken: String, val deviceInf
                 session.inboundPacket(DisconnectPacket().apply {
                     kickMessage = e.toString()
                 })
+                logError("login failed", e)
             }
             logInfo("login success")
         }
