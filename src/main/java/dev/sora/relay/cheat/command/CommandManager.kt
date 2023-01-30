@@ -25,7 +25,7 @@ class CommandManager(private val session: GameSession) : Listener {
     fun init(moduleManager: ModuleManager) {
         registerCommand(CommandToggle(moduleManager))
         moduleManager.modules.forEach {
-            if (it.getValues().isEmpty()) return@forEach
+            if (it.values.isEmpty()) return@forEach
             registerCommand(CommandModule(it))
         }
     }

@@ -7,7 +7,6 @@ import com.nukkitx.protocol.bedrock.data.inventory.TransactionType
 import com.nukkitx.protocol.bedrock.packet.InventoryTransactionPacket
 import com.nukkitx.protocol.bedrock.packet.UpdateBlockPacket
 import dev.sora.relay.cheat.module.CheatModule
-import dev.sora.relay.cheat.value.ListValue
 import dev.sora.relay.game.entity.EntityPlayerSP
 import dev.sora.relay.game.event.EventTick
 import dev.sora.relay.game.event.Listen
@@ -17,7 +16,7 @@ import dev.sora.relay.game.world.WorldClient
 
 class ModuleBlockFly : CheatModule("BlockFly") {
 
-    private val swingValue = ListValue("Swing", arrayOf("Both", "Client", "Server", "None"), "Server")
+    private val swingValue = listValue("Swing", arrayOf("Both", "Client", "Server", "None"), "Server")
 
     private val extendableFacing = arrayOf(EnumFacing.WEST, EnumFacing.EAST, EnumFacing.UP, EnumFacing.SOUTH, EnumFacing.NORTH)
 

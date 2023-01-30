@@ -8,9 +8,6 @@ import com.nukkitx.protocol.bedrock.data.command.CommandPermission
 import com.nukkitx.protocol.bedrock.data.entity.EntityEventType
 import com.nukkitx.protocol.bedrock.packet.*
 import dev.sora.relay.cheat.module.CheatModule
-import dev.sora.relay.cheat.value.BoolValue
-import dev.sora.relay.cheat.value.FloatValue
-import dev.sora.relay.cheat.value.ListValue
 import dev.sora.relay.game.event.EventPacketInbound
 import dev.sora.relay.game.event.EventPacketOutbound
 import dev.sora.relay.game.event.EventTick
@@ -22,10 +19,10 @@ import kotlin.math.sin
 
 class ModuleFly : CheatModule("Fly") {
 
-    private val modeValue = ListValue("Mode", arrayOf("Vanilla", "Jetpack", "Mineplex"), "Vanilla")
-    private val speedValue = FloatValue("Speed", 1.5f, 0.1f, 5f)
-    private val mineplexDirectValue = BoolValue("MineplexDirect", false)
-    private val mineplexMotionValue = BoolValue("MineplexMotion", false)
+    private val modeValue = listValue("Mode", arrayOf("Vanilla", "Jetpack", "Mineplex"), "Vanilla")
+    private val speedValue = floatValue("Speed", 1.5f, 0.1f, 5f)
+    private val mineplexDirectValue = boolValue("MineplexDirect", false)
+    private val mineplexMotionValue = boolValue("MineplexMotion", false)
 
     private var launchY = 0.0
     private var canFly = false

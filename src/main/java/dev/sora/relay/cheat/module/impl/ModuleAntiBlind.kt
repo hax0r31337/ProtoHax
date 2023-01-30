@@ -2,7 +2,6 @@ package dev.sora.relay.cheat.module.impl
 
 import com.nukkitx.protocol.bedrock.packet.MobEffectPacket
 import dev.sora.relay.cheat.module.CheatModule
-import dev.sora.relay.cheat.value.BoolValue
 import dev.sora.relay.game.event.EventPacketInbound
 import dev.sora.relay.game.event.EventTick
 import dev.sora.relay.game.event.Listen
@@ -10,8 +9,8 @@ import dev.sora.relay.game.utils.constants.Effect
 
 class ModuleAntiBlind : CheatModule("AntiBlind") {
 
-    private val nightVisionValue = BoolValue("NightVision", true)
-    private val removeBadEffectsValue = BoolValue("RemoveBadEffects", true)
+    private val nightVisionValue = boolValue("NightVision", true)
+    private val removeBadEffectsValue = boolValue("RemoveBadEffects", true)
 
     @Listen
     fun onTick(event: EventTick){

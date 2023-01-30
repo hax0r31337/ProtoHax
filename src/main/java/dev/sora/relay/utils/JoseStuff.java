@@ -1,6 +1,5 @@
 package dev.sora.relay.utils;
 
-import java.lang.reflect.Method;
 import java.security.SignatureException;
 
 //edited from, https://github.com/auth0/java-jwt/blob/master/lib/src/main/java/com/auth0/jwt/algorithms/ECDSAAlgorithm.java
@@ -58,11 +57,5 @@ public class JoseStuff {
         System.arraycopy(derSignature, offset + Math.max(-sPadding, 0), joseSignature, ecNumberSize + Math.max(sPadding, 0), sLength + Math.min(sPadding, 0));
 
         return joseSignature;
-    }
-
-    public static Object cloneObj(Object obj) throws Exception {
-        Method m = obj.getClass().getMethod("clone");
-        m.setAccessible(true);
-        return m.invoke(obj);
     }
 }

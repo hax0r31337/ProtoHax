@@ -3,10 +3,6 @@ package dev.sora.relay.cheat.module.impl
 import com.nukkitx.math.vector.Vector3f
 import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.cheat.module.impl.ModuleAntiBot.isBot
-import dev.sora.relay.cheat.value.BoolValue
-import dev.sora.relay.cheat.value.FloatValue
-import dev.sora.relay.cheat.value.IntValue
-import dev.sora.relay.cheat.value.ListValue
 import dev.sora.relay.game.entity.EntityPlayer
 import dev.sora.relay.game.entity.EntityPlayerSP
 import dev.sora.relay.game.event.EventTick
@@ -18,14 +14,14 @@ import kotlin.math.pow
 
 class ModuleKillAura : CheatModule("KillAura") {
 
-    private val cpsValue = IntValue("CPS", 7, 1, 20)
-    private val rangeValue = FloatValue("Range", 3.7f, 2f, 7f)
-    private val attackModeValue = ListValue("AttackMode", arrayOf("Single", "Multi"), "Single")
-    private val rotationModeValue = ListValue("RotationMode", arrayOf("Lock", "None"), "Lock")
-    private val swingValue = ListValue("Swing", arrayOf("Both", "Client", "Server", "None"), "Both")
-    private val swingSoundValue = BoolValue("SwingSound", true)
-    private val failRateValue = FloatValue("FailRate", 0f, 0f, 1f)
-    private val failSoundValue = BoolValue("FailSound", true)
+    private val cpsValue = intValue("CPS", 7, 1, 20)
+    private val rangeValue = floatValue("Range", 3.7f, 2f, 7f)
+    private val attackModeValue = listValue("AttackMode", arrayOf("Single", "Multi"), "Single")
+    private val rotationModeValue = listValue("RotationMode", arrayOf("Lock", "None"), "Lock")
+    private val swingValue = listValue("Swing", arrayOf("Both", "Client", "Server", "None"), "Both")
+    private val swingSoundValue = boolValue("SwingSound", true)
+    private val failRateValue = floatValue("FailRate", 0f, 0f, 1f)
+    private val failSoundValue = boolValue("FailSound", true)
 
     private val clickTimer = ClickTimer()
 

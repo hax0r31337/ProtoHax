@@ -4,7 +4,6 @@ import com.google.gson.JsonParser
 import com.nukkitx.protocol.bedrock.data.ResourcePackType
 import com.nukkitx.protocol.bedrock.packet.*
 import dev.sora.relay.cheat.module.CheatModule
-import dev.sora.relay.cheat.value.BoolValue
 import dev.sora.relay.game.event.EventPacketInbound
 import dev.sora.relay.game.event.EventPacketOutbound
 import dev.sora.relay.game.event.Listen
@@ -19,7 +18,7 @@ object ModuleResourcePackSpoof : CheatModule("ResourcePackSpoof") {
 
     private const val RESOURCE_PACK_CHUNK_SIZE = 8 * 1024
 
-    private val acceptServerPacks = BoolValue("AcceptServerPacks", false)
+    private val acceptServerPacks = boolValue("AcceptServerPacks", false)
     var resourcePackProvider: IResourcePackProvider = EmptyResourcePackProvider()
 
     @Listen

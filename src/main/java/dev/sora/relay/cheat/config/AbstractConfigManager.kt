@@ -66,7 +66,7 @@ abstract class AbstractConfigManager(val moduleManager: ModuleManager) {
 
             if (!moduleJson.has("values")) return@forEach
             val valuesJson = moduleJson.getAsJsonObject("values")
-            it.getValues().forEach { v ->
+            it.values.forEach { v ->
                 if (!valuesJson.has(v.name)) return@forEach
                 v.fromJson(valuesJson.get(v.name))
             }
@@ -79,7 +79,7 @@ abstract class AbstractConfigManager(val moduleManager: ModuleManager) {
         moduleManager.modules.forEach {
             val moduleJson = JsonObject()
             moduleJson.addProperty("state", it.state)
-            it.getValues().also { values ->
+            it.values.also { values ->
                 if (values.isNotEmpty()) {
                     val valuesJson = JsonObject()
                     values.forEach { v ->

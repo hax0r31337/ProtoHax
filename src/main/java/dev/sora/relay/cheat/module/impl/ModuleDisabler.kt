@@ -5,14 +5,13 @@ import com.nukkitx.protocol.bedrock.packet.MovePlayerPacket
 import com.nukkitx.protocol.bedrock.packet.NetworkStackLatencyPacket
 import com.nukkitx.protocol.bedrock.packet.PlayerAuthInputPacket
 import dev.sora.relay.cheat.module.CheatModule
-import dev.sora.relay.cheat.value.ListValue
 import dev.sora.relay.game.event.EventPacketOutbound
 import dev.sora.relay.game.event.EventTick
 import dev.sora.relay.game.event.Listen
 
 class ModuleDisabler : CheatModule("Disabler") {
 
-    private val modeValue = ListValue("Mode", arrayOf("Lifeboat","Mineplex","CubeCraft"), "Lifeboat")
+    private val modeValue = listValue("Mode", arrayOf("Lifeboat","Mineplex","CubeCraft"), "Lifeboat")
 
     @Listen
     fun onPacketOutbound(event: EventPacketOutbound) {
