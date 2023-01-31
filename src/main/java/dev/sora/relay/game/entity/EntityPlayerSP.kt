@@ -33,6 +33,21 @@ class EntityPlayerSP(private val session: GameSession) : EntityPlayer(0L, UUID.r
 
     var silentRotation: Pair<Float, Float>? = null
 
+    var prevRotationYaw = 0f
+    var prevRotationPitch = 0f
+    private var lastTick = 0L
+    val renderPartialTicks: Float
+        get() {
+            val cur = System.currentTimeMillis()
+            return (cur - lastTick).coerceIn(0L, 50L) / 50f
+        }
+
+    override fun rotate(yaw: Float, pitch: Float) {
+        this.prevRotationYaw = rotationYaw
+        this.prevRotationPitch = rotationPitch
+        super.rotate(yaw, pitch)
+    }
+
     fun teleport(x: Double, y: Double, z: Double, netSession: RakNetRelaySession) {
         move(x, y, z)
         netSession.inboundPacket(MovePlayerPacket().apply {
@@ -52,6 +67,11 @@ class EntityPlayerSP(private val session: GameSession) : EntityPlayer(0L, UUID.r
         super.reset()
         inventory.reset()
         username = ""
+    }
+
+    @Listen
+    fun onTick(event: EventTick) {
+        lastTick = System.currentTimeMillis()
     }
 
     @Listen
