@@ -7,7 +7,7 @@ import dev.sora.relay.game.event.Listen
 
 class ModuleVelocity : CheatModule("Velocity") {
 
-    private val modeValue = listValue("Mode", arrayOf("Cancel", "Simple"), "Vanilla")
+    private val modeValue = listValue("Mode", arrayOf("Cancel", "Simple","Vanilla"), "Vanilla")
     private val horizontalValue = floatValue("Horizontal", 0f, 0f, 1f)
     private val verticalValue = floatValue("Vertical", 0f, 0f, 1f)
 
