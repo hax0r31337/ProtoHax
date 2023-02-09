@@ -21,7 +21,7 @@ configurations {
 }
 
 dependencies {
-    embed('com.nukkitx.protocol:bedrock-v560:2.9.15-SNAPSHOT') {
+    embed('com.nukkitx.protocol:bedrock-v567:2.9.16-SNAPSHOT') {
         exclude group: 'com.nukkitx.network'
         exclude group: 'com.nukkitx', module: 'natives'
     }
