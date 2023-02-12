@@ -76,4 +76,13 @@ abstract class AbstractInventory(val containerId: Int) {
             it.item = content[slot]
         })
     }
+
+    open fun searchForItem(range: IntRange, condition: (ItemData) -> Boolean): Int? {
+        for (i in range) {
+            if (condition(content[i])) {
+                return i
+            }
+        }
+        return null
+    }
 }

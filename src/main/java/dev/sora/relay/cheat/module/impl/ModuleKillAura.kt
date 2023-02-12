@@ -7,6 +7,7 @@ import dev.sora.relay.game.entity.EntityPlayer
 import dev.sora.relay.game.entity.EntityPlayerSP
 import dev.sora.relay.game.event.EventTick
 import dev.sora.relay.game.event.Listen
+import dev.sora.relay.game.utils.toRotation
 import dev.sora.relay.utils.timing.ClickTimer
 import java.lang.Math.atan2
 import java.lang.Math.sqrt
@@ -58,21 +59,9 @@ class ModuleKillAura : CheatModule("KillAura") {
         }
 
         if (rotationModeValue.get() == "Lock") {
-            session.thePlayer.silentRotation = toRotation(session.thePlayer.vec3Position, aimTarget.vec3Position).let {
-                (it.first - session.thePlayer.rotationYaw) * 0.8f + session.thePlayer.rotationYaw to it.second
-            }
+            session.thePlayer.silentRotation = toRotation(session.thePlayer.vec3Position, aimTarget.vec3Position)
         }
 
         clickTimer.update(cpsValue.get(), cpsValue.get() + 1)
-    }
-
-    private fun toRotation(from: Vector3f, to: Vector3f): Pair<Float, Float> {
-        val diffX = (to.x - from.x).toDouble()
-        val diffY = (to.y - from.y).toDouble()
-        val diffZ = (to.z - from.z).toDouble()
-        return Pair(
-            ((-Math.toDegrees(atan2(diffY, sqrt(diffX * diffX + diffZ * diffZ)))).toFloat()),
-            (Math.toDegrees(atan2(diffZ, diffX)).toFloat() - 90f)
-        )
     }
 }

@@ -1,4 +1,4 @@
-package dev.sora.relay.game.utils
+package dev.sora.relay.game.management
 
 import com.nukkitx.protocol.bedrock.packet.ClientCacheBlobStatusPacket
 import com.nukkitx.protocol.bedrock.packet.ClientCacheMissResponsePacket

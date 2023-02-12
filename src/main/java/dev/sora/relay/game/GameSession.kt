@@ -7,7 +7,7 @@ import dev.sora.relay.RakNetRelaySession
 import dev.sora.relay.RakNetRelaySessionListener
 import dev.sora.relay.game.entity.EntityPlayerSP
 import dev.sora.relay.game.event.*
-import dev.sora.relay.game.utils.BlobCacheManager
+import dev.sora.relay.game.management.BlobCacheManager
 import dev.sora.relay.game.utils.mapping.BlockMappingUtils
 import dev.sora.relay.game.utils.mapping.EmptyRuntimeMapping
 import dev.sora.relay.game.utils.mapping.RuntimeMapping
