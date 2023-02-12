@@ -2,6 +2,7 @@ package dev.sora.relay.game.world.chunk
 
 import dev.sora.relay.game.utils.mapping.RuntimeMapping
 import io.netty.buffer.ByteBuf
+import java.lang.UnsupportedOperationException
 
 class ChunkSection(private val blockMapping: RuntimeMapping,
                    private val legacyBlockMapping: RuntimeMapping) {
@@ -9,18 +10,29 @@ class ChunkSection(private val blockMapping: RuntimeMapping,
     var storage = BlockStorage(blockMapping)
         private set
 
+    /**
+     * deserialize chunk into blocks
+     * credit:
+     * https://github.com/CloudburstMC/Nukkit/blob/b391d4ddd0a6db7eb1c830f5a5477f5a6d3ea459/src/main/java/cn/nukkit/level/format/generic/serializer/NetworkChunkSerializer.java
+     * https://github.com/DavyCraft648/Barrel/blob/main/src/ebd52e4a7b7fa17e2d3f206690e4516088eff71c/java/org/barrelmc/barrel/network/translator/bedrock/LevelChunkPacket.java
+     */
     fun read(buf: ByteBuf) {
         val version = buf.readByte().toInt()
         if (version == 0) {
             // PocketMine-MP still using this format
             readLegacy(buf)
-        } else {
+        } else if (version == 1 || version in 8..10) {
             readModern(buf, version)
+        } else {
+            throw UnsupportedOperationException("chunk version not supported: $version")
         }
     }
 
     private fun readModern(buf: ByteBuf, version: Int) {
         val layers = if(version == 1) 1 else buf.readByte().toInt()
+        if (version == 9) {
+            buf.readByte()
+        }
         if (layers == 0) return
         storage = BlockStorage(buf, blockMapping)
 

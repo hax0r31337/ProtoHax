@@ -7,6 +7,7 @@ import dev.sora.relay.RakNetRelaySession
 import dev.sora.relay.RakNetRelaySessionListener
 import dev.sora.relay.game.entity.EntityPlayerSP
 import dev.sora.relay.game.event.*
+import dev.sora.relay.game.utils.BlobCacheManager
 import dev.sora.relay.game.utils.mapping.BlockMappingUtils
 import dev.sora.relay.game.utils.mapping.EmptyRuntimeMapping
 import dev.sora.relay.game.utils.mapping.RuntimeMapping
@@ -16,6 +17,8 @@ class GameSession : RakNetRelaySessionListener.PacketListener {
 
     val thePlayer = EntityPlayerSP(this)
     val theWorld = WorldClient(this)
+
+    val cacheManager = BlobCacheManager()
 
     val eventManager = EventManager()
 
@@ -30,6 +33,7 @@ class GameSession : RakNetRelaySessionListener.PacketListener {
     init {
         eventManager.registerListener(thePlayer)
         eventManager.registerListener(theWorld)
+        eventManager.registerListener(cacheManager)
     }
 
     override fun onPacketInbound(packet: BedrockPacket): Boolean {

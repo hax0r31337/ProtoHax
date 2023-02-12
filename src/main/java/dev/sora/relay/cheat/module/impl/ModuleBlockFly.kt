@@ -13,6 +13,7 @@ import dev.sora.relay.game.event.Listen
 import dev.sora.relay.game.utils.AxisAlignedBB
 import dev.sora.relay.game.utils.constants.EnumFacing
 import dev.sora.relay.game.world.WorldClient
+import dev.sora.relay.utils.logInfo
 
 class ModuleBlockFly : CheatModule("BlockFly") {
 
@@ -25,17 +26,19 @@ class ModuleBlockFly : CheatModule("BlockFly") {
         val session = event.session
         val world = session.theWorld
         val airId = session.blockMapping.runtime("minecraft:air")
+        logInfo(world.getBlockAt(session.thePlayer.posX.toInt(), (session.thePlayer.posY - 2.62).toInt(),
+            session.thePlayer.posZ.toInt()))
         val possibilities = searchBlocks(session.thePlayer.posX, session.thePlayer.posY - 1.62,
             session.thePlayer.posZ, 1, world, airId)
         val block = possibilities.firstOrNull() ?: return
         val facing = getFacing(block, world, airId) ?: return
 
         val id = session.blockMapping.runtime("minecraft:planks[wood_type=oak]")
-       session.netSession.inboundPacket(UpdateBlockPacket().apply {
-           blockPosition = block
-           runtimeId = id
-       })
-       session.theWorld.setBlockIdAt(block.x, block.y, block.z, id)
+        session.netSession.inboundPacket(UpdateBlockPacket().apply {
+            blockPosition = block
+            runtimeId = id
+        })
+        world.setBlockIdAt(block.x, block.y, block.z, id)
         session.sendPacket(InventoryTransactionPacket().apply {
             transactionType = TransactionType.ITEM_USE
             actionType = 0
