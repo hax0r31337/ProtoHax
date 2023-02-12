@@ -18,27 +18,29 @@ import dev.sora.relay.utils.logInfo
 class ModuleBlockFly : CheatModule("BlockFly") {
 
     private val swingValue = listValue("Swing", arrayOf("Both", "Client", "Server", "None"), "Server")
+    private val heldBlockValue = boolValue("HeldBlock", true)
 
     private val extendableFacing = arrayOf(EnumFacing.WEST, EnumFacing.EAST, EnumFacing.UP, EnumFacing.SOUTH, EnumFacing.NORTH)
 
     @Listen
     fun onTick(event: EventTick) {
         val session = event.session
+        val heldBlockId = session.thePlayer.inventory.hand.blockRuntimeId
+        if (heldBlockValue.get() && heldBlockId == 0) return
+
         val world = session.theWorld
         val airId = session.blockMapping.runtime("minecraft:air")
-        logInfo(world.getBlockAt(session.thePlayer.posX.toInt(), (session.thePlayer.posY - 2.62).toInt(),
-            session.thePlayer.posZ.toInt()))
         val possibilities = searchBlocks(session.thePlayer.posX, session.thePlayer.posY - 1.62,
             session.thePlayer.posZ, 1, world, airId)
         val block = possibilities.firstOrNull() ?: return
         val facing = getFacing(block, world, airId) ?: return
 
-        val id = session.blockMapping.runtime("minecraft:planks[wood_type=oak]")
+//        val id = session.blockMapping.runtime("minecraft:planks[wood_type=oak]")
         session.netSession.inboundPacket(UpdateBlockPacket().apply {
             blockPosition = block
-            runtimeId = id
+            runtimeId = heldBlockId
         })
-        world.setBlockIdAt(block.x, block.y, block.z, id)
+        world.setBlockIdAt(block.x, block.y, block.z, heldBlockId)
         session.sendPacket(InventoryTransactionPacket().apply {
             transactionType = TransactionType.ITEM_USE
             actionType = 0

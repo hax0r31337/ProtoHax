@@ -29,7 +29,7 @@ class ChunkSection(private val blockMapping: RuntimeMapping,
 
     private fun readModern(buf: ByteBuf, version: Int) {
         val layers = if(version == 1) 1 else buf.readByte().toInt()
-        if (version == 9) {
+        if (version >= 9) {
             buf.readByte()
         }
         if (layers == 0) return
