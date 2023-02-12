@@ -2,7 +2,6 @@ package dev.sora.relay.game.world.chunk
 
 import dev.sora.relay.game.utils.mapping.RuntimeMapping
 import io.netty.buffer.ByteBuf
-import java.lang.UnsupportedOperationException
 
 class ChunkSection(private val blockMapping: RuntimeMapping,
                    private val legacyBlockMapping: RuntimeMapping) {
@@ -14,7 +13,7 @@ class ChunkSection(private val blockMapping: RuntimeMapping,
      * deserialize chunk into blocks
      * credit:
      * https://github.com/CloudburstMC/Nukkit/blob/b391d4ddd0a6db7eb1c830f5a5477f5a6d3ea459/src/main/java/cn/nukkit/level/format/generic/serializer/NetworkChunkSerializer.java
-     * https://github.com/DavyCraft648/Barrel/blob/main/src/ebd52e4a7b7fa17e2d3f206690e4516088eff71c/java/org/barrelmc/barrel/network/translator/bedrock/LevelChunkPacket.java
+     * https://github.com/DavyCraft648/Barrel/blob/ebd52e4a7b7fa17e2d3f206690e4516088eff71c/src/main/java/org/barrelmc/barrel/network/translator/bedrock/LevelChunkPacket.java
      */
     fun read(buf: ByteBuf) {
         val version = buf.readByte().toInt()
