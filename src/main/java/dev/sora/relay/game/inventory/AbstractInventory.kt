@@ -85,4 +85,44 @@ abstract class AbstractInventory(val containerId: Int) {
         }
         return null
     }
+
+    open fun searchForItem(condition: (ItemData) -> Boolean): Int? {
+        content.forEachIndexed { i, item ->
+            if (condition(item)) {
+                return i
+            }
+        }
+        return null
+    }
+
+    open fun searchForItemIndexed(condition: (Int, ItemData) -> Boolean): Int? {
+        content.forEachIndexed { i, item ->
+            if (condition(i, item)) {
+                return i
+            }
+        }
+        return null
+    }
+
+    open fun findEmptySlot(): Int? {
+        content.forEachIndexed { i, item ->
+            if (item == ItemData.AIR) {
+                return i
+            }
+        }
+        return null
+    }
+
+    open fun findBestItem(judge: (ItemData) -> Float): Int? {
+        var slot: Int? = null
+        var credit = 0f
+        content.forEachIndexed { i, item ->
+            val score = judge(item)
+            if (score > credit) {
+                credit = score
+                slot = i
+            }
+        }
+        return slot
+    }
 }

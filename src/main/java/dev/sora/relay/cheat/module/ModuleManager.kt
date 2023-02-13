@@ -30,6 +30,6 @@ class ModuleManager(private val session: GameSession) {
         registerModule(ModuleFastBreak())
         registerModule(ModuleBlink())
         registerModule(ModuleBlockFly())
-        registerModule(ModuleComboOneHitExploit())
+        registerModule(ModuleInventoryHelper())
     }
 }

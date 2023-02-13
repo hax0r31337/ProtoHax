@@ -69,6 +69,15 @@ class PlayerInventory : EntityInventory(0L) {
         else error("invalid slot: $slot")
     }
 
+    override fun findEmptySlot(): Int? {
+        for (i in 0 until 36) {
+            if (content[i] == ItemData.AIR) {
+                return i
+            }
+        }
+        return null
+    }
+
     override var hand: ItemData
         get() = content[heldItemSlot]
         set(value) { content[heldItemSlot] = value }
@@ -88,4 +97,11 @@ class PlayerInventory : EntityInventory(0L) {
     override var boots: ItemData
         get() = content[39]
         set(value) { content[39] = value }
+
+    companion object {
+        const val SLOT_HELMET = 36
+        const val SLOT_CHESTPLATE = 37
+        const val SLOT_LEGGINGS = 38
+        const val SLOT_BOOTS = 39
+    }
 }

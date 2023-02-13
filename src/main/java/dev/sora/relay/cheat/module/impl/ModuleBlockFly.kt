@@ -14,6 +14,7 @@ import dev.sora.relay.game.event.EventTick
 import dev.sora.relay.game.event.Listen
 import dev.sora.relay.game.utils.AxisAlignedBB
 import dev.sora.relay.game.utils.constants.EnumFacing
+import dev.sora.relay.game.utils.mapping.isBlock
 import dev.sora.relay.game.utils.toRotation
 import dev.sora.relay.game.utils.toVector3f
 import dev.sora.relay.game.world.WorldClient
@@ -88,9 +89,9 @@ class ModuleBlockFly : CheatModule("BlockFly") {
 
     private fun switchToBlock(): Boolean {
         return when(heldBlockValue.get()) {
-            "Manual" -> session.thePlayer.inventory.hand.blockRuntimeId != 0
+            "Manual" -> session.thePlayer.inventory.hand.isBlock()
             "Auto" -> {
-                if (session.thePlayer.inventory.hand.blockRuntimeId == 0) {
+                if (!session.thePlayer.inventory.hand.isBlock()) {
                     val slot = session.thePlayer.inventory.searchForItem(0..8) {
                         it.blockRuntimeId != 0
                     } ?: return false

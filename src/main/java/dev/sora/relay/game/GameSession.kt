@@ -8,9 +8,7 @@ import dev.sora.relay.RakNetRelaySessionListener
 import dev.sora.relay.game.entity.EntityPlayerSP
 import dev.sora.relay.game.event.*
 import dev.sora.relay.game.management.BlobCacheManager
-import dev.sora.relay.game.utils.mapping.BlockMappingUtils
-import dev.sora.relay.game.utils.mapping.EmptyRuntimeMapping
-import dev.sora.relay.game.utils.mapping.RuntimeMapping
+import dev.sora.relay.game.utils.mapping.*
 import dev.sora.relay.game.world.WorldClient
 
 class GameSession : RakNetRelaySessionListener.PacketListener {
@@ -24,6 +22,7 @@ class GameSession : RakNetRelaySessionListener.PacketListener {
 
     lateinit var netSession: RakNetRelaySession
 
+    var itemMapping: ItemMapping = ItemMapping(emptyList())
     var blockMapping: RuntimeMapping = EmptyRuntimeMapping()
     var legacyBlockMapping: RuntimeMapping = EmptyRuntimeMapping()
 
@@ -56,6 +55,7 @@ class GameSession : RakNetRelaySessionListener.PacketListener {
         if (packet is LoginPacket) {
             blockMapping = BlockMappingUtils.craftMapping(packet.protocolVersion)
             legacyBlockMapping = BlockMappingUtils.craftMapping(packet.protocolVersion, "legacy")
+            itemMapping = ItemMappingUtils.craftMapping(packet.protocolVersion)
         }
 
         return true
@@ -85,7 +85,7 @@ class GameSession : RakNetRelaySessionListener.PacketListener {
         if (event.isCanceled()) {
             return
         }
-        netSession.outboundPacket(packet)
+        netSession.inboundPacket(packet)
     }
 
     companion object {
