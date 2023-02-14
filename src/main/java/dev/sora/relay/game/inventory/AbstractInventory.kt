@@ -1,11 +1,11 @@
 package dev.sora.relay.game.inventory
 
-import com.nukkitx.protocol.bedrock.data.inventory.InventoryActionData
-import com.nukkitx.protocol.bedrock.data.inventory.InventorySource
-import com.nukkitx.protocol.bedrock.data.inventory.ItemData
-import com.nukkitx.protocol.bedrock.data.inventory.TransactionType
+import com.nukkitx.protocol.bedrock.BedrockPacket
+import com.nukkitx.protocol.bedrock.data.inventory.*
+import com.nukkitx.protocol.bedrock.data.inventory.stackrequestactions.PlaceStackRequestActionData
 import com.nukkitx.protocol.bedrock.packet.InventorySlotPacket
 import com.nukkitx.protocol.bedrock.packet.InventoryTransactionPacket
+import com.nukkitx.protocol.bedrock.packet.ItemStackRequestPacket
 import dev.sora.relay.game.GameSession
 
 abstract class AbstractInventory(val containerId: Int) {
@@ -20,32 +20,53 @@ abstract class AbstractInventory(val containerId: Int) {
         return containerId to slot
     }
 
-    open fun moveItem(sourceSlot: Int, destinationSlot: Int, destinationInventory: AbstractInventory): InventoryTransactionPacket {
+    private fun getSlotTypeFromInventoryId(id: Int, slot: Int): ContainerSlotType? {
+        return when(id) {
+            ContainerId.INVENTORY -> (if (slot < 9) ContainerSlotType.HOTBAR else ContainerSlotType.INVENTORY)
+            ContainerId.ARMOR -> ContainerSlotType.ARMOR
+            ContainerId.OFFHAND -> ContainerSlotType.OFFHAND
+            else -> ContainerSlotType.CONTAINER
+        }
+    }
+
+    open fun moveItem(sourceSlot: Int, destinationSlot: Int, destinationInventory: AbstractInventory, serverAuthoritative: Int): BedrockPacket {
         val sourceInfo = getNetworkSlotInfo(sourceSlot)
         val destinationInfo = destinationInventory.getNetworkSlotInfo(destinationSlot)
-        return InventoryTransactionPacket().apply {
-            transactionType = TransactionType.NORMAL
-            actions.add(InventoryActionData(InventorySource.fromContainerWindowId(sourceInfo.first), sourceInfo.second,
-                content[sourceSlot], destinationInventory.content[destinationSlot]))
-            actions.add(InventoryActionData(InventorySource.fromContainerWindowId(destinationInfo.first), destinationInfo.second,
-                destinationInventory.content[destinationSlot], content[sourceSlot]))
+        return if (serverAuthoritative != Int.MAX_VALUE) {
+            ItemStackRequestPacket().also {
+                it.requests.add(ItemStackRequest(serverAuthoritative,
+                    arrayOf(PlaceStackRequestActionData(content[sourceSlot].count.toByte(),
+                    StackRequestSlotInfoData(getSlotTypeFromInventoryId(sourceInfo.first, sourceInfo.second), sourceInfo.second.toByte(), content[sourceSlot].netId),
+                    StackRequestSlotInfoData(getSlotTypeFromInventoryId(destinationInfo.first, destinationInfo.second), destinationInfo.second.toByte(), destinationInventory.content[destinationSlot].netId))),
+                    arrayOf(), null
+                ))
+            }
+        } else {
+            InventoryTransactionPacket().apply {
+                transactionType = TransactionType.NORMAL
+                actions.add(InventoryActionData(InventorySource.fromContainerWindowId(sourceInfo.first), sourceInfo.second,
+                    content[sourceSlot], destinationInventory.content[destinationSlot]))
+                actions.add(InventoryActionData(InventorySource.fromContainerWindowId(destinationInfo.first), destinationInfo.second,
+                    destinationInventory.content[destinationSlot], content[sourceSlot]))
+            }
         }
     }
 
     open fun moveItem(sourceSlot: Int, destinationSlot: Int, destinationInventory: AbstractInventory, session: GameSession) {
         // send packet to server
-        val pk = moveItem(sourceSlot, destinationSlot, destinationInventory)
+        val pk = moveItem(sourceSlot, destinationSlot, destinationInventory,
+            if (session.inventoriesServerAuthoritative) session.thePlayer.inventory.getRequestId() else Int.MAX_VALUE)
+        val sourceInfo = getNetworkSlotInfo(sourceSlot)
+        val destinationInfo = destinationInventory.getNetworkSlotInfo(destinationSlot)
         session.sendPacket(pk)
 
         // sync with client
-        val sourceInfo = getNetworkSlotInfo(sourceSlot)
-        session.netSession.inboundPacket(InventorySlotPacket().apply {
+        session.sendPacketToClient(InventorySlotPacket().apply {
             containerId = sourceInfo.first
             slot = sourceInfo.second
             item = content[sourceSlot]
         })
-        val destinationInfo = destinationInventory.getNetworkSlotInfo(destinationSlot)
-        session.netSession.inboundPacket(InventorySlotPacket().apply {
+        session.sendPacketToClient(InventorySlotPacket().apply {
             containerId = destinationInfo.first
             slot = destinationInfo.second
             item = destinationInventory.content[destinationSlot]
@@ -56,10 +77,10 @@ abstract class AbstractInventory(val containerId: Int) {
         val info = getNetworkSlotInfo(slot)
         return InventoryTransactionPacket().apply {
             transactionType = TransactionType.NORMAL
-            actions.add(InventoryActionData(InventorySource.fromContainerWindowId(info.first), info.second,
-                content[slot], ItemData.AIR))
             actions.add(InventoryActionData(InventorySource.fromWorldInteraction(InventorySource.Flag.DROP_ITEM), 0,
                 ItemData.AIR, content[slot]))
+            actions.add(InventoryActionData(InventorySource.fromContainerWindowId(info.first), info.second,
+                content[slot], ItemData.AIR))
         }
     }
 
@@ -70,7 +91,7 @@ abstract class AbstractInventory(val containerId: Int) {
 
         // sync with client
         val info = getNetworkSlotInfo(slot)
-        session.netSession.inboundPacket(InventorySlotPacket().also {
+        session.sendPacketToClient(InventorySlotPacket().also {
             it.containerId = info.first
             it.slot = info.second
             it.item = content[slot]

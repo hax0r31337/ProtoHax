@@ -18,6 +18,7 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper") {
 
     private val stealChestValue = boolValue("StealChest", true)
     private val guiOpenValue = boolValue("GuiOpen", false)
+    private val fakeOpenValue = boolValue("FakeOpen", true)
     private val autoCloseValue = boolValue("AutoClose", false)
     private val throwUnnecessaryValue = boolValue("ThrowUnnecessary", true)
     private val swingValue = listValue("Swing", arrayOf("Both", "Client", "Server", "None"), "Server")
@@ -146,7 +147,11 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper") {
         return sorts
     }
 
-    class Sort(val slot: Int, val judge: (ItemData, ItemMapping) -> Float) {
+//    privat`e fun checkFakeOpen(): Boolean {
+//
+//    }`
+
+    inner class Sort(val slot: Int, val judge: (ItemData, ItemMapping) -> Float) {
 
         constructor(slot: Int, judgeTag: String) : this(slot, { item, m ->
             val itemTags = m.tags(item)

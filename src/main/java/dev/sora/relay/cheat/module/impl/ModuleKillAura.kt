@@ -1,6 +1,5 @@
 package dev.sora.relay.cheat.module.impl
 
-import com.nukkitx.math.vector.Vector3f
 import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.cheat.module.impl.ModuleAntiBot.isBot
 import dev.sora.relay.game.entity.EntityPlayer
@@ -9,8 +8,6 @@ import dev.sora.relay.game.event.EventTick
 import dev.sora.relay.game.event.Listen
 import dev.sora.relay.game.utils.toRotation
 import dev.sora.relay.utils.timing.ClickTimer
-import java.lang.Math.atan2
-import java.lang.Math.sqrt
 import kotlin.math.pow
 
 class ModuleKillAura : CheatModule("KillAura") {

@@ -27,7 +27,7 @@ class EntityPlayerSP(private val session: GameSession) : EntityPlayer(0L, UUID.r
     var xuid = ""
         private set
 
-    override val inventory = PlayerInventory()
+    override val inventory = PlayerInventory(this)
     var openContainer: AbstractInventory? = null
         private set
 

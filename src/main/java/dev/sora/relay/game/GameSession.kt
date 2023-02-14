@@ -3,6 +3,7 @@ package dev.sora.relay.game
 import com.nukkitx.network.util.DisconnectReason
 import com.nukkitx.protocol.bedrock.BedrockPacket
 import com.nukkitx.protocol.bedrock.packet.LoginPacket
+import com.nukkitx.protocol.bedrock.packet.StartGamePacket
 import dev.sora.relay.RakNetRelaySession
 import dev.sora.relay.RakNetRelaySessionListener
 import dev.sora.relay.game.entity.EntityPlayerSP
@@ -23,8 +24,14 @@ class GameSession : RakNetRelaySessionListener.PacketListener {
     lateinit var netSession: RakNetRelaySession
 
     var itemMapping: ItemMapping = ItemMapping(emptyList())
+        private set
     var blockMapping: RuntimeMapping = EmptyRuntimeMapping()
+        private set
     var legacyBlockMapping: RuntimeMapping = EmptyRuntimeMapping()
+        private set
+
+    var inventoriesServerAuthoritative = false
+        private set
 
     val netSessionInitialized: Boolean
         get() = this::netSession.isInitialized
@@ -40,6 +47,10 @@ class GameSession : RakNetRelaySessionListener.PacketListener {
         eventManager.emit(event)
         if (event.isCanceled()) {
             return false
+        }
+
+        if (packet is StartGamePacket) {
+            inventoriesServerAuthoritative = packet.isInventoriesServerAuthoritative
         }
 
         return true

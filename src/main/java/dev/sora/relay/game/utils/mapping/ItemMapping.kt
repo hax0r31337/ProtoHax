@@ -27,6 +27,7 @@ class ItemMapping(data: List<Pair<String, Int>>) : RuntimeMappingImpl(data) {
                 || itemTags.contains(ItemMappingUtils.TAG_IS_AXE)
                 || itemTags.contains(ItemMappingUtils.TAG_IS_HOE)
                 || itemTags.contains(ItemMappingUtils.TAG_IS_SHOVEL)
+                || itemTags.contains(ItemMappingUtils.TAG_IS_FOOD)
                 || map(item) == "minecraft:shield"
     }
 

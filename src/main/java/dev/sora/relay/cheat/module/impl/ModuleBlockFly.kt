@@ -18,7 +18,6 @@ import dev.sora.relay.game.utils.mapping.isBlock
 import dev.sora.relay.game.utils.toRotation
 import dev.sora.relay.game.utils.toVector3f
 import dev.sora.relay.game.world.WorldClient
-import dev.sora.relay.utils.logInfo
 
 class ModuleBlockFly : CheatModule("BlockFly") {
 
