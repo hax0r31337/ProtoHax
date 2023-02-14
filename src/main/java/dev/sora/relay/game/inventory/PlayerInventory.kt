@@ -2,6 +2,7 @@ package dev.sora.relay.game.inventory
 
 import com.nukkitx.protocol.bedrock.BedrockPacket
 import com.nukkitx.protocol.bedrock.data.inventory.*
+import com.nukkitx.protocol.bedrock.data.inventory.stackrequestactions.DropStackRequestActionData
 import com.nukkitx.protocol.bedrock.data.inventory.stackrequestactions.PlaceStackRequestActionData
 import com.nukkitx.protocol.bedrock.packet.*
 import dev.sora.relay.game.entity.EntityPlayerSP
@@ -73,6 +74,14 @@ class PlayerInventory(private val player: EntityPlayerSP) : EntityInventory(0L) 
                 // TODO: better
                 dstItem.second(srcItem.first)
                 srcItem.second(dstItem.first)
+            }
+            it.actions.filterIsInstance<DropStackRequestActionData>().forEach { action ->
+                val slot = action.source.slot.toInt() + (getOffsetByContainerType(action.source.container) ?: return@forEach)
+                val item = content[slot]
+                item.count -= action.count
+                if (item.count == 0) {
+                    content[slot] = ItemData.AIR
+                }
             }
         }
     }

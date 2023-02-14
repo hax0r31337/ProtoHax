@@ -2,6 +2,7 @@ package dev.sora.relay.game.inventory
 
 import com.nukkitx.protocol.bedrock.BedrockPacket
 import com.nukkitx.protocol.bedrock.data.inventory.*
+import com.nukkitx.protocol.bedrock.data.inventory.stackrequestactions.DropStackRequestActionData
 import com.nukkitx.protocol.bedrock.data.inventory.stackrequestactions.PlaceStackRequestActionData
 import com.nukkitx.protocol.bedrock.packet.InventorySlotPacket
 import com.nukkitx.protocol.bedrock.packet.InventoryTransactionPacket
@@ -56,16 +57,16 @@ abstract class AbstractInventory(val containerId: Int) {
         // send packet to server
         val pk = moveItem(sourceSlot, destinationSlot, destinationInventory,
             if (session.inventoriesServerAuthoritative) session.thePlayer.inventory.getRequestId() else Int.MAX_VALUE)
-        val sourceInfo = getNetworkSlotInfo(sourceSlot)
-        val destinationInfo = destinationInventory.getNetworkSlotInfo(destinationSlot)
         session.sendPacket(pk)
 
         // sync with client
+        val sourceInfo = getNetworkSlotInfo(sourceSlot)
         session.sendPacketToClient(InventorySlotPacket().apply {
             containerId = sourceInfo.first
             slot = sourceInfo.second
             item = content[sourceSlot]
         })
+        val destinationInfo = destinationInventory.getNetworkSlotInfo(destinationSlot)
         session.sendPacketToClient(InventorySlotPacket().apply {
             containerId = destinationInfo.first
             slot = destinationInfo.second
@@ -73,20 +74,30 @@ abstract class AbstractInventory(val containerId: Int) {
         })
     }
 
-    open fun dropItem(slot: Int): InventoryTransactionPacket {
+    open fun dropItem(slot: Int, serverAuthoritative: Int): BedrockPacket {
         val info = getNetworkSlotInfo(slot)
-        return InventoryTransactionPacket().apply {
-            transactionType = TransactionType.NORMAL
-            actions.add(InventoryActionData(InventorySource.fromWorldInteraction(InventorySource.Flag.DROP_ITEM), 0,
-                ItemData.AIR, content[slot]))
-            actions.add(InventoryActionData(InventorySource.fromContainerWindowId(info.first), info.second,
-                content[slot], ItemData.AIR))
+        return if (serverAuthoritative != Int.MAX_VALUE) {
+            ItemStackRequestPacket().also {
+                it.requests.add(ItemStackRequest(serverAuthoritative,
+                    arrayOf(DropStackRequestActionData(content[slot].count.toByte(), StackRequestSlotInfoData(getSlotTypeFromInventoryId(info.first, info.second), info.second.toByte(), content[slot].netId), false)),
+                    arrayOf(), null
+                ))
+            }
+        } else {
+            InventoryTransactionPacket().apply {
+                transactionType = TransactionType.NORMAL
+                actions.add(InventoryActionData(InventorySource.fromWorldInteraction(InventorySource.Flag.DROP_ITEM), 0,
+                    ItemData.AIR, content[slot]))
+                actions.add(InventoryActionData(InventorySource.fromContainerWindowId(info.first), info.second,
+                    content[slot], ItemData.AIR))
+            }
         }
     }
 
     open fun dropItem(slot: Int, session: GameSession) {
         // send packet to server
-        val pk = dropItem(slot)
+        val pk = dropItem(slot,
+            if (session.inventoriesServerAuthoritative) session.thePlayer.inventory.getRequestId() else Int.MAX_VALUE)
         session.sendPacket(pk)
 
         // sync with client

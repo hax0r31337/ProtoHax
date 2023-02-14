@@ -2,9 +2,14 @@ package dev.sora.relay.cheat.module.impl
 
 import com.nukkitx.protocol.bedrock.data.inventory.ItemData
 import com.nukkitx.protocol.bedrock.packet.ContainerClosePacket
+import com.nukkitx.protocol.bedrock.packet.ContainerOpenPacket
+import com.nukkitx.protocol.bedrock.packet.InteractPacket
+import com.nukkitx.protocol.bedrock.packet.ItemStackRequestPacket
 import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.game.GameSession
 import dev.sora.relay.game.entity.EntityPlayerSP
+import dev.sora.relay.game.event.EventPacketInbound
+import dev.sora.relay.game.event.EventPacketOutbound
 import dev.sora.relay.game.event.EventTick
 import dev.sora.relay.game.event.Listen
 import dev.sora.relay.game.inventory.AbstractInventory
@@ -18,7 +23,7 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper") {
 
     private val stealChestValue = boolValue("StealChest", true)
     private val guiOpenValue = boolValue("GuiOpen", false)
-    private val fakeOpenValue = boolValue("FakeOpen", true)
+//    private val simulateInventoryValue = boolValue("SimulateInventory", true)
     private val autoCloseValue = boolValue("AutoClose", false)
     private val throwUnnecessaryValue = boolValue("ThrowUnnecessary", true)
     private val swingValue = listValue("Swing", arrayOf("Both", "Client", "Server", "None"), "Server")
@@ -41,9 +46,13 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper") {
 
     private val clickTimer = ClickTimer()
     private var sorted = true
+    private var hasSimulated = false
+    private var hasSimulatedWaitForClose = false
 
     override fun onDisable() {
         sorted = false
+        hasSimulated = false
+        hasSimulatedWaitForClose = false
     }
 
     private fun updateClick() {
@@ -77,6 +86,7 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper") {
             player.inventory.content.forEachIndexed { index, item ->
                 if (item == ItemData.AIR) return@forEachIndexed
                 if (mapping.hasBetterItem(item, player.inventory, index) || (throwUnnecessaryValue.get() && !mapping.isNecessaryItem(item))) {
+                    if (checkFakeOpen(event.session)) return
                     player.inventory.dropItem(index, event.session)
                     // player will swing if they drop an item
                     player.swing(when(swingValue.get()) {
@@ -101,6 +111,14 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper") {
             }
 
             if (openContainer == null) {
+                if (hasSimulated) {
+                    session.netSession.outboundPacket(ContainerClosePacket().apply {
+                        id = 0
+                        isUnknownBool0 = false
+                    })
+                    hasSimulated = false
+                    hasSimulatedWaitForClose = true
+                }
                 updateClick()
                 sorted = false
                 return
@@ -135,7 +153,7 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper") {
         }
         if (sortBlockValue.get() != -1 && !inventory.content[sortBlockValue.get()].isBlock()) {
             sorts.add(Sort(sortBlockValue.get()) { item, m ->
-                if (item.isBlock()) 1f else 0f
+                if (item.isBlock()) item.count.toFloat() else 0f
             })
         }
         if (sortGAppleValue.get() != -1) {
@@ -147,9 +165,40 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper") {
         return sorts
     }
 
-//    privat`e fun checkFakeOpen(): Boolean {
+//    @Listen
+//    fun onPacketInbound(event: EventPacketInbound) {
+//        val packet = event.packet
 //
-//    }`
+//        if (hasSimulated && packet is ContainerOpenPacket && packet.id == 0.toByte()) {
+//            event.cancel()
+//        } else if (hasSimulatedWaitForClose && packet is ContainerClosePacket && packet.id == 0.toByte()) {
+//            event.cancel()
+//        }
+//    }
+
+//    @Listen
+//    fun onPacketOutbound(event: EventPacketOutbound) {
+//        val packet = event.packet
+//
+//        if (hasSimulated && packet is InteractPacket && packet.action == InteractPacket.Action.OPEN_INVENTORY) {
+//            hasSimulated = false
+//            event.cancel()
+//        }
+//    }
+
+    private fun checkFakeOpen(session: GameSession): Boolean {
+//        if (!hasSimulated && session.thePlayer.openContainer == null && simulateInventoryValue.get()) {
+//            session.netSession.outboundPacket(InteractPacket().apply {
+//                runtimeEntityId = session.thePlayer.entityId
+//                action = InteractPacket.Action.OPEN_INVENTORY
+//            })
+//            println("OPEN")
+//            hasSimulated = true
+//            updateClick()
+//            return true
+//        }
+        return false
+    }
 
     inner class Sort(val slot: Int, val judge: (ItemData, ItemMapping) -> Float) {
 
@@ -167,6 +216,7 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper") {
                 judge(item, mapping)
             } ?: return false
             if (bestSlot == slot) return false
+            if (checkFakeOpen(session)) return true
 
             inventory.moveItem(bestSlot, slot, inventory, session)
             return true
