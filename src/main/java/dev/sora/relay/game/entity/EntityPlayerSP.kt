@@ -179,6 +179,10 @@ class EntityPlayerSP(private val session: GameSession) : EntityPlayer(0L, UUID.r
         }
     }
 
+    fun swing(swingValue: String, sound: Boolean = false) {
+        swing(getSwingMode(swingValue), sound)
+    }
+
     fun attackEntity(entity: Entity, swingValue: SwingMode = SwingMode.BOTH, sound: Boolean = false) {
         swing(swingValue)
 
@@ -204,6 +208,18 @@ class EntityPlayerSP(private val session: GameSession) : EntityPlayer(0L, UUID.r
             clickPosition = Vector3f.ZERO
         })
     }
+    
+    fun attackEntity(entity: Entity, swingValue: String, sound: Boolean = false) {
+        attackEntity(entity, getSwingMode(swingValue), sound)
+    }
+
+    fun getSwingMode(swingValue: String)
+        = when(swingValue) {
+            "Both" -> EntityPlayerSP.SwingMode.BOTH
+            "Client" -> EntityPlayerSP.SwingMode.CLIENTSIDE
+            "Server" -> EntityPlayerSP.SwingMode.SERVERSIDE
+            else -> EntityPlayerSP.SwingMode.NONE
+        }
 
     enum class SwingMode {
         CLIENTSIDE,

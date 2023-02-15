@@ -90,13 +90,8 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper") {
                     if (checkFakeOpen(event.session)) return
                     player.inventory.dropItem(index, event.session)
                     // player will swing if they drop an item
-                    player.swing(when(swingValue.get()) {
-                        "Both" -> EntityPlayerSP.SwingMode.BOTH
-                        "Client" -> EntityPlayerSP.SwingMode.CLIENTSIDE
-                        "Server" -> EntityPlayerSP.SwingMode.SERVERSIDE
-                        else -> EntityPlayerSP.SwingMode.NONE
-                    })
-
+                    player.swing(swingValue.get())
+                    
                     updateClick()
                     return
                 }

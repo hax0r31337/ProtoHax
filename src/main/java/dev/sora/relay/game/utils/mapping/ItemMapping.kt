@@ -35,7 +35,7 @@ class ItemMapping(data: List<Pair<String, Int>>) : RuntimeMappingImpl(data) {
         if (item == ItemData.AIR) return false
 
         val itemTags = tags(item)
-        var categoryTag = ""
+        val categoryTag: String
         if (itemTags.contains(ItemMappingUtils.TAG_IS_HELMET).also { categoryTag = ItemMappingUtils.TAG_IS_HELMET }
             || itemTags.contains(ItemMappingUtils.TAG_IS_CHESTPLATE).also { categoryTag = ItemMappingUtils.TAG_IS_CHESTPLATE }
             || itemTags.contains(ItemMappingUtils.TAG_IS_LEGGINGS).also { categoryTag = ItemMappingUtils.TAG_IS_LEGGINGS }

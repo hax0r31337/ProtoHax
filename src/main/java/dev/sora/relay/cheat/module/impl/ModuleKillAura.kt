@@ -34,12 +34,7 @@ class ModuleKillAura : CheatModule("KillAura") {
         val entityList = session.theWorld.entityMap.values.filter { it is EntityPlayer && it.distanceSq(session.thePlayer) < range && !it.isBot(session) }
         if (entityList.isEmpty()) return
 
-        val swingMode = when(swingValue.get()) {
-            "Both" -> EntityPlayerSP.SwingMode.BOTH
-            "Client" -> EntityPlayerSP.SwingMode.CLIENTSIDE
-            "Server" -> EntityPlayerSP.SwingMode.SERVERSIDE
-            else -> EntityPlayerSP.SwingMode.NONE
-        }
+        val swingMode = session.thePlayer.getSwingMode(swingValue.get())
         val aimTarget = if (Math.random() <= failRateValue.get()) {
             session.thePlayer.swing(swingMode, failSoundValue.get())
             entityList.first()

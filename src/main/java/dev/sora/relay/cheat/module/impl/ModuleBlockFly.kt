@@ -73,12 +73,7 @@ class ModuleBlockFly : CheatModule("BlockFly") {
             playerPosition = session.thePlayer.vec3Position
             clickPosition = Vector3f.from(Math.random(), Math.random(), Math.random())
         })
-        session.thePlayer.swing(when(swingValue.get()) {
-            "Both" -> EntityPlayerSP.SwingMode.BOTH
-            "Client" -> EntityPlayerSP.SwingMode.CLIENTSIDE
-            "Server" -> EntityPlayerSP.SwingMode.SERVERSIDE
-            else -> EntityPlayerSP.SwingMode.NONE
-        })
+        session.thePlayer.swing(swingValue.get())
 
         if (rotationValue.get()) {
             lastRotation = toRotation(session.thePlayer.vec3Position, block.sub(facing.unitVector).toVector3f())
