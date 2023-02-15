@@ -1,10 +1,10 @@
 package dev.sora.relay.cheat.module.impl
 
+import com.nukkitx.protocol.bedrock.data.inventory.ContainerType
 import com.nukkitx.protocol.bedrock.data.inventory.ItemData
 import com.nukkitx.protocol.bedrock.packet.ContainerClosePacket
 import com.nukkitx.protocol.bedrock.packet.ContainerOpenPacket
 import com.nukkitx.protocol.bedrock.packet.InteractPacket
-import com.nukkitx.protocol.bedrock.packet.ItemStackRequestPacket
 import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.game.GameSession
 import dev.sora.relay.game.entity.EntityPlayerSP
@@ -17,13 +17,14 @@ import dev.sora.relay.game.inventory.PlayerInventory
 import dev.sora.relay.game.utils.mapping.ItemMapping
 import dev.sora.relay.game.utils.mapping.ItemMappingUtils
 import dev.sora.relay.game.utils.mapping.isBlock
+import dev.sora.relay.game.utils.toVector3i
 import dev.sora.relay.utils.timing.ClickTimer
 
 class ModuleInventoryHelper : CheatModule("InventoryHelper") {
 
     private val stealChestValue = boolValue("StealChest", true)
     private val guiOpenValue = boolValue("GuiOpen", false)
-//    private val simulateInventoryValue = boolValue("SimulateInventory", true)
+    private val simulateInventoryValue = boolValue("SimulateInventory", false)
     private val autoCloseValue = boolValue("AutoClose", false)
     private val throwUnnecessaryValue = boolValue("ThrowUnnecessary", true)
     private val swingValue = listValue("Swing", arrayOf("Both", "Client", "Server", "None"), "Server")
@@ -112,6 +113,7 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper") {
 
             if (openContainer == null) {
                 if (hasSimulated) {
+                    println("CLOSE")
                     session.netSession.outboundPacket(ContainerClosePacket().apply {
                         id = 0
                         isUnknownBool0 = false
@@ -165,38 +167,46 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper") {
         return sorts
     }
 
-//    @Listen
-//    fun onPacketInbound(event: EventPacketInbound) {
-//        val packet = event.packet
-//
-//        if (hasSimulated && packet is ContainerOpenPacket && packet.id == 0.toByte()) {
-//            event.cancel()
-//        } else if (hasSimulatedWaitForClose && packet is ContainerClosePacket && packet.id == 0.toByte()) {
-//            event.cancel()
-//        }
-//    }
+    @Listen
+    fun onPacketInbound(event: EventPacketInbound) {
+        val packet = event.packet
 
-//    @Listen
-//    fun onPacketOutbound(event: EventPacketOutbound) {
-//        val packet = event.packet
-//
-//        if (hasSimulated && packet is InteractPacket && packet.action == InteractPacket.Action.OPEN_INVENTORY) {
-//            hasSimulated = false
-//            event.cancel()
-//        }
-//    }
+        if (hasSimulated && packet is ContainerOpenPacket && packet.id == 0.toByte()) {
+            event.cancel()
+        } else if (hasSimulatedWaitForClose && packet is ContainerClosePacket && packet.id == 0.toByte()) {
+            // inventories gui will no longer display if this packet is received or unable to receive the one that required by the client
+            event.cancel()
+            hasSimulatedWaitForClose = false
+        }
+    }
+
+    @Listen
+    fun onPacketOutbound(event: EventPacketOutbound) {
+        val packet = event.packet
+
+        if (hasSimulated && packet is InteractPacket && packet.action == InteractPacket.Action.OPEN_INVENTORY) {
+            hasSimulated = false
+            event.cancel()
+            // client only display inventory gui if server accepts it
+            event.session.sendPacketToClient(ContainerOpenPacket().apply {
+                id = 0.toByte()
+                type = ContainerType.INVENTORY
+                blockPosition = event.session.thePlayer.vec3Position.toVector3i()
+                uniqueEntityId = event.session.thePlayer.entityId
+            })
+        }
+    }
 
     private fun checkFakeOpen(session: GameSession): Boolean {
-//        if (!hasSimulated && session.thePlayer.openContainer == null && simulateInventoryValue.get()) {
-//            session.netSession.outboundPacket(InteractPacket().apply {
-//                runtimeEntityId = session.thePlayer.entityId
-//                action = InteractPacket.Action.OPEN_INVENTORY
-//            })
-//            println("OPEN")
-//            hasSimulated = true
-//            updateClick()
-//            return true
-//        }
+        if (!hasSimulated && session.thePlayer.openContainer == null && simulateInventoryValue.get()) {
+            session.netSession.outboundPacket(InteractPacket().apply {
+                runtimeEntityId = session.thePlayer.entityId
+                action = InteractPacket.Action.OPEN_INVENTORY
+            })
+            hasSimulated = true
+            updateClick()
+            return true
+        }
         return false
     }
 

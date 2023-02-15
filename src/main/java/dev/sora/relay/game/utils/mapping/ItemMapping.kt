@@ -68,8 +68,8 @@ class ItemMapping(data: List<Pair<String, Int>>) : RuntimeMappingImpl(data) {
             tags.contains(ItemMappingUtils.TAG_STONE_TIER) -> 3
             tags.contains(ItemMappingUtils.TAG_CHAINMAIL_TIER) -> 3
             tags.contains(ItemMappingUtils.TAG_IRON_TIER) -> 4
-            tags.contains(ItemMappingUtils.TAG_DIAMOND_TIER) -> 4
-            tags.contains(ItemMappingUtils.TAG_NETHERITE_TIER) -> 5
+            tags.contains(ItemMappingUtils.TAG_DIAMOND_TIER) -> 5
+            tags.contains(ItemMappingUtils.TAG_NETHERITE_TIER) -> 6
             else -> 0
         }
     }
