@@ -32,6 +32,7 @@ import com.nukkitx.protocol.bedrock.v534.Bedrock_v534
 import com.nukkitx.protocol.bedrock.v544.Bedrock_v544
 import com.nukkitx.protocol.bedrock.v557.Bedrock_v557
 import com.nukkitx.protocol.bedrock.v560.Bedrock_v560
+import com.nukkitx.protocol.bedrock.v567.Bedrock_v567
 import dev.sora.relay.RakNetRelaySession
 import dev.sora.relay.RakNetRelaySessionListener
 import dev.sora.relay.utils.logInfo
@@ -64,7 +65,8 @@ class RakNetRelaySessionListenerAutoCodec(private val session: RakNetRelaySessio
             Bedrock_v475.V475_CODEC, Bedrock_v448.V448_CODEC, Bedrock_v465.V465_CODEC,
             Bedrock_v471.V471_CODEC, Bedrock_v475.V475_CODEC, Bedrock_v486.V486_CODEC,
             Bedrock_v503.V503_CODEC, Bedrock_v527.V527_CODEC, Bedrock_v534.V534_CODEC,
-            Bedrock_v544.V544_CODEC, Bedrock_v557.V557_CODEC, Bedrock_v560.V560_CODEC
+            Bedrock_v544.V544_CODEC, Bedrock_v557.V557_CODEC, Bedrock_v560.V560_CODEC,
+            Bedrock_v567.V567_CODEC
         ).associateBy { it.protocolVersion }
 
         private fun pickProtocolCodec(version: Int): BedrockPacketCodec {

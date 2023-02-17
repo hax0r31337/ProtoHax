@@ -19,7 +19,7 @@ class EmptyRuntimeMapping(private val fallbackGame: String = FALLBACK_GAME,
     override fun runtime(game: String) = fallbackRuntime
 }
 
-class RuntimeMappingImpl : RuntimeMapping {
+open class RuntimeMappingImpl : RuntimeMapping {
 
     private val runtimeToGameMap: Map<Int, String>
     private val gameToRuntimeMap: Map<String, Int>

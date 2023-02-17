@@ -42,7 +42,6 @@ class RakNetRelaySessionListenerMicrosoft(val accessToken: String, val deviceInf
     private var chain: AsciiString? = null
         get() {
             if (field == null || chainExpires < Instant.now().epochSecond) {
-                println("FETCH")
                 field = AsciiString(fetchChain(identityToken, keyPair).also {
                     val json = JsonParser.parseReader(base64Decode(
                         JsonParser.parseString(it).asJsonObject.getAsJsonArray("chain").get(0).asString.split(".")[1])

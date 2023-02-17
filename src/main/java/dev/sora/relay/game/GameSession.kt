@@ -3,13 +3,13 @@ package dev.sora.relay.game
 import com.nukkitx.network.util.DisconnectReason
 import com.nukkitx.protocol.bedrock.BedrockPacket
 import com.nukkitx.protocol.bedrock.packet.LoginPacket
+import com.nukkitx.protocol.bedrock.packet.StartGamePacket
 import dev.sora.relay.RakNetRelaySession
 import dev.sora.relay.RakNetRelaySessionListener
 import dev.sora.relay.game.entity.EntityPlayerSP
 import dev.sora.relay.game.event.*
-import dev.sora.relay.game.utils.mapping.BlockMappingUtils
-import dev.sora.relay.game.utils.mapping.EmptyRuntimeMapping
-import dev.sora.relay.game.utils.mapping.RuntimeMapping
+import dev.sora.relay.game.management.BlobCacheManager
+import dev.sora.relay.game.utils.mapping.*
 import dev.sora.relay.game.world.WorldClient
 
 class GameSession : RakNetRelaySessionListener.PacketListener {
@@ -17,12 +17,21 @@ class GameSession : RakNetRelaySessionListener.PacketListener {
     val thePlayer = EntityPlayerSP(this)
     val theWorld = WorldClient(this)
 
+    val cacheManager = BlobCacheManager()
+
     val eventManager = EventManager()
 
     lateinit var netSession: RakNetRelaySession
 
+    var itemMapping: ItemMapping = ItemMapping(emptyList())
+        private set
     var blockMapping: RuntimeMapping = EmptyRuntimeMapping()
+        private set
     var legacyBlockMapping: RuntimeMapping = EmptyRuntimeMapping()
+        private set
+
+    var inventoriesServerAuthoritative = false
+        private set
 
     val netSessionInitialized: Boolean
         get() = this::netSession.isInitialized
@@ -30,6 +39,7 @@ class GameSession : RakNetRelaySessionListener.PacketListener {
     init {
         eventManager.registerListener(thePlayer)
         eventManager.registerListener(theWorld)
+        eventManager.registerListener(cacheManager)
     }
 
     override fun onPacketInbound(packet: BedrockPacket): Boolean {
@@ -37,6 +47,10 @@ class GameSession : RakNetRelaySessionListener.PacketListener {
         eventManager.emit(event)
         if (event.isCanceled()) {
             return false
+        }
+
+        if (packet is StartGamePacket) {
+            inventoriesServerAuthoritative = packet.isInventoriesServerAuthoritative
         }
 
         return true
@@ -52,6 +66,7 @@ class GameSession : RakNetRelaySessionListener.PacketListener {
         if (packet is LoginPacket) {
             blockMapping = BlockMappingUtils.craftMapping(packet.protocolVersion)
             legacyBlockMapping = BlockMappingUtils.craftMapping(packet.protocolVersion, "legacy")
+            itemMapping = ItemMappingUtils.craftMapping(packet.protocolVersion)
         }
 
         return true
@@ -81,7 +96,7 @@ class GameSession : RakNetRelaySessionListener.PacketListener {
         if (event.isCanceled()) {
             return
         }
-        netSession.outboundPacket(packet)
+        netSession.inboundPacket(packet)
     }
 
     companion object {

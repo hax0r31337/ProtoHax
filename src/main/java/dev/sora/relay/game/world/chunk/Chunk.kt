@@ -2,6 +2,7 @@ package dev.sora.relay.game.world.chunk
 
 import dev.sora.relay.game.utils.mapping.RuntimeMapping
 import io.netty.buffer.ByteBuf
+import io.netty.buffer.Unpooled
 import kotlin.math.abs
 
 class Chunk(val x: Int, val z: Int, val is384World: Boolean,
@@ -19,8 +20,16 @@ class Chunk(val x: Int, val z: Int, val is384World: Boolean,
 
     fun read(buf: ByteBuf, subChunks: Int) {
         repeat(subChunks) {
-            sectionStorage[it].read(buf)
+            readSubChunk(it, buf)
         }
+    }
+
+    fun readSubChunk(index: Int, data: ByteArray) {
+        readSubChunk(index, Unpooled.wrappedBuffer(data))
+    }
+
+    fun readSubChunk(index: Int, buf: ByteBuf) {
+        sectionStorage[index].read(buf)
     }
 
     fun getBlockAt(x: Int, yIn: Int, z: Int): Int {
