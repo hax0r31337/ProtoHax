@@ -1,10 +1,10 @@
 package dev.sora.relay.cheat.module.impl
 
-import com.nukkitx.protocol.bedrock.data.inventory.ContainerType
-import com.nukkitx.protocol.bedrock.data.inventory.ItemData
-import com.nukkitx.protocol.bedrock.packet.ContainerClosePacket
-import com.nukkitx.protocol.bedrock.packet.ContainerOpenPacket
-import com.nukkitx.protocol.bedrock.packet.InteractPacket
+import org.cloudburstmc.protocol.bedrock.data.inventory.ContainerType
+import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData
+import org.cloudburstmc.protocol.bedrock.packet.ContainerClosePacket
+import org.cloudburstmc.protocol.bedrock.packet.ContainerOpenPacket
+import org.cloudburstmc.protocol.bedrock.packet.InteractPacket
 import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.game.GameSession
 import dev.sora.relay.game.entity.EntityPlayerSP
@@ -111,7 +111,7 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper") {
                     println("CLOSE")
                     session.netSession.outboundPacket(ContainerClosePacket().apply {
                         id = 0
-                        isUnknownBool0 = false
+                        isServerInitiated = false
                     })
                     hasSimulated = false
                     hasSimulatedWaitForClose = true
@@ -129,7 +129,7 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper") {
         if (autoCloseValue.get() && (!noSortNoCloseValue.get() || sorted)) {
             session.sendPacketToClient(ContainerClosePacket().apply {
                 id = openContainer.containerId.toByte()
-                isUnknownBool0 = true // maybe? this field is true in nukkit
+                isServerInitiated = true // maybe? this field is true in nukkit
             })
         }
     }

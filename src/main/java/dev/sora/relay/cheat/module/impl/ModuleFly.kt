@@ -1,12 +1,12 @@
 package dev.sora.relay.cheat.module.impl
 
-import com.nukkitx.math.vector.Vector3f
-import com.nukkitx.protocol.bedrock.data.Ability
-import com.nukkitx.protocol.bedrock.data.AbilityLayer
-import com.nukkitx.protocol.bedrock.data.PlayerPermission
-import com.nukkitx.protocol.bedrock.data.command.CommandPermission
-import com.nukkitx.protocol.bedrock.data.entity.EntityEventType
-import com.nukkitx.protocol.bedrock.packet.*
+import org.cloudburstmc.math.vector.Vector3f
+import org.cloudburstmc.protocol.bedrock.data.Ability
+import org.cloudburstmc.protocol.bedrock.data.AbilityLayer
+import org.cloudburstmc.protocol.bedrock.data.PlayerPermission
+import org.cloudburstmc.protocol.bedrock.data.command.CommandPermission
+import org.cloudburstmc.protocol.bedrock.data.entity.EntityEventType
+import org.cloudburstmc.protocol.bedrock.packet.*
 import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.game.event.EventPacketInbound
 import dev.sora.relay.game.event.EventPacketOutbound
@@ -29,7 +29,7 @@ class ModuleFly : CheatModule("Fly") {
 
     private val abilityPacket = UpdateAbilitiesPacket().apply {
         playerPermission = PlayerPermission.OPERATOR
-        commandPermission = CommandPermission.OPERATOR
+        commandPermission = CommandPermission.OWNER
         abilityLayers.add(AbilityLayer().apply {
             layerType = AbilityLayer.Type.BASE
             abilitiesSet.addAll(Ability.values())

@@ -1,9 +1,9 @@
 package dev.sora.relay.game.world.chunk
 
-import com.nukkitx.nbt.NBTInputStream
-import com.nukkitx.nbt.NbtMap
-import com.nukkitx.nbt.util.stream.NetworkDataInputStream
-import com.nukkitx.network.VarInts
+import org.cloudburstmc.nbt.NBTInputStream
+import org.cloudburstmc.nbt.NbtMap
+import org.cloudburstmc.nbt.util.stream.NetworkDataInputStream
+import org.cloudburstmc.protocol.common.util.VarInts
 import dev.sora.relay.game.utils.mapping.BlockMappingUtils
 import dev.sora.relay.game.utils.mapping.RuntimeMapping
 import dev.sora.relay.game.world.chunk.palette.BitArray

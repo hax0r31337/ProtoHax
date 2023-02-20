@@ -2,15 +2,15 @@ package dev.sora.relay
 
 import com.nukkitx.network.raknet.RakNetSession
 import com.nukkitx.network.util.DisconnectReason
-import com.nukkitx.protocol.bedrock.BedrockPacket
-import com.nukkitx.protocol.bedrock.data.PacketCompressionAlgorithm
-import com.nukkitx.protocol.bedrock.packet.NetworkSettingsPacket
-import com.nukkitx.protocol.bedrock.wrapper.BedrockWrapperSerializer
-import com.nukkitx.protocol.bedrock.wrapper.BedrockWrapperSerializerV11
-import com.nukkitx.protocol.bedrock.wrapper.BedrockWrapperSerializers
-import com.nukkitx.protocol.bedrock.wrapper.compression.NoCompression
-import com.nukkitx.protocol.bedrock.wrapper.compression.SnappyCompression
-import com.nukkitx.protocol.bedrock.wrapper.compression.ZlibCompression
+import org.cloudburstmc.protocol.bedrock.packet.BedrockPacket
+import org.cloudburstmc.protocol.bedrock.data.PacketCompressionAlgorithm
+import org.cloudburstmc.protocol.bedrock.packet.NetworkSettingsPacket
+import org.cloudburstmc.protocol.bedrock.wrapper.BedrockWrapperSerializer
+import org.cloudburstmc.protocol.bedrock.wrapper.BedrockWrapperSerializerV11
+import org.cloudburstmc.protocol.bedrock.wrapper.BedrockWrapperSerializers
+import org.cloudburstmc.protocol.bedrock.wrapper.compression.NoCompression
+import org.cloudburstmc.protocol.bedrock.wrapper.compression.SnappyCompression
+import org.cloudburstmc.protocol.bedrock.wrapper.compression.ZlibCompression
 import dev.sora.relay.utils.logError
 
 open class RakNetRelaySessionListener {

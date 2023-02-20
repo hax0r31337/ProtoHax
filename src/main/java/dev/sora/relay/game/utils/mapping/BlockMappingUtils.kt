@@ -1,8 +1,8 @@
 package dev.sora.relay.game.utils.mapping
 
-import com.nukkitx.nbt.NBTInputStream
-import com.nukkitx.nbt.NbtList
-import com.nukkitx.nbt.NbtMap
+import org.cloudburstmc.nbt.NBTInputStream
+import org.cloudburstmc.nbt.NbtList
+import org.cloudburstmc.nbt.NbtMap
 import java.io.DataInputStream
 import java.util.zip.GZIPInputStream
 

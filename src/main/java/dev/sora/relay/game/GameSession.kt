@@ -1,9 +1,8 @@
 package dev.sora.relay.game
 
-import com.nukkitx.network.util.DisconnectReason
-import com.nukkitx.protocol.bedrock.BedrockPacket
-import com.nukkitx.protocol.bedrock.packet.LoginPacket
-import com.nukkitx.protocol.bedrock.packet.StartGamePacket
+import org.cloudburstmc.protocol.bedrock.packet.BedrockPacket
+import org.cloudburstmc.protocol.bedrock.packet.LoginPacket
+import org.cloudburstmc.protocol.bedrock.packet.StartGamePacket
 import dev.sora.relay.RakNetRelaySession
 import dev.sora.relay.RakNetRelaySessionListener
 import dev.sora.relay.game.entity.EntityPlayerSP
@@ -72,7 +71,7 @@ class GameSession : RakNetRelaySessionListener.PacketListener {
         return true
     }
 
-    override fun onDisconnect(client: Boolean, reason: DisconnectReason) {
+    override fun onDisconnect(client: Boolean, reason: String) {
         eventManager.emit(EventDisconnect(this, client, reason))
     }
 

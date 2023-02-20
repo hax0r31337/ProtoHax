@@ -1,6 +1,6 @@
 package dev.sora.relay.cheat.command
 
-import com.nukkitx.protocol.bedrock.packet.TextPacket
+import org.cloudburstmc.protocol.bedrock.packet.TextPacket
 import dev.sora.relay.cheat.BasicThing
 import dev.sora.relay.cheat.command.impl.CommandModule
 import dev.sora.relay.cheat.command.impl.CommandToggle

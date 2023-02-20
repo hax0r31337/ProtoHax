@@ -1,6 +1,6 @@
 package dev.sora.relay.cheat.module.impl
 
-import com.nukkitx.protocol.bedrock.packet.TextPacket
+import org.cloudburstmc.protocol.bedrock.packet.TextPacket
 import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.game.event.EventTick
 import dev.sora.relay.game.event.Listen

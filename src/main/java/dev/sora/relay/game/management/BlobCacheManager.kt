@@ -1,9 +1,12 @@
 package dev.sora.relay.game.management
 
-import com.nukkitx.protocol.bedrock.packet.ClientCacheBlobStatusPacket
-import com.nukkitx.protocol.bedrock.packet.ClientCacheMissResponsePacket
+import org.cloudburstmc.protocol.bedrock.packet.ClientCacheBlobStatusPacket
+import org.cloudburstmc.protocol.bedrock.packet.ClientCacheMissResponsePacket
 import dev.sora.relay.game.event.*
 import dev.sora.relay.utils.logError
+import io.netty.buffer.ByteBuf
+import it.unimi.dsi.fastutil.longs.LongPredicate
+import java.util.function.Predicate
 
 /**
  * manages BLOB(Binary Large OBjects) cache
@@ -11,9 +14,9 @@ import dev.sora.relay.utils.logError
 class BlobCacheManager : Listener {
 
     private val clientAcknowledgements = mutableListOf<Long>()
-    private val cacheCallbacks = mutableMapOf<Long, (ByteArray) -> Unit>()
+    private val cacheCallbacks = mutableMapOf<Long, (ByteBuf) -> Unit>()
 
-    fun registerCacheCallback(blobId: Long, callback: (ByteArray) -> Unit) {
+    fun registerCacheCallback(blobId: Long, callback: (ByteBuf) -> Unit) {
         cacheCallbacks[blobId] = callback
     }
 
@@ -33,7 +36,7 @@ class BlobCacheManager : Listener {
 
             // because of we don't have such cache system, we just request cache which we required
             packet.naks.addAll(packet.acks.filter { cacheCallbacks.containsKey(it) })
-            packet.acks.removeIf { packet.naks.contains(it) }
+            packet.acks.removeIf(Predicate { t -> packet.naks.contains(t) })
         } /*else if (packet is ResourcePacksInfoPacket) {
             // attempt disable cache
             val cacheStatusPacket = ClientCacheStatusPacket().apply {

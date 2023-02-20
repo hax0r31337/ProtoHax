@@ -5,8 +5,8 @@ import com.nukkitx.network.raknet.RakNetServer
 import com.nukkitx.network.raknet.RakNetServerListener
 import com.nukkitx.network.raknet.RakNetServerSession
 import com.nukkitx.network.util.EventLoops
-import com.nukkitx.protocol.bedrock.BedrockPacketCodec
-import com.nukkitx.protocol.bedrock.compat.BedrockCompat
+import org.cloudburstmc.protocol.bedrock.packet.BedrockPacketCodec
+import org.cloudburstmc.protocol.bedrock.compat.BedrockCompat
 import io.netty.bootstrap.Bootstrap
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.EventLoopGroup

@@ -1,11 +1,10 @@
 package dev.sora.relay.game.entity
 
 import com.google.gson.JsonParser
-import com.nukkitx.math.vector.Vector3f
-import com.nukkitx.protocol.bedrock.data.SoundEvent
-import com.nukkitx.protocol.bedrock.data.inventory.ItemData
-import com.nukkitx.protocol.bedrock.data.inventory.TransactionType
-import com.nukkitx.protocol.bedrock.packet.*
+import org.cloudburstmc.math.vector.Vector3f
+import org.cloudburstmc.protocol.bedrock.data.SoundEvent
+import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData
+import org.cloudburstmc.protocol.bedrock.packet.*
 import dev.sora.relay.RakNetRelaySession
 import dev.sora.relay.cheat.BasicThing
 import dev.sora.relay.game.GameSession
@@ -14,6 +13,7 @@ import dev.sora.relay.game.inventory.AbstractInventory
 import dev.sora.relay.game.inventory.ContainerInventory
 import dev.sora.relay.game.inventory.PlayerInventory
 import dev.sora.relay.utils.base64Decode
+import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.InventoryTransactionType
 import java.util.*
 
 class EntityPlayerSP(private val session: GameSession) : EntityPlayer(0L, UUID.randomUUID(), ""), Listener {
@@ -199,7 +199,7 @@ class EntityPlayerSP(private val session: GameSession) : EntityPlayer(0L, UUID.r
 
         // attack
         session.sendPacket(InventoryTransactionPacket().apply {
-            transactionType = TransactionType.ITEM_USE_ON_ENTITY
+            transactionType = InventoryTransactionType.ITEM_USE_ON_ENTITY
             actionType = 1
             runtimeEntityId = entity.entityId
             hotbarSlot = inventory.heldItemSlot

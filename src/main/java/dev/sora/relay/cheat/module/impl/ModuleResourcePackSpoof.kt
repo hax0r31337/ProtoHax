@@ -1,12 +1,13 @@
 package dev.sora.relay.cheat.module.impl
 
 import com.google.gson.JsonParser
-import com.nukkitx.protocol.bedrock.data.ResourcePackType
-import com.nukkitx.protocol.bedrock.packet.*
+import org.cloudburstmc.protocol.bedrock.data.ResourcePackType
+import org.cloudburstmc.protocol.bedrock.packet.*
 import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.game.event.EventPacketInbound
 import dev.sora.relay.game.event.EventPacketOutbound
 import dev.sora.relay.game.event.Listen
+import io.netty.buffer.Unpooled
 import java.io.File
 import java.io.InputStreamReader
 import java.security.MessageDigest
@@ -59,7 +60,7 @@ object ModuleResourcePackSpoof : CheatModule("ResourcePackSpoof") {
                         chunkCount = entry.first.packSize / RESOURCE_PACK_CHUNK_SIZE
                         compressedPackSize = entry.first.packSize
                         hash = MessageDigest.getInstance("SHA-256").digest(entry.second)
-                        type = ResourcePackType.RESOURCE
+                        type = ResourcePackType.RESOURCES
                     })
                     packet.packIds.remove(it)
                 }
@@ -74,7 +75,7 @@ object ModuleResourcePackSpoof : CheatModule("ResourcePackSpoof") {
                 packVersion = packet.packVersion
                 chunkIndex = packet.chunkIndex
                 progress = (RESOURCE_PACK_CHUNK_SIZE * chunkIndex).toLong()
-                data = getPackChunk(entry.second, progress.toInt(), RESOURCE_PACK_CHUNK_SIZE)
+                data = Unpooled.wrappedBuffer(getPackChunk(entry.second, progress.toInt(), RESOURCE_PACK_CHUNK_SIZE))
             })
             event.cancel()
         }

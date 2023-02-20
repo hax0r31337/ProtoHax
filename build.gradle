@@ -21,11 +21,9 @@ configurations {
 }
 
 dependencies {
-    embed('com.nukkitx.protocol:bedrock-v567:2.9.16-SNAPSHOT') {
-        exclude group: 'com.nukkitx.network'
+    embed('org.cloudburstmc.protocol:bedrock-codec:3.0.0.Beta1-SNAPSHOT') {
         exclude group: 'com.nukkitx', module: 'natives'
     }
-    embed project(':raknet')
     embed project(':natives')
 
     embed 'com.google.code.gson:gson:2.10'

@@ -1,12 +1,12 @@
 package dev.sora.relay.game.utils.mapping
 
-import com.nukkitx.protocol.bedrock.data.inventory.ItemData
+import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData
 import dev.sora.relay.game.inventory.AbstractInventory
 
 class ItemMapping(data: List<Pair<String, Int>>) : RuntimeMappingImpl(data) {
 
     fun map(item: ItemData): String {
-        return game(item.id)
+        return game(item.definition.runtimeId)
     }
 
     fun tags(item: ItemData): List<String> {
@@ -76,5 +76,5 @@ class ItemMapping(data: List<Pair<String, Int>>) : RuntimeMappingImpl(data) {
 }
 
 fun ItemData.isBlock(): Boolean {
-    return blockRuntimeId != 0
+    return (blockDefinition?.runtimeId ?: 0) != 0
 }

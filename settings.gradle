@@ -1,6 +1,5 @@
 
 rootProject.name = 'ProtoHax'
 
-include 'raknet'
 include 'natives'
 include 'packet-analyze'

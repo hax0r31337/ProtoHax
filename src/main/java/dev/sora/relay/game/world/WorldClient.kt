@@ -1,6 +1,6 @@
 package dev.sora.relay.game.world
 
-import com.nukkitx.protocol.bedrock.packet.*
+import org.cloudburstmc.protocol.bedrock.packet.*
 import dev.sora.relay.game.GameSession
 import dev.sora.relay.game.entity.Entity
 import dev.sora.relay.game.entity.EntityItem

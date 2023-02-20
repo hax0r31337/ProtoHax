@@ -1,8 +1,8 @@
 package dev.sora.relay.game.world
 
-import com.nukkitx.math.vector.Vector3i
-import com.nukkitx.protocol.bedrock.data.SubChunkRequestResult
-import com.nukkitx.protocol.bedrock.packet.*
+import org.cloudburstmc.math.vector.Vector3i
+import org.cloudburstmc.protocol.bedrock.data.SubChunkRequestResult
+import org.cloudburstmc.protocol.bedrock.packet.*
 import dev.sora.relay.game.GameSession
 import dev.sora.relay.game.event.EventDisconnect
 import dev.sora.relay.game.event.EventPacketInbound
@@ -32,7 +32,7 @@ abstract class WorldwideBlockStorage(protected val session: GameSession) : Liste
             val chunk = Chunk(packet.chunkX, packet.chunkZ,
                 dimension == Dimension.OVERWORLD && (!session.netSessionInitialized || session.netSession.packetCodec.protocolVersion >= 440),
                 session.blockMapping, session.legacyBlockMapping)
-            chunk.read(Unpooled.wrappedBuffer(packet.data), packet.subChunksLength)
+            chunk.read(packet.data, packet.subChunksLength)
             chunks[chunk.hash] = chunk
         } else if (packet is ChunkRadiusUpdatedPacket) {
             viewDistance = packet.radius
@@ -40,14 +40,14 @@ abstract class WorldwideBlockStorage(protected val session: GameSession) : Liste
         } else if (packet is ChangeDimensionPacket) {
             chunks.clear()
         } else if (packet is UpdateBlockPacket && packet.dataLayer == 0) {
-            setBlockIdAt(packet.blockPosition.x, packet.blockPosition.y, packet.blockPosition.z, packet.runtimeId)
+            setBlockIdAt(packet.blockPosition.x, packet.blockPosition.y, packet.blockPosition.z, packet.definition.runtimeId)
         } else if (packet is SubChunkPacket && packet.dimension == dimension) {
             val centerPos = packet.centerPosition
             packet.subChunks.forEach {
                 if (it.result != SubChunkRequestResult.SUCCESS) return@forEach
                 val position = it.position.add(centerPos).add(0, 4, 0)
                 val chunk = getChunk(position.x, position.z) ?: return@forEach
-                if (it.data.isEmpty()) {
+                if (it.data.readableBytes() == 0) {
                     // cached chunk
                     session.cacheManager.registerCacheCallback(it.blobId) {
                         chunk.readSubChunk(position.y, it)

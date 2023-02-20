@@ -1,9 +1,8 @@
 package dev.sora.relay.game.event
 
-import com.nukkitx.network.util.DisconnectReason
-import com.nukkitx.protocol.bedrock.BedrockPacket
 import dev.sora.relay.game.GameSession
 import dev.sora.relay.game.inventory.AbstractInventory
+import org.cloudburstmc.protocol.bedrock.packet.BedrockPacket
 
 abstract class GameEvent(val session: GameSession)
 
@@ -21,7 +20,10 @@ abstract class GameEventCancellable(session: GameSession) : GameEvent(session) {
 
 class EventTick(session: GameSession) : GameEvent(session)
 
-class EventDisconnect(session: GameSession, val client: Boolean, val reason: DisconnectReason) : GameEvent(session)
+/**
+ * @param reason BedrockDisconnectReasons
+ */
+class EventDisconnect(session: GameSession, val client: Boolean, val reason: String) : GameEvent(session)
 
 class EventPacketInbound(session: GameSession, val packet: BedrockPacket) : GameEventCancellable(session)
 

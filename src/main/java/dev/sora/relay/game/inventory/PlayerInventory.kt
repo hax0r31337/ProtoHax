@@ -1,11 +1,16 @@
 package dev.sora.relay.game.inventory
 
-import com.nukkitx.protocol.bedrock.BedrockPacket
-import com.nukkitx.protocol.bedrock.data.inventory.*
-import com.nukkitx.protocol.bedrock.data.inventory.stackrequestactions.DropStackRequestActionData
-import com.nukkitx.protocol.bedrock.data.inventory.stackrequestactions.PlaceStackRequestActionData
-import com.nukkitx.protocol.bedrock.packet.*
+import org.cloudburstmc.protocol.bedrock.packet.BedrockPacket
+import org.cloudburstmc.protocol.bedrock.data.inventory.*
+import org.cloudburstmc.protocol.bedrock.packet.*
 import dev.sora.relay.game.entity.EntityPlayerSP
+import org.cloudburstmc.protocol.bedrock.data.inventory.itemstack.request.ItemStackRequest
+import org.cloudburstmc.protocol.bedrock.data.inventory.itemstack.request.action.DropAction
+import org.cloudburstmc.protocol.bedrock.data.inventory.itemstack.request.action.PlaceAction
+import org.cloudburstmc.protocol.bedrock.data.inventory.itemstack.response.ItemStackResponse
+import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.InventoryActionData
+import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.InventorySource
+import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.InventoryTransactionType
 
 class PlayerInventory(private val player: EntityPlayerSP) : EntityInventory(0L) {
 
@@ -29,7 +34,7 @@ class PlayerInventory(private val player: EntityPlayerSP) : EntityInventory(0L) 
             heldItemSlot = packet.selectedHotbarSlot
         } else if (packet is MobEquipmentPacket) {
             heldItemSlot = packet.hotbarSlot
-        } else if (packet is InventoryTransactionPacket && packet.transactionType == TransactionType.NORMAL) {
+        } else if (packet is InventoryTransactionPacket && packet.transactionType == InventoryTransactionType.NORMAL) {
             packet.actions.filter { it is InventoryActionData && it.source.type == InventorySource.Type.CONTAINER }.forEach {
                 val containerId = getOffsetByContainerId(it.source.containerId) ?: return@forEach
                 content[it.slot+containerId] = it.toItem
@@ -49,24 +54,24 @@ class PlayerInventory(private val player: EntityPlayerSP) : EntityInventory(0L) 
 
     private fun processItemStackPacket(packet: ItemStackRequestPacket) {
         packet.requests.forEach {
-            it.actions.filterIsInstance<PlaceStackRequestActionData>().forEach { action ->
+            it.actions.filterIsInstance<PlaceAction>().forEach { action ->
                 val openContainer = player.openContainer
-                val srcItem: Pair<ItemData, (ItemData) -> Unit> = if (action.source.container == ContainerSlotType.CONTAINER && openContainer is ContainerInventory) {
-                    openContainer.content[action.source.slot.toInt()] to {
-                        openContainer.content[action.source.slot.toInt()] = it
+                val srcItem: Pair<ItemData, (ItemData) -> Unit> = if (action.source.container == ContainerSlotType.LEVEL_ENTITY && openContainer is ContainerInventory) {
+                    openContainer.content[action.source.slot] to {
+                        openContainer.content[action.source.slot] = it
                     }
                 } else {
-                    val slot = action.source.slot.toInt() + (getOffsetByContainerType(action.source.container) ?: return@forEach)
+                    val slot = action.source.slot + (getOffsetByContainerType(action.source.container) ?: return@forEach)
                     content[slot] to {
                         content[slot] = it
                     }
                 }
-                val dstItem: Pair<ItemData, (ItemData) -> Unit> = if (action.destination.container == ContainerSlotType.CONTAINER && openContainer is ContainerInventory) {
-                    openContainer.content[action.destination.slot.toInt()] to {
-                        openContainer.content[action.destination.slot.toInt()] = it
+                val dstItem: Pair<ItemData, (ItemData) -> Unit> = if (action.destination.container == ContainerSlotType.LEVEL_ENTITY && openContainer is ContainerInventory) {
+                    openContainer.content[action.destination.slot] to {
+                        openContainer.content[action.destination.slot] = it
                     }
                 } else {
-                    val slot = action.destination.slot.toInt() + (getOffsetByContainerType(action.destination.container) ?: return@forEach)
+                    val slot = action.destination.slot + (getOffsetByContainerType(action.destination.container) ?: return@forEach)
                     content[slot] to {
                         content[slot] = it
                     }
@@ -75,12 +80,15 @@ class PlayerInventory(private val player: EntityPlayerSP) : EntityInventory(0L) 
                 dstItem.second(srcItem.first)
                 srcItem.second(dstItem.first)
             }
-            it.actions.filterIsInstance<DropStackRequestActionData>().forEach { action ->
-                val slot = action.source.slot.toInt() + (getOffsetByContainerType(action.source.container) ?: return@forEach)
+            it.actions.filterIsInstance<DropAction>().forEach { action ->
+                val slot = action.source.slot + (getOffsetByContainerType(action.source.container) ?: return@forEach)
                 val item = content[slot]
-                item.count -= action.count
-                if (item.count == 0) {
+                if (item.count == 1) {
                     content[slot] = ItemData.AIR
+                } else {
+                    content[slot] = item.toBuilder()
+                        .count(item.count - 1)
+                        .build()
                 }
             }
         }
@@ -99,7 +107,7 @@ class PlayerInventory(private val player: EntityPlayerSP) : EntityInventory(0L) 
         } else if (packet is ItemStackResponsePacket) {
             val newResponse = packet.entries.map {
                 val oldId = requestIdMap[it.requestId]?.also { _ -> requestIdMap.remove(it.requestId) } ?: it.requestId
-                ItemStackResponsePacket.Response(it.result, oldId, it.containers)
+                ItemStackResponse(it.result, oldId, it.containers)
             }
             packet.entries.clear()
             packet.entries.addAll(newResponse)

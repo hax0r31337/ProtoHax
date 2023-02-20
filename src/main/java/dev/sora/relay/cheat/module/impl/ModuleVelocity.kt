@@ -1,6 +1,6 @@
 package dev.sora.relay.cheat.module.impl
 
-import com.nukkitx.protocol.bedrock.packet.SetEntityMotionPacket
+import org.cloudburstmc.protocol.bedrock.packet.SetEntityMotionPacket
 import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.game.event.EventPacketInbound
 import dev.sora.relay.game.event.Listen

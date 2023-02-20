@@ -1,9 +1,9 @@
 package dev.sora.relay.cheat.module.impl
 
-import com.nukkitx.math.vector.Vector2f
-import com.nukkitx.protocol.bedrock.packet.MovePlayerPacket
-import com.nukkitx.protocol.bedrock.packet.NetworkStackLatencyPacket
-import com.nukkitx.protocol.bedrock.packet.PlayerAuthInputPacket
+import org.cloudburstmc.math.vector.Vector2f
+import org.cloudburstmc.protocol.bedrock.packet.MovePlayerPacket
+import org.cloudburstmc.protocol.bedrock.packet.NetworkStackLatencyPacket
+import org.cloudburstmc.protocol.bedrock.packet.PlayerAuthInputPacket
 import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.game.event.EventPacketOutbound
 import dev.sora.relay.game.event.EventTick
