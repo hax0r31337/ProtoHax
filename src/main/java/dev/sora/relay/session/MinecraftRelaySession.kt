@@ -37,7 +37,7 @@ class MinecraftRelaySession(peer: BedrockPeer, subClientId: Int) : BedrockServer
                         logError("disconnect handle", t)
                     }
                 }
-            } catch (t: Throwable) {}
+            } catch (_: Throwable) {}
         }
     }
 
@@ -87,7 +87,7 @@ class MinecraftRelaySession(peer: BedrockPeer, subClientId: Int) : BedrockServer
                             logError("disconnect handle", t)
                         }
                     }
-                } catch (t: Throwable) {}
+                } catch (_: Throwable) {}
             }
         }
 

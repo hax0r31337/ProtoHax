@@ -1,11 +1,9 @@
 package dev.sora.relay.game.inventory
 
-import org.cloudburstmc.protocol.bedrock.packet.BedrockPacket
-import org.cloudburstmc.protocol.bedrock.data.inventory.*
-import org.cloudburstmc.protocol.bedrock.packet.InventorySlotPacket
-import org.cloudburstmc.protocol.bedrock.packet.InventoryTransactionPacket
-import org.cloudburstmc.protocol.bedrock.packet.ItemStackRequestPacket
 import dev.sora.relay.game.GameSession
+import org.cloudburstmc.protocol.bedrock.data.inventory.ContainerId
+import org.cloudburstmc.protocol.bedrock.data.inventory.ContainerSlotType
+import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData
 import org.cloudburstmc.protocol.bedrock.data.inventory.itemstack.request.ItemStackRequest
 import org.cloudburstmc.protocol.bedrock.data.inventory.itemstack.request.ItemStackRequestSlotData
 import org.cloudburstmc.protocol.bedrock.data.inventory.itemstack.request.action.DropAction
@@ -13,6 +11,10 @@ import org.cloudburstmc.protocol.bedrock.data.inventory.itemstack.request.action
 import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.InventoryActionData
 import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.InventorySource
 import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.InventoryTransactionType
+import org.cloudburstmc.protocol.bedrock.packet.BedrockPacket
+import org.cloudburstmc.protocol.bedrock.packet.InventorySlotPacket
+import org.cloudburstmc.protocol.bedrock.packet.InventoryTransactionPacket
+import org.cloudburstmc.protocol.bedrock.packet.ItemStackRequestPacket
 
 abstract class AbstractInventory(val containerId: Int) {
 

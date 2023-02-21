@@ -1,8 +1,8 @@
 package dev.sora.relay.game.inventory
 
-import org.cloudburstmc.protocol.bedrock.packet.BedrockPacket
 import org.cloudburstmc.protocol.bedrock.data.inventory.ContainerId
 import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData
+import org.cloudburstmc.protocol.bedrock.packet.BedrockPacket
 import org.cloudburstmc.protocol.bedrock.packet.MobArmorEquipmentPacket
 import org.cloudburstmc.protocol.bedrock.packet.MobEquipmentPacket
 

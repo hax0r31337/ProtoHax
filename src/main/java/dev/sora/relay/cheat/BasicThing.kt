@@ -1,8 +1,8 @@
 package dev.sora.relay.cheat
 
-import org.cloudburstmc.protocol.bedrock.packet.TextPacket
 import dev.sora.relay.game.GameSession
 import dev.sora.relay.utils.logInfo
+import org.cloudburstmc.protocol.bedrock.packet.TextPacket
 
 abstract class BasicThing {
 

@@ -1,11 +1,11 @@
 package dev.sora.relay.cheat.module.impl
 
-import org.cloudburstmc.protocol.bedrock.data.SoundEvent
-import org.cloudburstmc.protocol.bedrock.packet.LevelSoundEventPacket
 import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.game.event.EventTick
 import dev.sora.relay.game.event.Listen
 import dev.sora.relay.game.utils.NoteBlockUtils
+import org.cloudburstmc.protocol.bedrock.data.SoundEvent
+import org.cloudburstmc.protocol.bedrock.packet.LevelSoundEventPacket
 import java.io.ByteArrayInputStream
 import java.util.*
 

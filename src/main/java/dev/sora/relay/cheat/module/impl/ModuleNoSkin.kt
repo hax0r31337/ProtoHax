@@ -1,12 +1,12 @@
 package dev.sora.relay.cheat.module.impl
 
+import dev.sora.relay.cheat.module.CheatModule
+import dev.sora.relay.game.event.EventPacketInbound
+import dev.sora.relay.game.event.Listen
 import org.cloudburstmc.protocol.bedrock.data.skin.ImageData
 import org.cloudburstmc.protocol.bedrock.data.skin.SerializedSkin
 import org.cloudburstmc.protocol.bedrock.packet.PlayerListPacket
 import org.cloudburstmc.protocol.bedrock.packet.PlayerSkinPacket
-import dev.sora.relay.cheat.module.CheatModule
-import dev.sora.relay.game.event.EventPacketInbound
-import dev.sora.relay.game.event.Listen
 
 class ModuleNoSkin : CheatModule("NoSkin") {
 

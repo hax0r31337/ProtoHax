@@ -1,13 +1,13 @@
 package dev.sora.relay.cheat.module.impl
 
 import com.google.gson.JsonParser
-import org.cloudburstmc.protocol.bedrock.data.ResourcePackType
-import org.cloudburstmc.protocol.bedrock.packet.*
 import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.game.event.EventPacketInbound
 import dev.sora.relay.game.event.EventPacketOutbound
 import dev.sora.relay.game.event.Listen
 import io.netty.buffer.Unpooled
+import org.cloudburstmc.protocol.bedrock.data.ResourcePackType
+import org.cloudburstmc.protocol.bedrock.packet.*
 import java.io.File
 import java.io.InputStreamReader
 import java.security.MessageDigest

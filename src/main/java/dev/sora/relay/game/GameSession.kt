@@ -1,8 +1,5 @@
 package dev.sora.relay.game
 
-import org.cloudburstmc.protocol.bedrock.packet.BedrockPacket
-import org.cloudburstmc.protocol.bedrock.packet.LoginPacket
-import org.cloudburstmc.protocol.bedrock.packet.StartGamePacket
 import dev.sora.relay.game.entity.EntityPlayerSP
 import dev.sora.relay.game.event.*
 import dev.sora.relay.game.management.BlobCacheManager
@@ -10,6 +7,9 @@ import dev.sora.relay.game.utils.mapping.*
 import dev.sora.relay.game.world.WorldClient
 import dev.sora.relay.session.MinecraftRelayPacketListener
 import dev.sora.relay.session.MinecraftRelaySession
+import org.cloudburstmc.protocol.bedrock.packet.BedrockPacket
+import org.cloudburstmc.protocol.bedrock.packet.LoginPacket
+import org.cloudburstmc.protocol.bedrock.packet.StartGamePacket
 
 class GameSession : MinecraftRelayPacketListener {
 

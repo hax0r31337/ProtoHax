@@ -15,7 +15,6 @@ import org.cloudburstmc.protocol.bedrock.data.inventory.ContainerId
 import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.InventoryTransactionType
 import org.cloudburstmc.protocol.bedrock.packet.InventoryTransactionPacket
 import org.cloudburstmc.protocol.bedrock.packet.PlayerHotbarPacket
-import org.cloudburstmc.protocol.bedrock.packet.UpdateBlockPacket
 
 class ModuleBlockFly : CheatModule("BlockFly") {
 

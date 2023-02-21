@@ -42,8 +42,6 @@ class MinecraftRelay(private val listener: MinecraftRelayListener,
         override fun createSession0(peer: BedrockPeer, subClientId: Int): BedrockServerSession {
             val session = MinecraftRelaySession(peer, subClientId)
 
-            println(peer.socketAddress)
-
             // establish connection to actual server
             Bootstrap()
                 .channelFactory(RakChannelFactory.client(NioDatagramChannel::class.java))
@@ -58,7 +56,7 @@ class MinecraftRelay(private val listener: MinecraftRelayListener,
 
                     override fun initSession(session: BedrockClientSession) {}
                 })
-                .bind(listener.onSessionCreation(session))
+                .connect(listener.onSessionCreation(session))
                 .syncUninterruptibly()
 
             return session

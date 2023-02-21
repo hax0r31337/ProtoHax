@@ -2,6 +2,7 @@ package dev.sora.relay.session.listener
 
 import dev.sora.relay.session.MinecraftRelayPacketListener
 import dev.sora.relay.session.MinecraftRelaySession
+import dev.sora.relay.utils.logInfo
 import org.cloudburstmc.protocol.bedrock.codec.BedrockCodec
 import org.cloudburstmc.protocol.bedrock.codec.compat.BedrockCompat
 import org.cloudburstmc.protocol.bedrock.codec.v291.Bedrock_v291
@@ -35,7 +36,6 @@ import org.cloudburstmc.protocol.bedrock.codec.v567.Bedrock_v567
 import org.cloudburstmc.protocol.bedrock.packet.BedrockPacket
 import org.cloudburstmc.protocol.bedrock.packet.LoginPacket
 import org.cloudburstmc.protocol.bedrock.packet.RequestNetworkSettingsPacket
-import dev.sora.relay.utils.logInfo
 
 class RelayListenerAutoCodec(private val session: MinecraftRelaySession) : MinecraftRelayPacketListener {
 

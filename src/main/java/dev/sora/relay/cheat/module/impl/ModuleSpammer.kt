@@ -1,11 +1,11 @@
 package dev.sora.relay.cheat.module.impl
 
-import org.cloudburstmc.protocol.bedrock.packet.TextPacket
 import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.game.event.EventTick
 import dev.sora.relay.game.event.Listen
 import dev.sora.relay.utils.getRandomString
 import dev.sora.relay.utils.timing.TheTimer
+import org.cloudburstmc.protocol.bedrock.packet.TextPacket
 import kotlin.random.Random
 
 class ModuleSpammer : CheatModule("Spammer") {

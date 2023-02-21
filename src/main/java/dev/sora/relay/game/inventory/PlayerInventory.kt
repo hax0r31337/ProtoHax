@@ -1,9 +1,9 @@
 package dev.sora.relay.game.inventory
 
-import org.cloudburstmc.protocol.bedrock.packet.BedrockPacket
-import org.cloudburstmc.protocol.bedrock.data.inventory.*
-import org.cloudburstmc.protocol.bedrock.packet.*
 import dev.sora.relay.game.entity.EntityPlayerSP
+import org.cloudburstmc.protocol.bedrock.data.inventory.ContainerId
+import org.cloudburstmc.protocol.bedrock.data.inventory.ContainerSlotType
+import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData
 import org.cloudburstmc.protocol.bedrock.data.inventory.itemstack.request.ItemStackRequest
 import org.cloudburstmc.protocol.bedrock.data.inventory.itemstack.request.action.DropAction
 import org.cloudburstmc.protocol.bedrock.data.inventory.itemstack.request.action.PlaceAction
@@ -11,6 +11,7 @@ import org.cloudburstmc.protocol.bedrock.data.inventory.itemstack.response.ItemS
 import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.InventoryActionData
 import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.InventorySource
 import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.InventoryTransactionType
+import org.cloudburstmc.protocol.bedrock.packet.*
 
 class PlayerInventory(private val player: EntityPlayerSP) : EntityInventory(0L) {
 
@@ -76,7 +77,6 @@ class PlayerInventory(private val player: EntityPlayerSP) : EntityInventory(0L) 
                         content[slot] = it
                     }
                 }
-                // TODO: better
                 dstItem.second(srcItem.first)
                 srcItem.second(dstItem.first)
             }

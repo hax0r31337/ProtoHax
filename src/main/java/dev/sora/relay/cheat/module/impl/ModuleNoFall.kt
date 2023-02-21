@@ -1,12 +1,12 @@
 package dev.sora.relay.cheat.module.impl
 
-import org.cloudburstmc.protocol.bedrock.data.PlayerActionType
-import org.cloudburstmc.protocol.bedrock.packet.MovePlayerPacket
-import org.cloudburstmc.protocol.bedrock.packet.PlayerActionPacket
 import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.game.event.EventPacketOutbound
 import dev.sora.relay.game.event.EventTick
 import dev.sora.relay.game.event.Listen
+import org.cloudburstmc.protocol.bedrock.data.PlayerActionType
+import org.cloudburstmc.protocol.bedrock.packet.MovePlayerPacket
+import org.cloudburstmc.protocol.bedrock.packet.PlayerActionPacket
 
 
 class ModuleNoFall : CheatModule("NoFall") {

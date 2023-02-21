@@ -1,9 +1,9 @@
 package dev.sora.relay.cheat.module.impl
 
-import org.cloudburstmc.protocol.bedrock.packet.BedrockPacket
 import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.game.event.EventPacketOutbound
 import dev.sora.relay.game.event.Listen
+import org.cloudburstmc.protocol.bedrock.packet.BedrockPacket
 
 class ModuleBlink : CheatModule("Blink") {
 

@@ -1,7 +1,7 @@
 package dev.sora.relay.game.utils.mapping
 
-import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData
 import dev.sora.relay.game.inventory.AbstractInventory
+import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData
 
 class ItemMapping(data: List<Pair<String, Int>>) : RuntimeMappingImpl(data) {
 

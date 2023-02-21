@@ -1,15 +1,11 @@
 package dev.sora.relay.game.entity
 
-import org.cloudburstmc.math.vector.Vector3f
-import org.cloudburstmc.protocol.bedrock.packet.BedrockPacket
-import org.cloudburstmc.protocol.bedrock.data.AttributeData
-import org.cloudburstmc.protocol.bedrock.data.entity.EntityDataMap
-import org.cloudburstmc.protocol.bedrock.packet.MoveEntityAbsolutePacket
-import org.cloudburstmc.protocol.bedrock.packet.MoveEntityDeltaPacket
-import org.cloudburstmc.protocol.bedrock.packet.SetEntityDataPacket
-import org.cloudburstmc.protocol.bedrock.packet.UpdateAttributesPacket
 import dev.sora.relay.game.inventory.EntityInventory
 import org.cloudburstmc.math.vector.Vector2f
+import org.cloudburstmc.math.vector.Vector3f
+import org.cloudburstmc.protocol.bedrock.data.AttributeData
+import org.cloudburstmc.protocol.bedrock.data.entity.EntityDataMap
+import org.cloudburstmc.protocol.bedrock.packet.*
 import kotlin.math.sqrt
 
 abstract class Entity(open val entityId: Long) {

@@ -1,6 +1,5 @@
 package dev.sora.relay.cheat.command
 
-import org.cloudburstmc.protocol.bedrock.packet.TextPacket
 import dev.sora.relay.cheat.BasicThing
 import dev.sora.relay.cheat.command.impl.CommandModule
 import dev.sora.relay.cheat.command.impl.CommandToggle
@@ -10,6 +9,7 @@ import dev.sora.relay.game.event.EventPacketOutbound
 import dev.sora.relay.game.event.Listen
 import dev.sora.relay.game.event.Listener
 import dev.sora.relay.utils.logError
+import org.cloudburstmc.protocol.bedrock.packet.TextPacket
 
 class CommandManager(private val session: GameSession) : Listener {
 

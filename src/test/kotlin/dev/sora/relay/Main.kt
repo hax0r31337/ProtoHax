@@ -9,6 +9,7 @@ import dev.sora.relay.session.MinecraftRelayPacketListener
 import dev.sora.relay.session.MinecraftRelaySession
 import dev.sora.relay.session.listener.RelayListenerAutoCodec
 import dev.sora.relay.session.listener.RelayListenerMicrosoftLogin
+import dev.sora.relay.session.listener.RelayListenerNetworkSettings
 import dev.sora.relay.utils.HttpUtils
 import dev.sora.relay.utils.logInfo
 import io.netty.util.internal.logging.InternalLoggerFactory
@@ -39,6 +40,7 @@ fun main(args: Array<String>) {
             gameSession.netSession = session
 //            msSession.session = session
 //            session.listeners.add(msSession)
+            session.listeners.add(RelayListenerNetworkSettings(session))
             session.listeners.add(RelayListenerAutoCodec(session))
             session.listeners.add(object : MinecraftRelayPacketListener {
                 override fun onPacketInbound(packet: BedrockPacket): Boolean {
