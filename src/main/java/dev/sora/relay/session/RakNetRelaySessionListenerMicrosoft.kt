@@ -11,6 +11,7 @@ import org.cloudburstmc.protocol.bedrock.packet.DisconnectPacket
 import org.cloudburstmc.protocol.bedrock.packet.LoginPacket
 import org.cloudburstmc.protocol.bedrock.packet.ServerToClientHandshakePacket
 import org.cloudburstmc.protocol.bedrock.util.EncryptionUtils
+import com.nimbusds.jwt.SignedJWT
 import dev.sora.relay.RakNetRelaySession
 import dev.sora.relay.RakNetRelaySessionListener
 import dev.sora.relay.utils.*
@@ -39,15 +40,14 @@ class RakNetRelaySessionListenerMicrosoft(val accessToken: String, val deviceInf
             }
             return field
         }
-    private var chain: AsciiString? = null
+    private var chain: List<String>? = null
         get() {
             if (field == null || chainExpires < Instant.now().epochSecond) {
-                field = AsciiString(fetchChain(identityToken, keyPair).also {
-                    val json = JsonParser.parseReader(base64Decode(
-                        JsonParser.parseString(it).asJsonObject.getAsJsonArray("chain").get(0).asString.split(".")[1])
+                field = fetchChain(identityToken, keyPair).also {
+                    val json = JsonParser.parseReader(base64Decode(it[0].split(".")[1])
                         .inputStream().reader()).asJsonObject
                     chainExpires = json.get("exp").asLong
-                })
+                }
             }
             return field
         }
@@ -79,9 +79,12 @@ class RakNetRelaySessionListenerMicrosoft(val accessToken: String, val deviceInf
     override fun onPacketOutbound(packet: BedrockPacket): Boolean {
         if (packet is LoginPacket) {
             try {
-                packet.chainData = AsciiString(chain)
-                val skinBody = packet.skinData.toString().split(".")[1]
-                packet.skinData = AsciiString(toJWTRaw(skinBody, keyPair))
+                packet.chain.clear()
+                chain!!.forEach {
+                    packet.chain.add(SignedJWT.parse(it))
+                }
+                val skinBody = packet.extra.serialize().split(".")[1]
+                packet.extra = SignedJWT.parse(toJWTRaw(skinBody, keyPair))
             } catch (e: Throwable) {
                 session.inboundPacket(DisconnectPacket().apply {
                     kickMessage = e.toString()
@@ -172,7 +175,7 @@ class RakNetRelaySessionListenerMicrosoft(val accessToken: String, val deviceInf
             }
         }
 
-        fun fetchChain(identityToken: String, keyPair: KeyPair): String {
+        fun fetchChain(identityToken: String, keyPair: KeyPair): List<String> {
             val rawChain = JsonParser.parseReader(fetchRawChain(identityToken, keyPair.public)).asJsonObject
             val chains = rawChain.get("chain").asJsonArray
 
@@ -185,12 +188,11 @@ class RakNetRelaySessionListenerMicrosoft(val accessToken: String, val deviceInf
                 put("identityPublicKey", identityPubKey.get("x5u").asString)
             }.toJSONString().toByteArray(Charsets.UTF_8)), keyPair)
 
-            rawChain.add("chain", JsonArray().also {
-                it.add(jwt)
-                it.addAll(chains)
-            })
-
-            return Gson().toJson(rawChain)
+            val list = mutableListOf<String>(jwt)
+            chains.forEach {
+                list.add(it.asString)
+            }
+            return list
         }
 
         private fun toJWTRaw(payload: String, keyPair: KeyPair): String {
