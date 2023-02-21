@@ -2,4 +2,3 @@
 rootProject.name = 'ProtoHax'
 
 include 'natives'
-include 'packet-analyze'

@@ -1,6 +1,6 @@
 package dev.sora.relay.game.world.chunk.palette;
 
-import com.nukkitx.network.util.Preconditions;
+import org.cloudburstmc.protocol.common.util.Preconditions;
 
 import java.util.Arrays;
 

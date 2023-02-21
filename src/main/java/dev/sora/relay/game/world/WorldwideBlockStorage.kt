@@ -30,7 +30,7 @@ abstract class WorldwideBlockStorage(protected val session: GameSession) : Liste
         if (packet is LevelChunkPacket) {
             chunkOutOfRangeCheck()
             val chunk = Chunk(packet.chunkX, packet.chunkZ,
-                dimension == Dimension.OVERWORLD && (!session.netSessionInitialized || session.netSession.packetCodec.protocolVersion >= 440),
+                dimension == Dimension.OVERWORLD && (!session.netSessionInitialized || session.netSession.codec.protocolVersion >= 440),
                 session.blockMapping, session.legacyBlockMapping)
             chunk.read(packet.data, packet.subChunksLength)
             chunks[chunk.hash] = chunk

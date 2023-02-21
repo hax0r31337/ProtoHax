@@ -29,12 +29,12 @@ class ModuleOpFightBot : CheatModule("OPFightBot") {
                 "Back" -> target.rotationYaw + 180.0
                 else -> error("no such mode available")
             })
-            session.thePlayer.teleport(target.posX - sin(direction) * rangeValue.get(), target.posY + 0.5, target.posZ + cos(direction) * rangeValue.get(), session.netSession)
+            session.thePlayer.teleport(target.posX - sin(direction) * rangeValue.get(), target.posY + 0.5, target.posZ + cos(direction) * rangeValue.get())
         } else {
             val direction = atan2(target.posZ - session.thePlayer.posZ, target.posX - session.thePlayer.posX) - Math.toRadians(90.0)
             session.thePlayer.teleport(session.thePlayer.posX - sin(direction) * horizontalSpeedValue.get(),
                 target.posY.coerceIn(session.thePlayer.posY - verticalSpeedValue.get(), session.thePlayer.posY + verticalSpeedValue.get()),
-                session.thePlayer.posZ + cos(direction) * horizontalSpeedValue.get(), session.netSession)
+                session.thePlayer.posZ + cos(direction) * horizontalSpeedValue.get())
         }
     }
 }

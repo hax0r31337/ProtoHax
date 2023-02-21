@@ -5,14 +5,12 @@ import org.cloudburstmc.math.vector.Vector3f
 import org.cloudburstmc.protocol.bedrock.data.SoundEvent
 import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData
 import org.cloudburstmc.protocol.bedrock.packet.*
-import dev.sora.relay.RakNetRelaySession
 import dev.sora.relay.cheat.BasicThing
 import dev.sora.relay.game.GameSession
 import dev.sora.relay.game.event.*
 import dev.sora.relay.game.inventory.AbstractInventory
 import dev.sora.relay.game.inventory.ContainerInventory
 import dev.sora.relay.game.inventory.PlayerInventory
-import dev.sora.relay.utils.base64Decode
 import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.InventoryTransactionType
 import java.util.*
 
@@ -48,9 +46,9 @@ class EntityPlayerSP(private val session: GameSession) : EntityPlayer(0L, UUID.r
         super.rotate(yaw, pitch)
     }
 
-    fun teleport(x: Double, y: Double, z: Double, netSession: RakNetRelaySession) {
+    fun teleport(x: Double, y: Double, z: Double) {
         move(x, y, z)
-        netSession.inboundPacket(MovePlayerPacket().apply {
+        session.netSession.inboundPacket(MovePlayerPacket().apply {
             runtimeEntityId = entityId
             position = Vector3f.from(x, y, z)
             rotation = Vector3f.from(rotationPitch, rotationYaw, 0f)
@@ -132,9 +130,8 @@ class EntityPlayerSP(private val session: GameSession) : EntityPlayer(0L, UUID.r
                 silentRotation = null
             }
         } else if (packet is LoginPacket) {
-            val body = JsonParser.parseString(packet.chainData.toString()).asJsonObject.getAsJsonArray("chain")
-            for (chain in body) {
-                val chainBody = JsonParser.parseString(base64Decode(chain.asString.split(".")[1]).toString(Charsets.UTF_8)).asJsonObject
+            packet.chain.forEach {
+                val chainBody = JsonParser.parseString(it.payload.toString()).asJsonObject
                 if (chainBody.has("extraData")) {
                     val xData = chainBody.getAsJsonObject("extraData")
                     uuid = UUID.fromString(xData.get("identity").asString)

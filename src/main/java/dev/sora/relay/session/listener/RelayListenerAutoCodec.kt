@@ -1,5 +1,7 @@
-package dev.sora.relay.session
+package dev.sora.relay.session.listener
 
+import dev.sora.relay.session.MinecraftRelayPacketListener
+import dev.sora.relay.session.MinecraftRelaySession
 import org.cloudburstmc.protocol.bedrock.codec.BedrockCodec
 import org.cloudburstmc.protocol.bedrock.codec.compat.BedrockCompat
 import org.cloudburstmc.protocol.bedrock.codec.v291.Bedrock_v291
@@ -33,11 +35,9 @@ import org.cloudburstmc.protocol.bedrock.codec.v567.Bedrock_v567
 import org.cloudburstmc.protocol.bedrock.packet.BedrockPacket
 import org.cloudburstmc.protocol.bedrock.packet.LoginPacket
 import org.cloudburstmc.protocol.bedrock.packet.RequestNetworkSettingsPacket
-import dev.sora.relay.RakNetRelaySession
-import dev.sora.relay.RakNetRelaySessionListener
 import dev.sora.relay.utils.logInfo
 
-class RakNetRelaySessionListenerAutoCodec(private val session: RakNetRelaySession) : RakNetRelaySessionListener.PacketListener {
+class RelayListenerAutoCodec(private val session: MinecraftRelaySession) : MinecraftRelayPacketListener {
 
     override fun onPacketInbound(packet: BedrockPacket): Boolean {
         return true
@@ -45,11 +45,13 @@ class RakNetRelaySessionListenerAutoCodec(private val session: RakNetRelaySessio
 
     override fun onPacketOutbound(packet: BedrockPacket): Boolean {
         if (packet is RequestNetworkSettingsPacket) {
-            session.packetCodec = pickProtocolCodec(packet.protocolVersion)
-            logInfo("selected codec (clientProtocol=${packet.protocolVersion}, protocol=${session.packetCodec.protocolVersion}, mc=${session.packetCodec.minecraftVersion})")
+            val codec = pickProtocolCodec(packet.protocolVersion)
+            session.codec = codec
+            logInfo("selected codec (clientProtocol=${packet.protocolVersion}, protocol=${codec.protocolVersion}, mc=${codec.minecraftVersion})")
         } else if (packet is LoginPacket) {
-            session.packetCodec = pickProtocolCodec(packet.protocolVersion)
-            logInfo("selected codec (clientProtocol=${packet.protocolVersion}, protocol=${session.packetCodec.protocolVersion}, mc=${session.packetCodec.minecraftVersion})")
+            val codec = pickProtocolCodec(packet.protocolVersion)
+            session.codec = codec
+            logInfo("selected codec (clientProtocol=${packet.protocolVersion}, protocol=${codec.protocolVersion}, mc=${codec.minecraftVersion})")
         }
         return true
     }

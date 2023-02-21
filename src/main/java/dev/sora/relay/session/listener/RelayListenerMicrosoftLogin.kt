@@ -1,21 +1,14 @@
-package dev.sora.relay.session
+package dev.sora.relay.session.listener
 
 import coelho.msftauth.api.xbox.*
-import com.google.gson.Gson
-import com.google.gson.JsonArray
 import com.google.gson.JsonParser
 import com.nimbusds.jose.shaded.json.JSONObject
-import org.cloudburstmc.protocol.bedrock.packet.BedrockPacket
-import org.cloudburstmc.protocol.bedrock.packet.ClientToServerHandshakePacket
-import org.cloudburstmc.protocol.bedrock.packet.DisconnectPacket
-import org.cloudburstmc.protocol.bedrock.packet.LoginPacket
-import org.cloudburstmc.protocol.bedrock.packet.ServerToClientHandshakePacket
-import org.cloudburstmc.protocol.bedrock.util.EncryptionUtils
 import com.nimbusds.jwt.SignedJWT
-import dev.sora.relay.RakNetRelaySession
-import dev.sora.relay.RakNetRelaySessionListener
+import dev.sora.relay.session.MinecraftRelayPacketListener
+import dev.sora.relay.session.MinecraftRelaySession
 import dev.sora.relay.utils.*
-import io.netty.util.AsciiString
+import org.cloudburstmc.protocol.bedrock.packet.*
+import org.cloudburstmc.protocol.bedrock.util.EncryptionUtils
 import java.io.InputStreamReader
 import java.security.KeyPair
 import java.security.PublicKey
@@ -25,10 +18,9 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
 
-class RakNetRelaySessionListenerMicrosoft(val accessToken: String, val deviceInfo: DeviceInfo)
-    : RakNetRelaySessionListener.PacketListener {
+class RelayListenerMicrosoftLogin(val accessToken: String, val deviceInfo: DeviceInfo) : MinecraftRelayPacketListener {
 
-    constructor(accessToken: String, deviceInfo: DeviceInfo, session: RakNetRelaySession) : this(accessToken, deviceInfo) {
+    constructor(accessToken: String, deviceInfo: DeviceInfo, session: MinecraftRelaySession) : this(accessToken, deviceInfo) {
         this.session = session
     }
 
@@ -54,7 +46,7 @@ class RakNetRelaySessionListenerMicrosoft(val accessToken: String, val deviceInf
 
     private val keyPair = EncryptionUtils.createKeyPair()
 
-    lateinit var session: RakNetRelaySession
+    lateinit var session: MinecraftRelaySession
 
     fun forceFetchChain() {
         chain
@@ -68,7 +60,7 @@ class RakNetRelaySessionListenerMicrosoft(val accessToken: String, val deviceInf
             val serverKey = EncryptionUtils.generateKey(headerObject.get("x5u").asString)
             val key = EncryptionUtils.getSecretKey(keyPair.private, serverKey,
                 base64Decode(payloadObject.get("salt").asString))
-            session.serverCipher = CipherPair(key)
+            session.client!!.enableEncryption(key)
             session.outboundPacket(ClientToServerHandshakePacket())
             return false
         }
@@ -83,8 +75,7 @@ class RakNetRelaySessionListenerMicrosoft(val accessToken: String, val deviceInf
                 chain!!.forEach {
                     packet.chain.add(SignedJWT.parse(it))
                 }
-                val skinBody = packet.extra.serialize().split(".")[1]
-                packet.extra = SignedJWT.parse(toJWTRaw(skinBody, keyPair))
+                packet.extra = SignedJWT.parse(toJWTRaw(packet.extra.payload.toString(), keyPair))
             } catch (e: Throwable) {
                 session.inboundPacket(DisconnectPacket().apply {
                     kickMessage = e.toString()

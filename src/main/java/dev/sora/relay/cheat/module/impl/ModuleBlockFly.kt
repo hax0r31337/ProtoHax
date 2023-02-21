@@ -1,14 +1,6 @@
 package dev.sora.relay.cheat.module.impl
 
-import org.cloudburstmc.math.vector.Vector3f
-import org.cloudburstmc.math.vector.Vector3i
-import org.cloudburstmc.protocol.bedrock.data.inventory.ContainerId
-import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData
-import org.cloudburstmc.protocol.bedrock.packet.InventoryTransactionPacket
-import org.cloudburstmc.protocol.bedrock.packet.PlayerHotbarPacket
-import org.cloudburstmc.protocol.bedrock.packet.UpdateBlockPacket
 import dev.sora.relay.cheat.module.CheatModule
-import dev.sora.relay.game.entity.EntityPlayerSP
 import dev.sora.relay.game.event.EventTick
 import dev.sora.relay.game.event.Listen
 import dev.sora.relay.game.utils.AxisAlignedBB
@@ -17,7 +9,13 @@ import dev.sora.relay.game.utils.mapping.isBlock
 import dev.sora.relay.game.utils.toRotation
 import dev.sora.relay.game.utils.toVector3f
 import dev.sora.relay.game.world.WorldClient
+import org.cloudburstmc.math.vector.Vector3f
+import org.cloudburstmc.math.vector.Vector3i
+import org.cloudburstmc.protocol.bedrock.data.inventory.ContainerId
 import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.InventoryTransactionType
+import org.cloudburstmc.protocol.bedrock.packet.InventoryTransactionPacket
+import org.cloudburstmc.protocol.bedrock.packet.PlayerHotbarPacket
+import org.cloudburstmc.protocol.bedrock.packet.UpdateBlockPacket
 
 class ModuleBlockFly : CheatModule("BlockFly") {
 
@@ -56,10 +54,10 @@ class ModuleBlockFly : CheatModule("BlockFly") {
 
 //        val id = session.blockMapping.runtime("minecraft:planks[wood_type=oak]")
         val id = session.thePlayer.inventory.hand.blockDefinition?.runtimeId ?: 0
-        session.netSession.inboundPacket(UpdateBlockPacket().apply {
-            blockPosition = block
-            runtimeId = id
-        })
+//        session.netSession.inboundPacket(UpdateBlockPacket().apply {
+//            blockPosition = block
+//            runtimeId = id
+//        })
         world.setBlockIdAt(block.x, block.y, block.z, id)
         session.sendPacket(InventoryTransactionPacket().apply {
             transactionType = InventoryTransactionType.ITEM_USE

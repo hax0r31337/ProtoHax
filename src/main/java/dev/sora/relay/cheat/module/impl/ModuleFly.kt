@@ -65,7 +65,7 @@ class ModuleFly : CheatModule("Fly") {
                     motion = Vector3f.from(-sin(yaw) * value, 0.0, +cos(yaw) * value)
                 })
             } else {
-                player.teleport(player.posX - sin(yaw) * value, launchY, player.posZ + cos(yaw) * value, session.netSession)
+                player.teleport(player.posX - sin(yaw) * value, launchY, player.posZ + cos(yaw) * value)
             }
         } else if (modeValue.get() == "Vanilla" && !canFly) {
             canFly = true
