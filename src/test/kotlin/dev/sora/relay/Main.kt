@@ -26,7 +26,7 @@ fun main(args: Array<String>) {
     InternalLoggerFactory.setDefaultFactory(LoggerFactory())
     val gameSession = craftSession()
 
-    var dst = InetSocketAddress("127.0.0.1", 19136)
+    val dst = InetSocketAddress("127.0.0.1", 19136)
 //    val deviceInfo = RelayListenerMicrosoftLogin.DEVICE_NINTENDO
 //    val msSession = RelayListenerMicrosoftLogin(getMSAccessToken(deviceInfo.appId), deviceInfo).also {
 //        thread {
@@ -36,27 +36,27 @@ fun main(args: Array<String>) {
 //    }
     val relay = MinecraftRelay(object : MinecraftRelayListener {
         override fun onSessionCreation(session: MinecraftRelaySession): InetSocketAddress {
-            session.listeners.add(gameSession)
-            gameSession.netSession = session
 //            msSession.session = session
 //            session.listeners.add(msSession)
             session.listeners.add(RelayListenerNetworkSettings(session))
             session.listeners.add(RelayListenerAutoCodec(session))
-            session.listeners.add(object : MinecraftRelayPacketListener {
-                override fun onPacketInbound(packet: BedrockPacket): Boolean {
-                    if (packet is TransferPacket) {
-                        println("Transfer: ${packet.address}:${packet.port}")
-                        dst = InetSocketAddress(packet.address, packet.port)
-                        packet.address = "192.168.2.103"
-                        packet.port = 19132
-                    }
-                    return true
-                }
-
-                override fun onPacketOutbound(packet: BedrockPacket): Boolean {
-                    return true
-                }
-            })
+            session.listeners.add(gameSession)
+            gameSession.netSession = session
+//            session.listeners.add(object : MinecraftRelayPacketListener {
+//                override fun onPacketInbound(packet: BedrockPacket): Boolean {
+//                    if (packet is TransferPacket) {
+//                        println("Transfer: ${packet.address}:${packet.port}")
+//                        dst = InetSocketAddress(packet.address, packet.port)
+//                        packet.address = "192.168.2.103"
+//                        packet.port = 19132
+//                    }
+//                    return true
+//                }
+//
+//                override fun onPacketOutbound(packet: BedrockPacket): Boolean {
+//                    return true
+//                }
+//            })
 
             return dst
         }

@@ -3,7 +3,9 @@ package dev.sora.relay.game
 import dev.sora.relay.game.entity.EntityPlayerSP
 import dev.sora.relay.game.event.*
 import dev.sora.relay.game.management.BlobCacheManager
-import dev.sora.relay.game.utils.mapping.*
+import dev.sora.relay.game.registry.BlockMapping
+import dev.sora.relay.game.registry.ItemMapping
+import dev.sora.relay.game.registry.LegacyBlockMapping
 import dev.sora.relay.game.world.WorldClient
 import dev.sora.relay.session.MinecraftRelayPacketListener
 import dev.sora.relay.session.MinecraftRelaySession
@@ -22,11 +24,9 @@ class GameSession : MinecraftRelayPacketListener {
 
     lateinit var netSession: MinecraftRelaySession
 
-    var itemMapping: ItemMapping = ItemMapping(emptyList())
+    var blockMapping = BlockMapping(emptyMap(), 0)
         private set
-    var blockMapping: RuntimeMapping = EmptyRuntimeMapping()
-        private set
-    var legacyBlockMapping: RuntimeMapping = EmptyRuntimeMapping()
+    var legacyBlockMapping = LegacyBlockMapping(emptyMap())
         private set
 
     var inventoriesServerAuthoritative = false
@@ -63,9 +63,17 @@ class GameSession : MinecraftRelayPacketListener {
         }
 
         if (packet is LoginPacket) {
-            blockMapping = BlockMappingUtils.craftMapping(packet.protocolVersion)
-            legacyBlockMapping = BlockMappingUtils.craftMapping(packet.protocolVersion, "legacy")
-            itemMapping = ItemMappingUtils.craftMapping(packet.protocolVersion)
+            val protocolVersion = packet.protocolVersion
+            val itemDefinitions = ItemMapping.Provider.craftMapping(protocolVersion)
+            val blockDefinitions = BlockMapping.Provider.craftMapping(protocolVersion)
+            netSession.peer.codecHelper.itemDefinitions = itemDefinitions
+            netSession.peer.codecHelper.blockDefinitions = blockDefinitions
+            netSession.client?.let {
+                it.peer.codecHelper.itemDefinitions = itemDefinitions
+                it.peer.codecHelper.blockDefinitions = blockDefinitions
+            }
+            blockMapping = blockDefinitions
+            legacyBlockMapping = LegacyBlockMapping.Provider.craftMapping(packet.protocolVersion)
         }
 
         return true

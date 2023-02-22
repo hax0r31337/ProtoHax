@@ -8,9 +8,9 @@ import dev.sora.relay.game.event.EventTick
 import dev.sora.relay.game.event.Listen
 import dev.sora.relay.game.inventory.AbstractInventory
 import dev.sora.relay.game.inventory.PlayerInventory
-import dev.sora.relay.game.utils.mapping.ItemMapping
-import dev.sora.relay.game.utils.mapping.ItemMappingUtils
-import dev.sora.relay.game.utils.mapping.isBlock
+import dev.sora.relay.game.registry.isBlock
+import dev.sora.relay.game.registry.itemDefinition
+import dev.sora.relay.game.utils.constants.ItemTags
 import dev.sora.relay.game.utils.toVector3i
 import dev.sora.relay.utils.timing.ClickTimer
 import org.cloudburstmc.protocol.bedrock.data.inventory.ContainerType
@@ -38,10 +38,10 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper") {
     private val noSortNoCloseValue = boolValue("NoCloseIfNoSort", true)
 
     private val sortArmor = arrayOf(
-        Sort(PlayerInventory.SLOT_HELMET, ItemMappingUtils.TAG_IS_HELMET),
-        Sort(PlayerInventory.SLOT_CHESTPLATE, ItemMappingUtils.TAG_IS_CHESTPLATE),
-        Sort(PlayerInventory.SLOT_LEGGINGS, ItemMappingUtils.TAG_IS_LEGGINGS),
-        Sort(PlayerInventory.SLOT_BOOTS, ItemMappingUtils.TAG_IS_BOOTS)
+        Sort(PlayerInventory.SLOT_HELMET, ItemTags.TAG_IS_HELMET),
+        Sort(PlayerInventory.SLOT_CHESTPLATE, ItemTags.TAG_IS_CHESTPLATE),
+        Sort(PlayerInventory.SLOT_LEGGINGS, ItemTags.TAG_IS_LEGGINGS),
+        Sort(PlayerInventory.SLOT_BOOTS, ItemTags.TAG_IS_BOOTS)
     )
 
     private val clickTimer = ClickTimer()
@@ -67,13 +67,12 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper") {
         }
 
         val player = event.session.thePlayer
-        val mapping = event.session.itemMapping
         val openContainer = player.openContainer
 
         if (stealChestValue.get() && openContainer != null && openContainer !is PlayerInventory) {
             // steal items
             openContainer.content.forEachIndexed { index, item ->
-                if (mapping.isNecessaryItem(item) && !mapping.hasBetterItem(item, openContainer, index, strictMode = false) && !mapping.hasBetterItem(item, player.inventory)) {
+                if (item.itemDefinition.isNecessaryItem(item) && !item.itemDefinition.hasBetterItem(openContainer, index, strictMode = false) && !item.itemDefinition.hasBetterItem(player.inventory)) {
                     val slot = player.inventory.findEmptySlot() ?: return
                     openContainer.moveItem(index, slot, player.inventory, event.session)
 
@@ -85,7 +84,7 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper") {
             // drop garbage
             player.inventory.content.forEachIndexed { index, item ->
                 if (item == ItemData.AIR) return@forEachIndexed
-                if (mapping.hasBetterItem(item, player.inventory, index) || (throwUnnecessaryValue.get() && !mapping.isNecessaryItem(item))) {
+                if (item.itemDefinition.hasBetterItem(player.inventory, index) || (throwUnnecessaryValue.get() && !item.itemDefinition.isNecessaryItem(item))) {
                     if (checkFakeOpen(event.session)) return
                     player.inventory.dropItem(index, event.session)
                     // player will swing if they drop an item
@@ -99,7 +98,7 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper") {
             // sort items and wear armor
             val sorts = getSorts(player.inventory)
             sorts.forEach {
-                if (it.sort(mapping, player.inventory, event.session)) {
+                if (it.sort(player.inventory, event.session)) {
                     updateClick()
                     return
                 }
@@ -139,23 +138,22 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper") {
             sorts.addAll(sortArmor)
         }
         if (sortSwordValue.get() != -1) {
-            sorts.add(Sort(sortSwordValue.get(), ItemMappingUtils.TAG_IS_SWORD))
+            sorts.add(Sort(sortSwordValue.get(), ItemTags.TAG_IS_SWORD))
         }
         if (sortPickaxeValue.get() != -1) {
-            sorts.add(Sort(sortPickaxeValue.get(), ItemMappingUtils.TAG_IS_PICKAXE))
+            sorts.add(Sort(sortPickaxeValue.get(), ItemTags.TAG_IS_PICKAXE))
         }
         if (sortAxeValue.get() != -1) {
-            sorts.add(Sort(sortAxeValue.get(), ItemMappingUtils.TAG_IS_AXE))
+            sorts.add(Sort(sortAxeValue.get(), ItemTags.TAG_IS_AXE))
         }
         if (sortBlockValue.get() != -1 && !inventory.content[sortBlockValue.get()].isBlock()) {
-            sorts.add(Sort(sortBlockValue.get()) { item, m ->
+            sorts.add(Sort(sortBlockValue.get()) { item ->
                 if (item.isBlock()) item.count.toFloat() else 0f
             })
         }
         if (sortGAppleValue.get() != -1) {
-            sorts.add(Sort(sortGAppleValue.get()) { item, m ->
-                val name = m.map(item)
-                if (name == "minecraft:golden_apple") 1f else 0f
+            sorts.add(Sort(sortGAppleValue.get()) { item ->
+                if (item.itemDefinition.identifier == "minecraft:golden_apple") 1f else 0f
             })
         }
         return sorts
@@ -204,20 +202,20 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper") {
         return false
     }
 
-    inner class Sort(val slot: Int, val judge: (ItemData, ItemMapping) -> Float) {
+    inner class Sort(val slot: Int, val judge: (ItemData) -> Float) {
 
-        constructor(slot: Int, judgeTag: String) : this(slot, { item, m ->
-            val itemTags = m.tags(item)
+        constructor(slot: Int, judgeTag: String) : this(slot, { item ->
+            val itemTags = item.itemDefinition.tags
             if (itemTags.contains(judgeTag)) {
-                m.getTier(itemTags).toFloat()
+                item.itemDefinition.getTier(itemTags).toFloat()
             } else {
                 0f
             }
         })
 
-        fun sort(mapping: ItemMapping, inventory: AbstractInventory, session: GameSession): Boolean {
+        fun sort(inventory: AbstractInventory, session: GameSession): Boolean {
             val bestSlot = inventory.findBestItem { item ->
-                judge(item, mapping)
+                judge(item)
             } ?: return false
             if (bestSlot == slot) return false
             if (checkFakeOpen(session)) return true

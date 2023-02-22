@@ -1,11 +1,12 @@
 package dev.sora.relay.game.world.chunk
 
-import dev.sora.relay.game.utils.mapping.RuntimeMapping
+import dev.sora.relay.game.registry.BlockMapping
+import dev.sora.relay.game.registry.LegacyBlockMapping
 import io.netty.buffer.ByteBuf
 import kotlin.math.abs
 
 class Chunk(val x: Int, val z: Int, val is384World: Boolean,
-            private val blockMapping: RuntimeMapping, private val legacyBlockMapping: RuntimeMapping) {
+            private val blockMapping: BlockMapping, private val legacyBlockMapping: LegacyBlockMapping) {
 
     val hash: Long
         get() = hash(x, z)

@@ -1,7 +1,6 @@
 package dev.sora.relay.game.world.chunk
 
-import dev.sora.relay.game.utils.mapping.BlockMappingUtils
-import dev.sora.relay.game.utils.mapping.RuntimeMapping
+import dev.sora.relay.game.registry.BlockMapping
 import dev.sora.relay.game.world.chunk.palette.BitArray
 import dev.sora.relay.game.world.chunk.palette.BitArrayVersion
 import io.netty.buffer.ByteBuf
@@ -18,13 +17,13 @@ class BlockStorage {
     var bitArray: BitArray
     var palette: IntArrayList
 
-    constructor(blockMapping: RuntimeMapping, version: BitArrayVersion = BitArrayVersion.V2) {
+    constructor(airId: Int, version: BitArrayVersion = BitArrayVersion.V2) {
         bitArray = version.createPalette(SIZE)
         palette = IntArrayList(16)
-        palette.add(blockMapping.runtime("minecraft:air"))
+        palette.add(airId)
     }
 
-    constructor(byteBuf: ByteBuf, blockMapping: RuntimeMapping) {
+    constructor(byteBuf: ByteBuf, blockMapping: BlockMapping) {
         val paletteHeader = byteBuf.readByte().toInt()
         val isRuntime = (paletteHeader and 1) == 1
         val paletteVersion = paletteHeader or 1 shr 1
@@ -56,7 +55,7 @@ class BlockStorage {
                 } else {
                     name
                 })
-                palette.add(blockMapping.runtime(BlockMappingUtils.getBlockNameFromNbt(map.build())))
+                palette.add(blockMapping.getRuntimeByIdentifier(BlockMapping.Provider.getBlockNameFromNbt(map.build())))
             }
         }
     }

@@ -10,7 +10,7 @@ class RelayListenerNetworkSettings(private val session: MinecraftRelaySession) :
     override fun onPacketInbound(packet: BedrockPacket): Boolean {
         if (packet is NetworkSettingsPacket) {
             session.client!!.setCompression(packet.compressionAlgorithm)
-            // TODO: @Incompressible annotation takes no effect on nukkit protocol library
+            // FIXME: @Incompressible annotation takes no effect on nukkit protocol library
             session.sendPacketImmediately(packet)
             session.setCompression(packet.compressionAlgorithm)
             return false

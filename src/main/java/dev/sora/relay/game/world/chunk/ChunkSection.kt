@@ -1,12 +1,12 @@
 package dev.sora.relay.game.world.chunk
 
-import dev.sora.relay.game.utils.mapping.RuntimeMapping
+import dev.sora.relay.game.registry.BlockMapping
+import dev.sora.relay.game.registry.LegacyBlockMapping
 import io.netty.buffer.ByteBuf
 
-class ChunkSection(private val blockMapping: RuntimeMapping,
-                   private val legacyBlockMapping: RuntimeMapping) {
+class ChunkSection(private val blockMapping: BlockMapping, private val legacyBlockMapping: LegacyBlockMapping) {
 
-    var storage = BlockStorage(blockMapping)
+    var storage = BlockStorage(blockMapping.airId)
         private set
 
     /**
@@ -55,8 +55,7 @@ class ChunkSection(private val blockMapping: RuntimeMapping,
                     val idx = (x shl 8) + (z shl 4) + y
                     val id = blockIds[idx].toInt()
                     val meta = metaIds[idx shr 1].toInt() shr (idx and 1) * 4 and 15
-                    val name = legacyBlockMapping.game(id shl 6 or meta)
-                    storage.setBlock(index, blockMapping.runtime(name))
+                    storage.setBlock(index, legacyBlockMapping.toRuntime(id, meta))
                     index++
                 }
             }

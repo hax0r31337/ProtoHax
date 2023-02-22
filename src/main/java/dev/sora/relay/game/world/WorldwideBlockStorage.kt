@@ -4,6 +4,7 @@ import dev.sora.relay.game.GameSession
 import dev.sora.relay.game.event.EventDisconnect
 import dev.sora.relay.game.event.EventPacketInbound
 import dev.sora.relay.game.event.Listener
+import dev.sora.relay.game.registry.BlockDefinition
 import dev.sora.relay.game.utils.constants.Dimension
 import dev.sora.relay.game.world.chunk.Chunk
 import org.cloudburstmc.math.vector.Vector3i
@@ -31,7 +32,7 @@ abstract class WorldwideBlockStorage(protected val session: GameSession) : Liste
             val chunk = Chunk(packet.chunkX, packet.chunkZ,
                 dimension == Dimension.OVERWORLD && (!session.netSessionInitialized || session.netSession.codec.protocolVersion >= 440),
                 session.blockMapping, session.legacyBlockMapping)
-            chunk.read(packet.data, packet.subChunksLength)
+            chunk.read(packet.data.copy(), packet.subChunksLength)
             chunks[chunk.hash] = chunk
         } else if (packet is ChunkRadiusUpdatedPacket) {
             viewDistance = packet.radius
@@ -52,7 +53,7 @@ abstract class WorldwideBlockStorage(protected val session: GameSession) : Liste
                         chunk.readSubChunk(position.y, it)
                     }
                 } else {
-                    chunk.readSubChunk(position.y, it.data)
+                    chunk.readSubChunk(position.y, it.data.copy())
                 }
             }
         }
@@ -68,12 +69,12 @@ abstract class WorldwideBlockStorage(protected val session: GameSession) : Liste
     }
 
     fun getBlockIdAt(x: Int, y: Int, z: Int): Int {
-        val chunk = getChunkAt(x, z) ?: return session.blockMapping.runtime("minecraft:air")
+        val chunk = getChunkAt(x, z) ?: return session.blockMapping.airId
         return chunk.getBlockAt(x and 0x0f, y, z and 0x0f)
     }
 
-    fun getBlockAt(x: Int, y: Int, z: Int): String {
-        return session.blockMapping.game(getBlockIdAt(x, y, z))
+    fun getBlockAt(x: Int, y: Int, z: Int): BlockDefinition {
+        return session.netSession.peer.codecHelper.blockDefinitions.getDefinition(getBlockIdAt(x, y, z)) as BlockDefinition
     }
 
     fun getBlockAt(vec: Vector3i)
@@ -88,7 +89,11 @@ abstract class WorldwideBlockStorage(protected val session: GameSession) : Liste
     }
 
     fun setBlockAt(x: Int, y: Int, z: Int, name: String) {
-        setBlockIdAt(x, y, z, session.blockMapping.runtime(name))
+        setBlockIdAt(x, y, z, session.blockMapping.getRuntimeByIdentifier(name))
+    }
+
+    fun setBlockAt(x: Int, y: Int, z: Int, block: BlockDefinition) {
+        setBlockIdAt(x, y, z, block.runtimeId)
     }
 
     /**
