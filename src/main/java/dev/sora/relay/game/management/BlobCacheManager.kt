@@ -55,7 +55,7 @@ class BlobCacheManager : Listener {
             packet.blobs.forEach { (id, data) ->
                 cacheCallbacks[id]?.let {
                     try {
-                        it(data.copy())
+                        it(data)
                     } catch (t: Throwable) {
                         logError("cache callback", t)
                     }

@@ -9,22 +9,24 @@ import java.util.zip.GZIPInputStream
 
 class BlockMapping(private val runtimeToGameMap: Map<Int, String>, val airId: Int) : DefinitionRegistry<org.cloudburstmc.protocol.bedrock.data.defintions.BlockDefinition> {
 
+    private val gameToRuntimeMap = mutableMapOf<String, Int>()
+
+    init {
+        runtimeToGameMap.forEach { (k, v) ->
+            gameToRuntimeMap[v] = k
+        }
+    }
+
     override fun getDefinition(runtimeId: Int): org.cloudburstmc.protocol.bedrock.data.defintions.BlockDefinition {
         return BlockDefinition(runtimeId, runtimeToGameMap[runtimeId] ?: return UnknownBlockDefinition(runtimeId))
     }
 
     override fun isRegistered(definition: org.cloudburstmc.protocol.bedrock.data.defintions.BlockDefinition): Boolean {
-        return getDefinition(definition.runtimeId) == definition
+        return definition is UnknownBlockDefinition || getDefinition(definition.runtimeId) == definition
     }
 
     fun getRuntimeByIdentifier(identifier: String): Int {
-        // TODO: performance issues
-        runtimeToGameMap.forEach { (k, v) ->
-            if (v == identifier) {
-                return k
-            }
-        }
-        return 0
+        return gameToRuntimeMap[identifier] ?: 0
     }
 
     object Provider : MappingProvider<BlockMapping>() {

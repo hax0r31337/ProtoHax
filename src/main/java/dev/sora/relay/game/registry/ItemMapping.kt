@@ -10,7 +10,7 @@ class ItemMapping(private val runtimeToGameMap: Map<Int, String>) : DefinitionRe
     }
 
     override fun isRegistered(definition: org.cloudburstmc.protocol.bedrock.data.defintions.ItemDefinition): Boolean {
-        return getDefinition(definition.runtimeId) == definition
+        return definition is UnknownItemDefinition || getDefinition(definition.runtimeId) == definition
     }
 
     object Provider : MappingProvider<ItemMapping>() {

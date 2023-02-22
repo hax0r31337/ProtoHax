@@ -27,17 +27,17 @@ fun main(args: Array<String>) {
     val gameSession = craftSession()
 
     val dst = InetSocketAddress("127.0.0.1", 19136)
-//    val deviceInfo = RelayListenerMicrosoftLogin.DEVICE_NINTENDO
-//    val msSession = RelayListenerMicrosoftLogin(getMSAccessToken(deviceInfo.appId), deviceInfo).also {
-//        thread {
-//            it.forceFetchChain()
-//            println("chain ok")
-//        }
-//    }
+    val deviceInfo = RelayListenerMicrosoftLogin.DEVICE_NINTENDO
+    val msSession = RelayListenerMicrosoftLogin(getMSAccessToken(deviceInfo.appId), deviceInfo).also {
+        thread {
+            it.forceFetchChain()
+            println("chain ok")
+        }
+    }
     val relay = MinecraftRelay(object : MinecraftRelayListener {
         override fun onSessionCreation(session: MinecraftRelaySession): InetSocketAddress {
-//            msSession.session = session
-//            session.listeners.add(msSession)
+            msSession.session = session
+            session.listeners.add(msSession)
             session.listeners.add(RelayListenerNetworkSettings(session))
             session.listeners.add(RelayListenerAutoCodec(session))
             session.listeners.add(gameSession)

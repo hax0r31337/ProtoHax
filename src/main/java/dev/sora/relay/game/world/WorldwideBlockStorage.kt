@@ -32,7 +32,8 @@ abstract class WorldwideBlockStorage(protected val session: GameSession) : Liste
             val chunk = Chunk(packet.chunkX, packet.chunkZ,
                 dimension == Dimension.OVERWORLD && (!session.netSessionInitialized || session.netSession.codec.protocolVersion >= 440),
                 session.blockMapping, session.legacyBlockMapping)
-            chunk.read(packet.data.copy(), packet.subChunksLength)
+            chunk.read(packet.data, packet.subChunksLength)
+            packet.data.resetReaderIndex()
             chunks[chunk.hash] = chunk
         } else if (packet is ChunkRadiusUpdatedPacket) {
             viewDistance = packet.radius
@@ -51,9 +52,11 @@ abstract class WorldwideBlockStorage(protected val session: GameSession) : Liste
                     // cached chunk
                     session.cacheManager.registerCacheCallback(it.blobId) {
                         chunk.readSubChunk(position.y, it)
+                        it.resetReaderIndex()
                     }
                 } else {
-                    chunk.readSubChunk(position.y, it.data.copy())
+                    chunk.readSubChunk(position.y, it.data)
+                    it.data.resetReaderIndex()
                 }
             }
         }

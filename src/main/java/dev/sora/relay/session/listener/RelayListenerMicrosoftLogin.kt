@@ -60,8 +60,8 @@ class RelayListenerMicrosoftLogin(val accessToken: String, val deviceInfo: Devic
             val serverKey = EncryptionUtils.generateKey(headerObject.get("x5u").asString)
             val key = EncryptionUtils.getSecretKey(keyPair.private, serverKey,
                 base64Decode(payloadObject.get("salt").asString))
-            session.sendPacketImmediately(ClientToServerHandshakePacket())
             session.client!!.enableEncryption(key)
+            session.outboundPacket(ClientToServerHandshakePacket())
             return false
         }
 
@@ -75,7 +75,7 @@ class RelayListenerMicrosoftLogin(val accessToken: String, val deviceInfo: Devic
                 chain!!.forEach {
                     packet.chain.add(SignedJWT.parse(it))
                 }
-                packet.extra = SignedJWT.parse(toJWTRaw(packet.extra.payload.toString(), keyPair))
+                packet.extra = SignedJWT.parse(toJWTRaw(packet.extra.payload.toBase64URL().toString(), keyPair))
             } catch (e: Throwable) {
                 session.inboundPacket(DisconnectPacket().apply {
                     kickMessage = e.toString()
