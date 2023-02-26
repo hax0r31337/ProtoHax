@@ -14,7 +14,7 @@ abstract class MappingProvider<T> {
         var version: Short = -1
 
         for (i in availableVersions) {
-            if (version < i && protocolVersion <= i) {
+            if (i in version..protocolVersion) {
                 version = i
             }
         }
