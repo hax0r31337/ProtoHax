@@ -28,6 +28,12 @@ class ModuleNoFall : CheatModule("NoFall") {
             if (packet is MovePlayerPacket){
                 packet.isOnGround = false
             }
+        }else if(modeValue.get() == "CubeCraft"){
+            if(packet is PlayerAuthInputPacket){
+                if(packet.delta.y < -0.3f){
+                    packet.delta = Vector3f.ZERO
+                }
+            }
         }
     }
 
@@ -41,10 +47,6 @@ class ModuleNoFall : CheatModule("NoFall") {
                     runtimeEntityId = session.thePlayer.entityId
                     action = PlayerActionType.START_GLIDE
                 })
-            }
-        }else if(modeValue.get() == "CubeCraft"){
-            if(session.thePlayer.motionY <= -5.5){
-
             }
         }
     }
