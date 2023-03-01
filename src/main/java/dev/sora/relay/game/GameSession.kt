@@ -11,7 +11,6 @@ import dev.sora.relay.session.MinecraftRelayPacketListener
 import dev.sora.relay.session.MinecraftRelaySession
 import org.cloudburstmc.protocol.bedrock.packet.BedrockPacket
 import org.cloudburstmc.protocol.bedrock.packet.LoginPacket
-import org.cloudburstmc.protocol.bedrock.packet.StartGamePacket
 
 class GameSession : MinecraftRelayPacketListener {
 
@@ -29,8 +28,6 @@ class GameSession : MinecraftRelayPacketListener {
     var legacyBlockMapping = LegacyBlockMapping(emptyMap())
         private set
 
-    var inventoriesServerAuthoritative = false
-        private set
 
     val netSessionInitialized: Boolean
         get() = this::netSession.isInitialized
@@ -46,10 +43,6 @@ class GameSession : MinecraftRelayPacketListener {
         eventManager.emit(event)
         if (event.isCanceled()) {
             return false
-        }
-
-        if (packet is StartGamePacket) {
-            inventoriesServerAuthoritative = packet.isInventoriesServerAuthoritative
         }
 
         return true

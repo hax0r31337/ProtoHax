@@ -1,6 +1,8 @@
 package dev.sora.relay.game.inventory
 
+import dev.sora.relay.game.GameSession
 import dev.sora.relay.game.entity.EntityPlayerSP
+import org.cloudburstmc.protocol.bedrock.data.PlayerAuthInputData
 import org.cloudburstmc.protocol.bedrock.data.inventory.ContainerId
 import org.cloudburstmc.protocol.bedrock.data.inventory.ContainerSlotType
 import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData
@@ -12,6 +14,7 @@ import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.InventoryAct
 import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.InventorySource
 import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.InventoryTransactionType
 import org.cloudburstmc.protocol.bedrock.packet.*
+import java.util.*
 
 class PlayerInventory(private val player: EntityPlayerSP) : EntityInventory(0L) {
 
@@ -23,6 +26,7 @@ class PlayerInventory(private val player: EntityPlayerSP) : EntityInventory(0L) 
 
     private var requestId = -1
     private val requestIdMap = mutableMapOf<Int, Int>()
+    private val pendingRequests = LinkedList<ItemStackRequest>()
 
     fun getRequestId(): Int {
         return requestId.also {
@@ -42,7 +46,7 @@ class PlayerInventory(private val player: EntityPlayerSP) : EntityInventory(0L) 
             }
         } else if (packet is ItemStackRequestPacket) {
             val newRequests = packet.requests.map {
-                val newId = it.requestId
+                val newId = requestId
                 requestIdMap[newId] = it.requestId
                 ItemStackRequest(newId, it.actions, it.filterStrings, it.textProcessingEventOrigin)
             }
@@ -50,6 +54,31 @@ class PlayerInventory(private val player: EntityPlayerSP) : EntityInventory(0L) 
             packet.requests.addAll(newRequests)
 
             processItemStackPacket(packet)
+        } else if (packet is PlayerAuthInputPacket) {
+            if (packet.inputData.contains(PlayerAuthInputData.PERFORM_ITEM_STACK_REQUEST)) {
+                packet.itemStackRequest = packet.itemStackRequest.let {
+                    val newId = requestId
+                    requestIdMap[newId] = it.requestId
+                    ItemStackRequest(newId, it.actions, it.filterStrings, it.textProcessingEventOrigin)
+                }
+            } else if (pendingRequests.isNotEmpty()) {
+                packet.itemStackRequest = pendingRequests.pop()
+                packet.inputData.add(PlayerAuthInputData.PERFORM_ITEM_STACK_REQUEST)
+            }
+        }
+    }
+
+    /**
+     * only call this if player.inventoriesServerAuthoritative == true
+     */
+    fun itemStackRequest(request: ItemStackRequest, session: GameSession) {
+        assert(player.inventoriesServerAuthoritative) { "inventory action is not server authoritative" }
+        if (player.movementServerAuthoritative) {
+            pendingRequests.add(request)
+        } else {
+            session.sendPacket(ItemStackRequestPacket().also {
+                it.requests.add(request)
+            })
         }
     }
 

@@ -12,8 +12,7 @@ import dev.sora.relay.game.world.WorldClient
 import org.cloudburstmc.math.vector.Vector3f
 import org.cloudburstmc.math.vector.Vector3i
 import org.cloudburstmc.protocol.bedrock.data.inventory.ContainerId
-import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.InventoryTransactionType
-import org.cloudburstmc.protocol.bedrock.packet.InventoryTransactionPacket
+import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.ItemUseTransaction
 import org.cloudburstmc.protocol.bedrock.packet.PlayerHotbarPacket
 import org.cloudburstmc.protocol.bedrock.packet.UpdateBlockPacket
 
@@ -58,8 +57,7 @@ class ModuleBlockFly : CheatModule("BlockFly") {
             this.definition = definition
         })
         world.setBlockIdAt(block.x, block.y, block.z, definition?.runtimeId ?: 0)
-        session.sendPacket(InventoryTransactionPacket().apply {
-            transactionType = InventoryTransactionType.ITEM_USE
+        session.thePlayer.useItem(ItemUseTransaction().apply {
             actionType = 0
             blockPosition = block.sub(facing.unitVector)
             blockFace = facing.ordinal

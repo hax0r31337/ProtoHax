@@ -64,8 +64,8 @@ abstract class AbstractInventory(val containerId: Int) {
     open fun moveItem(sourceSlot: Int, destinationSlot: Int, destinationInventory: AbstractInventory, session: GameSession) {
         // send packet to server
         val pk = moveItem(sourceSlot, destinationSlot, destinationInventory,
-            if (session.inventoriesServerAuthoritative) session.thePlayer.inventory.getRequestId() else Int.MAX_VALUE)
-        session.sendPacket(pk)
+            if (session.thePlayer.inventoriesServerAuthoritative) session.thePlayer.inventory.getRequestId() else Int.MAX_VALUE)
+        sendInventoryPacket(pk, destinationInventory, session)
 
         // sync with client
         val sourceInfo = getNetworkSlotInfo(sourceSlot)
@@ -105,8 +105,8 @@ abstract class AbstractInventory(val containerId: Int) {
     open fun dropItem(slot: Int, session: GameSession) {
         // send packet to server
         val pk = dropItem(slot,
-            if (session.inventoriesServerAuthoritative) session.thePlayer.inventory.getRequestId() else Int.MAX_VALUE)
-        session.sendPacket(pk)
+            if (session.thePlayer.inventoriesServerAuthoritative) session.thePlayer.inventory.getRequestId() else Int.MAX_VALUE)
+        sendInventoryPacket(pk, null, session)
 
         // sync with client
         val info = getNetworkSlotInfo(slot)
@@ -115,6 +115,23 @@ abstract class AbstractInventory(val containerId: Int) {
             it.slot = info.second
             it.item = content[slot]
         })
+    }
+
+    private fun sendInventoryPacket(pk: BedrockPacket, destinationInventory: AbstractInventory?, session: GameSession) {
+        if (pk is ItemStackRequestPacket) {
+            if (destinationInventory is PlayerInventory) {
+                destinationInventory
+            } else if (this is PlayerInventory) {
+                this
+            } else {
+                session.sendPacket(pk)
+                null
+            }?.also {
+                it.itemStackRequest(pk.requests[0], session)
+            }
+        } else {
+            session.sendPacket(pk)
+        }
     }
 
     open fun searchForItem(range: IntRange, condition: (ItemData) -> Boolean): Int? {

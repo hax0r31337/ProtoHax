@@ -8,9 +8,12 @@ import dev.sora.relay.game.inventory.AbstractInventory
 import dev.sora.relay.game.inventory.ContainerInventory
 import dev.sora.relay.game.inventory.PlayerInventory
 import org.cloudburstmc.math.vector.Vector3f
+import org.cloudburstmc.protocol.bedrock.data.AuthoritativeMovementMode
+import org.cloudburstmc.protocol.bedrock.data.PlayerAuthInputData
 import org.cloudburstmc.protocol.bedrock.data.SoundEvent
 import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData
 import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.InventoryTransactionType
+import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.ItemUseTransaction
 import org.cloudburstmc.protocol.bedrock.packet.*
 import java.util.*
 
@@ -39,6 +42,16 @@ class EntityPlayerSP(private val session: GameSession) : EntityPlayer(0L, UUID.r
             val cur = System.currentTimeMillis()
             return (cur - lastTick).coerceIn(0L, 50L) / 50f
         }
+
+    // new introduced "server authoritative" mode
+    var blockBreakServerAuthoritative = false
+        private set
+    var movementServerAuthoritative = false
+        private set
+    var inventoriesServerAuthoritative = false
+        private set
+
+    private val pendingItemInteraction = LinkedList<ItemUseTransaction>()
 
     override fun rotate(yaw: Float, pitch: Float) {
         this.prevRotationYaw = rotationYaw
@@ -78,6 +91,9 @@ class EntityPlayerSP(private val session: GameSession) : EntityPlayer(0L, UUID.r
 
         if (packet is StartGamePacket) {
             entityId = packet.runtimeEntityId
+            blockBreakServerAuthoritative = packet.isServerAuthoritativeBlockBreaking
+            movementServerAuthoritative = packet.authoritativeMovementMode != AuthoritativeMovementMode.CLIENT
+            inventoriesServerAuthoritative = packet.isInventoriesServerAuthoritative
             reset()
         } /* else if (packet is RespawnPacket) {
             entityId = packet.runtimeEntityId
@@ -129,6 +145,11 @@ class EntityPlayerSP(private val session: GameSession) : EntityPlayer(0L, UUID.r
                 packet.rotation = Vector3f.from(it.first, it.second, packet.rotation.z)
                 silentRotation = null
             }
+
+            if (pendingItemInteraction.isNotEmpty() && !packet.inputData.contains(PlayerAuthInputData.PERFORM_ITEM_INTERACTION)) {
+                packet.inputData.add(PlayerAuthInputData.PERFORM_ITEM_INTERACTION)
+                packet.itemUseTransaction = pendingItemInteraction.pop()
+            }
         } else if (packet is LoginPacket) {
             packet.chain.forEach {
                 val chainBody = JsonParser.parseString(it.payload.toString()).asJsonObject
@@ -172,6 +193,26 @@ class EntityPlayerSP(private val session: GameSession) : EntityPlayer(0L, UUID.r
                 identifier = "minecraft:player"
                 isBabySound = false
                 isRelativeVolumeDisabled = false
+            })
+        }
+    }
+
+    fun useItem(inventoryTransaction: ItemUseTransaction) {
+        if (movementServerAuthoritative && inventoriesServerAuthoritative) {
+            pendingItemInteraction.add(inventoryTransaction)
+        } else {
+            session.sendPacket(InventoryTransactionPacket().apply {
+                transactionType = InventoryTransactionType.ITEM_USE
+                legacyRequestId = inventoryTransaction.legacyRequestId
+                actions.addAll(inventoryTransaction.actions)
+                actionType = inventoryTransaction.actionType
+                blockPosition = inventoryTransaction.blockPosition
+                blockFace = inventoryTransaction.blockFace
+                hotbarSlot = inventoryTransaction.hotbarSlot
+                itemInHand = inventoryTransaction.itemInHand
+                playerPosition = inventoryTransaction.playerPosition
+                clickPosition = inventoryTransaction.clickPosition
+                blockDefinition = inventoryTransaction.blockDefinition
             })
         }
     }
