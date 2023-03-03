@@ -30,8 +30,8 @@ dependencies {
     embed 'coelho.msftauth:minecraft-msftauth:2.1.2'
 }
 
-compileKotlin {
-    kotlinOptions.jvmTarget = '11'
+kotlin {
+    jvmToolchain(11)
 }
 
 shadowJar {

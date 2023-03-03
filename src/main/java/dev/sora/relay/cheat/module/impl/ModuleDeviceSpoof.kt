@@ -21,8 +21,8 @@ import kotlin.random.Random
 
 class ModuleDeviceSpoof : CheatModule("DeviceSpoof") {
 
-    private val deviceIdValue = boolValue("DeviceId", true)
-    private val platformValue = boolValue("Platform", true)
+    private var deviceIdValue by boolValue("DeviceId", true)
+    private var platformValue by boolValue("Platform", true)
 
     @Listen
     fun onPacketOutbound(event: EventPacketOutbound) {
@@ -30,11 +30,11 @@ class ModuleDeviceSpoof : CheatModule("DeviceSpoof") {
 
         if (packet is LoginPacket) {
             val body = JsonParser.parseString(packet.extra.payload.toString()).asJsonObject
-            if (deviceIdValue.get()) {
+            if (deviceIdValue) {
                 body.addProperty("ClientRandomId", Random.nextLong())
                 body.addProperty("DeviceId", Random.nextBytes(ByteArray(16)).toHexString())
             }
-            if (platformValue.get()) {
+            if (platformValue) {
                 body.addProperty("DeviceModel","Nintendo Switch")
                 body.addProperty("DeviceOS", DeviceOS.NINTENDO)
                 body.addProperty("CurrentInputMode", 2) // Touch
@@ -46,7 +46,7 @@ class ModuleDeviceSpoof : CheatModule("DeviceSpoof") {
             EncryptionUtils.signJwt(jws, EncryptionUtils.createKeyPair().private as ECPrivateKey)
 
             packet.extra = SignedJWT.parse(jws.serialize())
-        } else if (platformValue.get() && packet is PlayerAuthInputPacket) {
+        } else if (platformValue && packet is PlayerAuthInputPacket) {
             packet.inputMode = InputMode.TOUCH
         }
     }

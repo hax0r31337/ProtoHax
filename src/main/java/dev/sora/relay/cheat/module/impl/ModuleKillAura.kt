@@ -11,14 +11,14 @@ import kotlin.math.pow
 
 class ModuleKillAura : CheatModule("KillAura") {
 
-    private val cpsValue = intValue("CPS", 7, 1, 20)
-    private val rangeValue = floatValue("Range", 3.7f, 2f, 7f)
-    private val attackModeValue = listValue("AttackMode", arrayOf("Single", "Multi"), "Single")
-    private val rotationModeValue = listValue("RotationMode", arrayOf("Lock", "None"), "Lock")
-    private val swingValue = listValue("Swing", arrayOf("Both", "Client", "Server", "None"), "Both")
-    private val swingSoundValue = boolValue("SwingSound", true)
-    private val failRateValue = floatValue("FailRate", 0f, 0f, 1f)
-    private val failSoundValue = boolValue("FailSound", true)
+    private var cpsValue by intValue("CPS", 7, 1..20)
+    private var rangeValue by floatValue("Range", 3.7f, 2f..7f)
+    private var attackModeValue by listValue("AttackMode", arrayOf("Single", "Multi"), "Single")
+    private var rotationModeValue by listValue("RotationMode", arrayOf("Lock", "None"), "Lock")
+    private var swingValue by listValue("Swing", arrayOf("Both", "Client", "Server", "None"), "Both")
+    private var swingSoundValue by boolValue("SwingSound", true)
+    private var failRateValue by floatValue("FailRate", 0f, 0f..1f)
+    private var failSoundValue by boolValue("FailSound", true)
 
     private val clickTimer = ClickTimer()
 
@@ -26,30 +26,30 @@ class ModuleKillAura : CheatModule("KillAura") {
     fun onTick(event: EventTick) {
         val session = event.session
 
-        val range = rangeValue.get().pow(2)
+        val range = rangeValue.pow(2)
         val entityList = session.theWorld.entityMap.values.filter { it is EntityPlayer && it.distanceSq(session.thePlayer) < range && !it.isBot(session) }
         if (entityList.isEmpty()) return
 
-        val swingMode = session.thePlayer.getSwingMode(swingValue.get())
-        val aimTarget = if (Math.random() <= failRateValue.get() || (cpsValue.get() < 20 && !clickTimer.canClick())) {
-            session.thePlayer.swing(swingMode, failSoundValue.get())
+        val swingMode = session.thePlayer.getSwingMode(swingValue)
+        val aimTarget = if (Math.random() <= failRateValue || (cpsValue < 20 && !clickTimer.canClick())) {
+            session.thePlayer.swing(swingMode, failSoundValue)
             entityList.first()
         } else {
-            when(attackModeValue.get()) {
+            when(attackModeValue) {
                 "Multi" -> {
-                    entityList.forEach { session.thePlayer.attackEntity(it, swingMode, swingSoundValue.get()) }
+                    entityList.forEach { session.thePlayer.attackEntity(it, swingMode, swingSoundValue) }
                     entityList.first()
                 }
                 else -> (entityList.minByOrNull { it.distanceSq(event.session.thePlayer) } ?: return).also {
-                    session.thePlayer.attackEntity(it, swingMode, swingSoundValue.get())
+                    session.thePlayer.attackEntity(it, swingMode, swingSoundValue)
                 }
             }
         }
 
-        if (rotationModeValue.get() == "Lock") {
+        if (rotationModeValue == "Lock") {
             session.thePlayer.silentRotation = toRotation(session.thePlayer.vec3Position, aimTarget.vec3Position)
         }
 
-        clickTimer.update(cpsValue.get(), cpsValue.get() + 1)
+        clickTimer.update(cpsValue, cpsValue + 1)
     }
 }

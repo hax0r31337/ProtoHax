@@ -9,12 +9,12 @@ import org.cloudburstmc.protocol.bedrock.packet.MobEffectPacket
 
 class ModuleAntiBlind : CheatModule("AntiBlind") {
 
-    private val nightVisionValue = boolValue("NightVision", true)
-    private val removeBadEffectsValue = boolValue("RemoveBadEffects", true)
+    private var nightVisionValue by boolValue("NightVision", true)
+    private var removeBadEffectsValue by boolValue("RemoveBadEffects", true)
 
     @Listen
     fun onTick(event: EventTick){
-        if (!nightVisionValue.get() || event.session.thePlayer.tickExists % 20 != 0L) return
+        if (!nightVisionValue || event.session.thePlayer.tickExists % 20 != 0L) return
         session.netSession.inboundPacket(MobEffectPacket().apply {
             runtimeEntityId = session.thePlayer.entityId
             setEvent(MobEffectPacket.Event.ADD)
@@ -26,7 +26,7 @@ class ModuleAntiBlind : CheatModule("AntiBlind") {
     }
 
     override fun onDisable() {
-        if (nightVisionValue.get() && session.netSessionInitialized) {
+        if (nightVisionValue && session.netSessionInitialized) {
             session.netSession.inboundPacket(MobEffectPacket().apply {
                 event = MobEffectPacket.Event.REMOVE
                 runtimeEntityId = session.thePlayer.entityId
@@ -38,7 +38,7 @@ class ModuleAntiBlind : CheatModule("AntiBlind") {
     @Listen
     fun onPacketInbound(event: EventPacketInbound) {
         val packet = event.packet
-        if (removeBadEffectsValue.get() && packet is MobEffectPacket) {
+        if (removeBadEffectsValue && packet is MobEffectPacket) {
             if (packet.effectId == Effect.NAUSEA || packet.effectId == Effect.BLINDNESS || packet.effectId == Effect.DARKNESS) {
                 event.cancel()
             }

@@ -11,13 +11,13 @@ import org.cloudburstmc.protocol.bedrock.packet.PlayerAuthInputPacket
 
 class ModuleDisabler : CheatModule("Disabler") {
 
-    private val modeValue = listValue("Mode", arrayOf("Lifeboat","Mineplex","CubeCraft"), "Lifeboat")
+    private var modeValue by listValue("Mode", arrayOf("Lifeboat","Mineplex","CubeCraft"), "Lifeboat")
 
     @Listen
     fun onPacketOutbound(event: EventPacketOutbound) {
         val packet = event.packet
 
-        if(modeValue.get() == "Lifeboat"){
+        if(modeValue == "Lifeboat"){
             if (packet is MovePlayerPacket) {
                 packet.isOnGround = true
                 event.session.netSession.outboundPacket(MovePlayerPacket().apply {
@@ -28,7 +28,7 @@ class ModuleDisabler : CheatModule("Disabler") {
                     isOnGround = false
                 })
             }
-        }else if(modeValue.get() == "CubeCraft") {
+        }else if(modeValue == "CubeCraft") {
             if (packet is MovePlayerPacket) {
                 for(i in 0 until 9){
                     event.session.netSession.outboundPacket(packet)
@@ -49,7 +49,7 @@ class ModuleDisabler : CheatModule("Disabler") {
     fun onTick(event: EventTick){
         val session = event.session
 
-        if(modeValue.get() == "Mineplex" || modeValue.get() == "CubeCraft"){
+        if(modeValue == "Mineplex" || modeValue == "CubeCraft"){
             session.sendPacket(MovePlayerPacket().apply {
                 runtimeEntityId = session.thePlayer.entityId
                 position = session.thePlayer.vec3Position

@@ -7,17 +7,17 @@ import org.cloudburstmc.protocol.bedrock.packet.SetEntityMotionPacket
 
 class ModuleVelocity : CheatModule("Velocity") {
 
-    private val modeValue = listValue("Mode", arrayOf("Simple","Vanilla"), "Vanilla")
-    private val horizontalValue = floatValue("Horizontal", 0f, 0f, 1f)
-    private val verticalValue = floatValue("Vertical", 0f, 0f, 1f)
+    private var modeValue by listValue("Mode", arrayOf("Simple","Vanilla"), "Vanilla")
+    private var horizontalValue by floatValue("Horizontal", 0f, 0f..1f)
+    private var verticalValue by floatValue("Vertical", 0f, 0f..1f)
 
     @Listen
     fun onPacketInbound(event: EventPacketInbound) {
         if (event.packet is SetEntityMotionPacket) {
-            if (modeValue.get() == "Vanilla") {
+            if (modeValue == "Vanilla") {
                 event.cancel()
             } else {
-                event.packet.motion.mul(horizontalValue.get(),verticalValue.get(),horizontalValue.get())
+                event.packet.motion.mul(horizontalValue, verticalValue, horizontalValue)
             }
         }
     }

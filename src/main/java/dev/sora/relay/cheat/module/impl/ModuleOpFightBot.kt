@@ -11,11 +11,11 @@ import kotlin.math.sin
 
 class ModuleOpFightBot : CheatModule("OPFightBot") {
 
-    private val modeValue = listValue("Mode", arrayOf("Random", "Strafe", "Back"), "Random")
-    private val rangeValue = floatValue("Range", 1.5f, 1.5f, 4f)
-    private val horizontalSpeedValue = floatValue("HorizontalSpeed", 5f, 1f, 7f)
-    private val verticalSpeedValue = floatValue("VerticalSpeed", 4f, 1f, 7f)
-    private val strafeSpeedValue = intValue("StrafeSpeed", 20, 10, 90)
+    private var modeValue by listValue("Mode", arrayOf("Random", "Strafe", "Back"), "Strafe")
+    private var rangeValue by floatValue("Range", 1.5f, 1.5f..4f)
+    private var horizontalSpeedValue by floatValue("HorizontalSpeed", 5f, 1f..7f)
+    private var verticalSpeedValue by floatValue("VerticalSpeed", 4f, 1f..7f)
+    private var strafeSpeedValue by intValue("StrafeSpeed", 20, 10..90)
 
     @Listen
     fun onTick(event: EventTick) {
@@ -23,18 +23,18 @@ class ModuleOpFightBot : CheatModule("OPFightBot") {
         val target = session.theWorld.entityMap.values.filter { it is EntityPlayer && !it.isBot(session) }
             .minByOrNull { it.distanceSq(session.thePlayer) } ?: return
         if(target.distance(session.thePlayer) < 5) {
-            val direction = Math.toRadians(when(modeValue.get()) {
+            val direction = Math.toRadians(when(modeValue) {
                 "Random" -> Math.random() * 360
-                "Strafe" -> ((session.thePlayer.tickExists * strafeSpeedValue.get()) % 360).toDouble()
+                "Strafe" -> ((session.thePlayer.tickExists * strafeSpeedValue) % 360).toDouble()
                 "Back" -> target.rotationYaw + 180.0
                 else -> error("no such mode available")
             })
-            session.thePlayer.teleport(target.posX - sin(direction) * rangeValue.get(), target.posY + 0.5, target.posZ + cos(direction) * rangeValue.get())
+            session.thePlayer.teleport(target.posX - sin(direction) * rangeValue, target.posY + 0.5, target.posZ + cos(direction) * rangeValue)
         } else {
             val direction = atan2(target.posZ - session.thePlayer.posZ, target.posX - session.thePlayer.posX) - Math.toRadians(90.0)
-            session.thePlayer.teleport(session.thePlayer.posX - sin(direction) * horizontalSpeedValue.get(),
-                target.posY.coerceIn(session.thePlayer.posY - verticalSpeedValue.get(), session.thePlayer.posY + verticalSpeedValue.get()),
-                session.thePlayer.posZ + cos(direction) * horizontalSpeedValue.get())
+            session.thePlayer.teleport(session.thePlayer.posX - sin(direction) * horizontalSpeedValue,
+                target.posY.coerceIn(session.thePlayer.posY - verticalSpeedValue, session.thePlayer.posY + verticalSpeedValue),
+                session.thePlayer.posZ + cos(direction) * horizontalSpeedValue)
         }
     }
 }

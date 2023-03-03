@@ -21,22 +21,22 @@ import org.cloudburstmc.protocol.bedrock.packet.InteractPacket
 
 class ModuleInventoryHelper : CheatModule("InventoryHelper") {
 
-    private val stealChestValue = boolValue("StealChest", true)
-    private val guiOpenValue = boolValue("GuiOpen", false)
-    private val simulateInventoryValue = boolValue("SimulateInventory", false)
-    private val autoCloseValue = boolValue("AutoClose", false)
-    private val throwUnnecessaryValue = boolValue("ThrowUnnecessary", true)
-    private val swingValue = listValue("Swing", arrayOf("Both", "Client", "Server", "None"), "Server")
-    private val clickMaxCpsValue = intValue("ClickMaxCPS", 4, 1, 20)
-    private val clickMinCpsValue = intValue("ClickMinCPS", 2, 1, 20)
-    private val sortArmorValue = boolValue("Armor", true)
-    private val sortTotemValue = boolValue("Totem", true)
-    private val sortSwordValue = intValue("SortSword", 0, -1, 8)
-    private val sortPickaxeValue = intValue("SortPickaxe", 5, -1, 8)
-    private val sortAxeValue = intValue("SortAxe", 6, -1, 8)
-    private val sortBlockValue = intValue("SortBlock", 7, -1, 8)
-    private val sortGAppleValue = intValue("SortGApple", 2, -1, 8)
-    private val noSortNoCloseValue = boolValue("NoCloseIfNoSort", true)
+    private var stealChestValue by boolValue("StealChest", true)
+    private var guiOpenValue by boolValue("GuiOpen", false)
+    private var simulateInventoryValue by boolValue("SimulateInventory", false)
+    private var autoCloseValue by boolValue("AutoClose", false)
+    private var throwUnnecessaryValue by boolValue("ThrowUnnecessary", true)
+    private var swingValue by listValue("Swing", arrayOf("Both", "Client", "Server", "None"), "Server")
+    private var clickMaxCpsValue by intValue("ClickMaxCPS", 4, 1..20)
+    private var clickMinCpsValue by intValue("ClickMinCPS", 2, 1..20)
+    private var sortArmorValue by boolValue("Armor", true)
+    private var sortTotemValue by boolValue("Totem", true)
+    private var sortSwordValue by intValue("SortSword", 0, -1..8)
+    private var sortPickaxeValue by intValue("SortPickaxe", 5, -1..8)
+    private var sortAxeValue by intValue("SortAxe", 6, -1..8)
+    private var sortBlockValue by intValue("SortBlock", 7, -1..8)
+    private var sortGAppleValue by intValue("SortGApple", 2, -1..8)
+    private var noSortNoCloseValue by boolValue("NoCloseIfNoSort", true)
 
     private val sortArmor = arrayOf(
         Sort(PlayerInventory.SLOT_HELMET, ItemTags.TAG_IS_HELMET),
@@ -60,7 +60,7 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper") {
     }
 
     private fun updateClick() {
-        clickTimer.update(clickMinCpsValue.get(), clickMaxCpsValue.get())
+        clickTimer.update(clickMinCpsValue, clickMaxCpsValue)
         sorted = true
     }
 
@@ -73,7 +73,7 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper") {
         val player = event.session.thePlayer
         val openContainer = player.openContainer
 
-        if (stealChestValue.get() && openContainer != null && openContainer !is PlayerInventory) {
+        if (stealChestValue && openContainer != null && openContainer !is PlayerInventory) {
             // steal items
             openContainer.content.forEachIndexed { index, item ->
                 if (item.itemDefinition.isNecessaryItem(item) && !item.itemDefinition.hasBetterItem(openContainer, index, strictMode = false) && !item.itemDefinition.hasBetterItem(player.inventory)) {
@@ -84,15 +84,15 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper") {
                     return
                 }
             }
-        } else if (!guiOpenValue.get() || openContainer != null) {
+        } else if (!guiOpenValue || openContainer != null) {
             // drop garbage
             player.inventory.content.forEachIndexed { index, item ->
                 if (item == ItemData.AIR) return@forEachIndexed
-                if (item.itemDefinition.hasBetterItem(player.inventory, index) || (throwUnnecessaryValue.get() && !item.itemDefinition.isNecessaryItem(item))) {
+                if (item.itemDefinition.hasBetterItem(player.inventory, index) || (throwUnnecessaryValue && !item.itemDefinition.isNecessaryItem(item))) {
                     if (checkFakeOpen(event.session)) return
                     player.inventory.dropItem(index, event.session)
                     // player will swing if they drop an item
-                    player.swing(swingValue.get())
+                    player.swing(swingValue)
                     
                     updateClick()
                     return
@@ -110,7 +110,6 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper") {
 
             if (openContainer == null) {
                 if (hasSimulated) {
-                    println("CLOSE")
                     session.netSession.outboundPacket(ContainerClosePacket().apply {
                         id = 0
                         isServerInitiated = false
@@ -128,7 +127,7 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper") {
             return
         }
 
-        if (autoCloseValue.get() && (!noSortNoCloseValue.get() || sorted)) {
+        if (autoCloseValue && (!noSortNoCloseValue || sorted)) {
             session.sendPacketToClient(ContainerClosePacket().apply {
                 id = openContainer.containerId.toByte()
                 isServerInitiated = true // maybe? this field is true in nukkit
@@ -138,28 +137,28 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper") {
 
     private fun getSorts(inventory: AbstractInventory): List<Sort> {
         val sorts = mutableListOf<Sort>()
-        if (sortArmorValue.get()) {
+        if (sortArmorValue) {
             sorts.addAll(sortArmor)
         }
-        if (sortTotemValue.get()) {
+        if (sortTotemValue) {
             sorts.add(sortTotem)
         }
-        if (sortSwordValue.get() != -1) {
-            sorts.add(Sort(sortSwordValue.get(), ItemTags.TAG_IS_SWORD))
+        if (sortSwordValue != -1) {
+            sorts.add(Sort(sortSwordValue, ItemTags.TAG_IS_SWORD))
         }
-        if (sortPickaxeValue.get() != -1) {
-            sorts.add(Sort(sortPickaxeValue.get(), ItemTags.TAG_IS_PICKAXE))
+        if (sortPickaxeValue != -1) {
+            sorts.add(Sort(sortPickaxeValue, ItemTags.TAG_IS_PICKAXE))
         }
-        if (sortAxeValue.get() != -1) {
-            sorts.add(Sort(sortAxeValue.get(), ItemTags.TAG_IS_AXE))
+        if (sortAxeValue != -1) {
+            sorts.add(Sort(sortAxeValue, ItemTags.TAG_IS_AXE))
         }
-        if (sortBlockValue.get() != -1 && !inventory.content[sortBlockValue.get()].isBlock()) {
-            sorts.add(Sort(sortBlockValue.get()) { item ->
+        if (sortBlockValue != -1 && !inventory.content[sortBlockValue].isBlock()) {
+            sorts.add(Sort(sortBlockValue) { item ->
                 if (item.isBlock()) item.count.toFloat() else 0f
             })
         }
-        if (sortGAppleValue.get() != -1) {
-            sorts.add(Sort(sortGAppleValue.get()) { item ->
+        if (sortGAppleValue != -1) {
+            sorts.add(Sort(sortGAppleValue) { item ->
                 if (item.itemDefinition.identifier == "minecraft:golden_apple") 1f else 0f
             })
         }
@@ -197,7 +196,7 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper") {
     }
 
     private fun checkFakeOpen(session: GameSession): Boolean {
-        if (!hasSimulated && session.thePlayer.openContainer == null && simulateInventoryValue.get()) {
+        if (!hasSimulated && session.thePlayer.openContainer == null && simulateInventoryValue) {
             session.netSession.outboundPacket(InteractPacket().apply {
                 runtimeEntityId = session.thePlayer.entityId
                 action = InteractPacket.Action.OPEN_INVENTORY

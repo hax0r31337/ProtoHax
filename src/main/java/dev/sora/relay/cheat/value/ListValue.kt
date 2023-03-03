@@ -19,18 +19,18 @@ open class ListValue(name: String, val values: Array<String>, value: String) : V
         return Arrays.stream(values).anyMatch { s: String -> s.equals(string, ignoreCase = true) }
     }
 
-    override fun changeValue(value: String) {
+    override fun validateValue(value: String): Boolean {
         for (element in values) {
             if (element.equals(value, ignoreCase = true)) {
-                this.value = element
-                break
+                return true
             }
         }
+        return false
     }
 
     override fun toJson() = JsonPrimitive(value)
 
     override fun fromJson(element: JsonElement) {
-        if (element.isJsonPrimitive) changeValue(element.asString)
+        if (element.isJsonPrimitive) value = element.asString
     }
 }

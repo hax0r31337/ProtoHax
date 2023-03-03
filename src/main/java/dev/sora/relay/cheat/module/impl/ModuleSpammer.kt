@@ -10,20 +10,20 @@ import kotlin.random.Random
 
 class ModuleSpammer : CheatModule("Spammer") {
 
-    private val delayValue = intValue("Delay", 5000, 500, 10000)
-    private val messageValue = stringValue("Message", "[!] I'm using ProtoHax t<dot>me/protohax")
+    private var delayValue by intValue("Delay", 5000, 500..10000)
+    private var messageValue by stringValue("Message", "[!] I'm using ProtoHax t<dot>me/protohax")
 
     private val spamTimer = TheTimer()
 
     @Listen
     fun onTick(event: EventTick) {
-        if (spamTimer.hasTimePassed(delayValue.get())) {
+        if (spamTimer.hasTimePassed(delayValue)) {
             event.session.sendPacket(TextPacket().apply {
                 type = TextPacket.Type.CHAT
                 xuid = event.session.thePlayer.xuid
                 sourceName = event.session.thePlayer.username
                 platformChatId = ""
-                message = "${messageValue.get()} >${getRandomString(10 + Random.nextInt(5))}<"
+                message = "${messageValue} >${getRandomString(10 + Random.nextInt(5))}<"
             })
             spamTimer.reset()
         }

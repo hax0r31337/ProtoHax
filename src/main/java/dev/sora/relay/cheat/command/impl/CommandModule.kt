@@ -34,9 +34,9 @@ class CommandModule(private val module: CheatModule) : Command(module.name.lower
 
         if (args.size < 2) {
             if (value is IntValue || value is FloatValue || value is StringValue || value is BoolValue) {
-                chatSyntax("${args[0].lowercase()} <value> (now=${value.get()})")
+                chatSyntax("${args[0].lowercase()} <value> (now=${value.value})")
             } else if (value is ListValue) {
-                chatSyntax("${args[0].lowercase()} <${value.values.joinToString(separator = "/").lowercase()}> (now=${value.get()})")
+                chatSyntax("${args[0].lowercase()} <${value.values.joinToString(separator = "/").lowercase()}> (now=${value.value})")
             }
             return
         }
@@ -47,10 +47,12 @@ class CommandModule(private val module: CheatModule) : Command(module.name.lower
                 is FloatValue -> value.set(args[1].toFloat())
                 is BoolValue -> {
                     when (args[1].lowercase()) {
-                        "on", "true" -> value.set(true)
-                        "off", "false" -> value.set(false)
-                        "!", "rev", "reverse" -> value.set(!value.get())
-                        else -> value.set(!value.get())
+                        "on", "true" -> value.value = true
+                        "off", "false" -> value.value = false
+                        "!", "rev", "reverse" -> value.value = !value.value
+                        else -> {
+                            chatSyntax("${args[0].lowercase()} <value> (now=${value.value})")
+                        }
                     }
                 }
                 is ListValue -> {
@@ -59,11 +61,11 @@ class CommandModule(private val module: CheatModule) : Command(module.name.lower
                         return
                     }
 
-                    value.set(args[1])
+                    value.value = args[1]
                 }
-                is StringValue -> value.set(args.copyOfRange(2, args.size - 1).joinToString(separator = " "))
+                is StringValue -> value.value = args.copyOfRange(2, args.size - 1).joinToString(separator = " ")
             }
-            chat("${module.name} ${args[0]} was set to ${value.get()}.")
+            chat("${module.name} ${args[0]} was set to ${value.value}.")
         } catch (e: NumberFormatException) {
             chat("${args[1]} cannot be converted to number!")
         }

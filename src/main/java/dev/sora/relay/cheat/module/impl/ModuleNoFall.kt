@@ -11,21 +11,21 @@ import org.cloudburstmc.protocol.bedrock.packet.PlayerActionPacket
 
 class ModuleNoFall : CheatModule("NoFall") {
 
-    private val modeValue = listValue("Mode", arrayOf("OnGround","AwayNoGround","Nukkit","CubeCraft"), "OnGround")
+    private var modeValue by listValue("Mode", arrayOf("OnGround","AwayNoGround","Nukkit","CubeCraft"), "OnGround")
 
     @Listen
     fun onPacketOutbound(event: EventPacketOutbound){
         val packet = event.packet
         val session = event.session
 
-        if(modeValue.get() == "OnGround"){
-            if(session.thePlayer.motionY <= -5.5){
-                if (packet is MovePlayerPacket){
+        if (modeValue == "OnGround"){
+            if(session.thePlayer.motionY <= -5.5) {
+                if (packet is MovePlayerPacket) {
                     packet.isOnGround = true
                 }
             }
-        }else if(modeValue.get() == "AwayNoGround"){
-            if (packet is MovePlayerPacket){
+        } else if (modeValue == "AwayNoGround") {
+            if (packet is MovePlayerPacket) {
                 packet.isOnGround = false
             }
         }
@@ -35,14 +35,14 @@ class ModuleNoFall : CheatModule("NoFall") {
     fun onTick(event: EventTick){
         val session = event.session
 
-        if(modeValue.get() == "Nukkit"){
+        if(modeValue == "Nukkit") {
             if(session.thePlayer.motionY <= -5.5){
                 session.sendPacket(PlayerActionPacket().apply {
                     runtimeEntityId = session.thePlayer.entityId
                     action = PlayerActionType.START_GLIDE
                 })
             }
-        }else if(modeValue.get() == "CubeCraft"){
+        } else if(modeValue == "CubeCraft"){
             if(session.thePlayer.motionY <= -5.5){
 
             }

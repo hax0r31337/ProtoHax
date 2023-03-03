@@ -1,6 +1,6 @@
 package dev.sora.relay.cheat.value
 
-interface ValueHolder {
+interface Configurable {
 
     val values: MutableList<Value<*>>
 
@@ -10,11 +10,11 @@ interface ValueHolder {
     fun boolValue(name: String, value: Boolean)
         = BoolValue(name, value).also { values.add(it) }
 
-    fun floatValue(name: String, value: Float, minimum: Float = 0F, maximum: Float = Float.MAX_VALUE)
-        = FloatValue(name, value, minimum, maximum).also { values.add(it) }
+    fun floatValue(name: String, value: Float, range: ClosedFloatingPointRange<Float>)
+        = FloatValue(name, value, range).also { values.add(it) }
 
-    fun intValue(name: String, value: Int, minimum: Int = 0, maximum: Int = Integer.MAX_VALUE)
-        = IntValue(name, value, minimum, maximum).also { values.add(it) }
+    fun intValue(name: String, value: Int, range: IntRange)
+        = IntValue(name, value, range).also { values.add(it) }
 
     fun listValue(name: String, valuesArr: Array<String>, value: String)
         = ListValue(name, valuesArr, value).also { values.add(it) }

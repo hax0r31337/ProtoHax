@@ -19,7 +19,7 @@ object ModuleResourcePackSpoof : CheatModule("ResourcePackSpoof") {
 
     private const val RESOURCE_PACK_CHUNK_SIZE = 8 * 1024
 
-    private val acceptServerPacks = boolValue("AcceptServerPacks", false)
+    private var acceptServerPacks by boolValue("AcceptServerPacks", false)
     var resourcePackProvider: IResourcePackProvider = EmptyResourcePackProvider()
 
     @Listen
@@ -27,14 +27,14 @@ object ModuleResourcePackSpoof : CheatModule("ResourcePackSpoof") {
         val packet = event.packet
 
         if (packet is ResourcePacksInfoPacket) {
-            if (!acceptServerPacks.get()) {
+            if (!acceptServerPacks) {
                 packet.resourcePackInfos.clear()
                 packet.behaviorPackInfos.clear()
             }
             // this will make the client download the resource pack
             packet.resourcePackInfos.addAll(resourcePackProvider.getEntry())
         } else if (packet is ResourcePackStackPacket) {
-            if (!acceptServerPacks.get()) {
+            if (!acceptServerPacks) {
                 packet.resourcePacks.clear()
                 packet.behaviorPacks.clear()
             }

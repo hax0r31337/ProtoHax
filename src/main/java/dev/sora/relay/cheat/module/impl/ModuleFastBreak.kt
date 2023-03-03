@@ -8,7 +8,7 @@ import org.cloudburstmc.protocol.bedrock.packet.MobEffectPacket
 
 class ModuleFastBreak : CheatModule("FastBreak") {
 
-    private val amplifierValue = intValue("Level", 5, 1, 128)
+    private var amplifierValue by intValue("Level", 5, 1..128)
 
     @Listen
     fun onTick(event: EventTick) {
@@ -17,7 +17,7 @@ class ModuleFastBreak : CheatModule("FastBreak") {
             setEvent(MobEffectPacket.Event.ADD)
             runtimeEntityId = event.session.thePlayer.entityId
             effectId = Effect.HASTE
-            amplifier = amplifierValue.get() - 1
+            amplifier = amplifierValue - 1
             isParticles = false
             duration = 21 * 20
         })

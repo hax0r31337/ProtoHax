@@ -7,12 +7,12 @@ import dev.sora.relay.game.entity.EntityPlayerSP
 
 object ModuleAntiBot : CheatModule("AntiBot") {
 
-    private val modeValue = listValue("Mode", arrayOf("LifeBoat"), "LifeBoat")
+    private var modeValue by listValue("Mode", arrayOf("LifeBoat"), "LifeBoat")
 
     fun EntityPlayer.isBot(session: GameSession): Boolean {
         if (this is EntityPlayerSP || !state) return false
 
-        if (modeValue.get() == "LifeBoat") {
+        if (modeValue == "LifeBoat") {
             val playerList = session.theWorld.playerList[this.uuid] ?: return true
             return playerList.name.isBlank()
         }

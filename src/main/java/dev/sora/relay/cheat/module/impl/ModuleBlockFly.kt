@@ -18,10 +18,10 @@ import org.cloudburstmc.protocol.bedrock.packet.UpdateBlockPacket
 
 class ModuleBlockFly : CheatModule("BlockFly") {
 
-    private val swingValue = listValue("Swing", arrayOf("Both", "Client", "Server", "None"), "Server")
-    private val adaptiveBlockIdValue = boolValue("AdaptiveBlockId", false)
-    private val heldBlockValue = listValue("HeldBlock", arrayOf("Manual", "Auto"), "Manual")
-    private val rotationValue = boolValue("Rotation", false)
+    private var swingValue by listValue("Swing", arrayOf("Both", "Client", "Server", "None"), "Server")
+    private var adaptiveBlockIdValue by boolValue("AdaptiveBlockId", false)
+    private var heldBlockValue by listValue("HeldBlock", arrayOf("Manual", "Auto"), "Manual")
+    private var rotationValue by boolValue("Rotation", false)
 
     private val extendableFacing = arrayOf(EnumFacing.WEST, EnumFacing.EAST, EnumFacing.UP, EnumFacing.SOUTH, EnumFacing.NORTH)
 
@@ -40,7 +40,7 @@ class ModuleBlockFly : CheatModule("BlockFly") {
         }
 
         val world = session.theWorld
-        val airId = if (adaptiveBlockIdValue.get()) {
+        val airId = if (adaptiveBlockIdValue) {
             world.getBlockIdAt(session.thePlayer.posX.toInt(), session.thePlayer.posY.toInt(),
                 session.thePlayer.posZ.toInt())
         } else {
@@ -70,16 +70,16 @@ class ModuleBlockFly : CheatModule("BlockFly") {
             clickPosition = Vector3f.from(Math.random(), Math.random(), Math.random())
             blockDefinition = definition
         })
-        session.thePlayer.swing(swingValue.get())
+        session.thePlayer.swing(swingValue)
 
-        if (rotationValue.get()) {
+        if (rotationValue) {
             lastRotation = toRotation(session.thePlayer.vec3Position, block.sub(facing.unitVector).toVector3f())
             session.thePlayer.silentRotation = lastRotation
         }
     }
 
     private fun switchToBlock(): Boolean {
-        return when(heldBlockValue.get()) {
+        return when(heldBlockValue) {
             "Manual" -> session.thePlayer.inventory.hand.isBlock()
             "Auto" -> {
                 if (!session.thePlayer.inventory.hand.isBlock()) {
