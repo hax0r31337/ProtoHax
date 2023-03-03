@@ -4,7 +4,6 @@ import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.cheat.value.NamedChoice
 import dev.sora.relay.game.entity.EntityPlayerSP
 import dev.sora.relay.game.event.EventTick
-import dev.sora.relay.game.event.Listen
 import dev.sora.relay.game.registry.isBlock
 import dev.sora.relay.game.utils.AxisAlignedBB
 import dev.sora.relay.game.utils.constants.EnumFacing
@@ -29,56 +28,55 @@ class ModuleBlockFly : CheatModule("BlockFly") {
 
     private var lastRotation: Pair<Float, Float>? = null
 
-    @Listen
-    fun onTick(event: EventTick) {
-        val session = event.session
-        if (!switchToBlock()) {
-            lastRotation = null
-            return
-        }
+	private val handleTick = handle<EventTick> { event ->
+		val session = event.session
+		if (!switchToBlock()) {
+			lastRotation = null
+			return@handle
+		}
 
-        if (lastRotation != null) {
-            session.thePlayer.silentRotation = lastRotation
-        }
+		if (lastRotation != null) {
+			session.thePlayer.silentRotation = lastRotation
+		}
 
-        val world = session.theWorld
-        val airId = if (adaptiveBlockIdValue) {
-            world.getBlockIdAt(session.thePlayer.posX.toInt(), session.thePlayer.posY.toInt(),
-                session.thePlayer.posZ.toInt())
-        } else {
-            session.blockMapping.airId
-        }
-        val possibilities = searchBlocks(session.thePlayer.posX, session.thePlayer.posY - 1.62,
-            session.thePlayer.posZ, 1, world, airId)
-        val block = possibilities.firstOrNull() ?: return
-        val facing = getFacing(block, world, airId) ?: return
+		val world = session.theWorld
+		val airId = if (adaptiveBlockIdValue) {
+			world.getBlockIdAt(session.thePlayer.posX.toInt(), session.thePlayer.posY.toInt(),
+				session.thePlayer.posZ.toInt())
+		} else {
+			session.blockMapping.airId
+		}
+		val possibilities = searchBlocks(session.thePlayer.posX, session.thePlayer.posY - 1.62,
+			session.thePlayer.posZ, 1, world, airId)
+		val block = possibilities.firstOrNull() ?: return@handle
+		val facing = getFacing(block, world, airId) ?: return@handle
 
-        val definition = session.thePlayer.inventory.hand.blockDefinition
-        session.netSession.inboundPacket(UpdateBlockPacket().apply {
-            blockPosition = block
-            this.definition = definition
-        })
-        world.setBlockIdAt(block.x, block.y, block.z, definition?.runtimeId ?: 0)
-        session.thePlayer.useItem(ItemUseTransaction().apply {
-            actionType = 0
-            blockPosition = block.sub(facing.unitVector)
-            blockFace = facing.ordinal
-            hotbarSlot = session.thePlayer.inventory.heldItemSlot
-            itemInHand = session.thePlayer.inventory.hand.toBuilder()
-                .usingNetId(false)
-                .netId(0)
-                .build()
-            playerPosition = session.thePlayer.vec3Position
-            clickPosition = Vector3f.from(Math.random(), Math.random(), Math.random())
-            blockDefinition = definition
-        })
-        session.thePlayer.swing(swingValue)
+		val definition = session.thePlayer.inventory.hand.blockDefinition
+		session.netSession.inboundPacket(UpdateBlockPacket().apply {
+			blockPosition = block
+			this.definition = definition
+		})
+		world.setBlockIdAt(block.x, block.y, block.z, definition?.runtimeId ?: 0)
+		session.thePlayer.useItem(ItemUseTransaction().apply {
+			actionType = 0
+			blockPosition = block.sub(facing.unitVector)
+			blockFace = facing.ordinal
+			hotbarSlot = session.thePlayer.inventory.heldItemSlot
+			itemInHand = session.thePlayer.inventory.hand.toBuilder()
+				.usingNetId(false)
+				.netId(0)
+				.build()
+			playerPosition = session.thePlayer.vec3Position
+			clickPosition = Vector3f.from(Math.random(), Math.random(), Math.random())
+			blockDefinition = definition
+		})
+		session.thePlayer.swing(swingValue)
 
-        if (rotationValue) {
-            lastRotation = toRotation(session.thePlayer.vec3Position, block.sub(facing.unitVector).toVector3f())
-            session.thePlayer.silentRotation = lastRotation
-        }
-    }
+		if (rotationValue) {
+			lastRotation = toRotation(session.thePlayer.vec3Position, block.sub(facing.unitVector).toVector3f())
+			session.thePlayer.silentRotation = lastRotation
+		}
+	}
 
     private fun switchToBlock(): Boolean {
         return when(heldBlockValue) {

@@ -4,7 +4,6 @@ import com.google.gson.JsonParser
 import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.game.event.EventPacketInbound
 import dev.sora.relay.game.event.EventPacketOutbound
-import dev.sora.relay.game.event.Listen
 import io.netty.buffer.Unpooled
 import org.cloudburstmc.protocol.bedrock.data.ResourcePackType
 import org.cloudburstmc.protocol.bedrock.packet.*
@@ -19,65 +18,62 @@ class ModuleResourcePackSpoof : CheatModule("ResourcePackSpoof") {
 
     private var acceptServerPacks by boolValue("AcceptServerPacks", false)
 
-    @Listen
-    fun onPacketInbound(event: EventPacketInbound) {
-        val packet = event.packet
+	private val handlePacketInbound = handle<EventPacketInbound> { event ->
+		val packet = event.packet
 
-        if (packet is ResourcePacksInfoPacket) {
-            if (!acceptServerPacks) {
-                packet.resourcePackInfos.clear()
-                packet.behaviorPackInfos.clear()
-            }
-            // this will make the client download the resource pack
-            packet.resourcePackInfos.addAll(resourcePackProvider.getEntry())
-        } else if (packet is ResourcePackStackPacket) {
-            if (!acceptServerPacks) {
-                packet.resourcePacks.clear()
-                packet.behaviorPacks.clear()
-            }
-            // this will make the client load the resource pack
-            packet.resourcePacks.addAll(resourcePackProvider.getEntry().map {
-                ResourcePackStackPacket.Entry(it.packId, it.packVersion, it.subPackName)
-            })
-        }
-    }
+		if (packet is ResourcePacksInfoPacket) {
+			if (!acceptServerPacks) {
+				packet.resourcePackInfos.clear()
+				packet.behaviorPackInfos.clear()
+			}
+			// this will make the client download the resource pack
+			packet.resourcePackInfos.addAll(resourcePackProvider.getEntry())
+		} else if (packet is ResourcePackStackPacket) {
+			if (!acceptServerPacks) {
+				packet.resourcePacks.clear()
+				packet.behaviorPacks.clear()
+			}
+			// this will make the client load the resource pack
+			packet.resourcePacks.addAll(resourcePackProvider.getEntry().map {
+				ResourcePackStackPacket.Entry(it.packId, it.packVersion, it.subPackName)
+			})
+		}
+	}
 
-    @Listen
-    fun onPacketOutbound(event: EventPacketOutbound) {
-        val packet = event.packet
+    private val handlePacketOutbound = handle<EventPacketOutbound> { event ->
+		val packet = event.packet
 
-        if (packet is ResourcePackClientResponsePacket) {
-            if (packet.status == ResourcePackClientResponsePacket.Status.SEND_PACKS) {
-                packet.packIds.map { it }.forEach {
-                    val entry = resourcePackProvider.getPackById(it) ?: return@forEach
-                    event.session.netSession.inboundPacket(ResourcePackDataInfoPacket().apply {
-                        packId = UUID.fromString(entry.first.packId)
-                        packVersion = entry.first.packVersion
-                        maxChunkSize = RESOURCE_PACK_CHUNK_SIZE.toLong()
-                        chunkCount = entry.first.packSize / RESOURCE_PACK_CHUNK_SIZE
-                        compressedPackSize = entry.first.packSize
-                        hash = MessageDigest.getInstance("SHA-256").digest(entry.second)
-                        type = ResourcePackType.RESOURCES
-                    })
-                    packet.packIds.remove(it)
-                }
-                if (packet.packIds.isEmpty()) {
-                    event.cancel()
-                }
-            }
-        } else if (packet is ResourcePackChunkRequestPacket) {
-            val entry = resourcePackProvider.getPackById(packet.packId.toString()) ?: return
-            event.session.netSession.inboundPacket(ResourcePackChunkDataPacket().apply {
-                packId = packet.packId
-                packVersion = packet.packVersion
-                chunkIndex = packet.chunkIndex
-                progress = (RESOURCE_PACK_CHUNK_SIZE * chunkIndex).toLong()
-                data = Unpooled.wrappedBuffer(getPackChunk(entry.second, progress.toInt(), RESOURCE_PACK_CHUNK_SIZE))
-            })
-            event.cancel()
-        }
-    }
-
+		if (packet is ResourcePackClientResponsePacket) {
+			if (packet.status == ResourcePackClientResponsePacket.Status.SEND_PACKS) {
+				packet.packIds.map { it }.forEach {
+					val entry = resourcePackProvider.getPackById(it) ?: return@forEach
+					event.session.netSession.inboundPacket(ResourcePackDataInfoPacket().apply {
+						packId = UUID.fromString(entry.first.packId)
+						packVersion = entry.first.packVersion
+						maxChunkSize = RESOURCE_PACK_CHUNK_SIZE.toLong()
+						chunkCount = entry.first.packSize / RESOURCE_PACK_CHUNK_SIZE
+						compressedPackSize = entry.first.packSize
+						hash = MessageDigest.getInstance("SHA-256").digest(entry.second)
+						type = ResourcePackType.RESOURCES
+					})
+					packet.packIds.remove(it)
+				}
+				if (packet.packIds.isEmpty()) {
+					event.cancel()
+				}
+			}
+		} else if (packet is ResourcePackChunkRequestPacket) {
+			val entry = resourcePackProvider.getPackById(packet.packId.toString()) ?: return@handle
+			event.session.netSession.inboundPacket(ResourcePackChunkDataPacket().apply {
+				packId = packet.packId
+				packVersion = packet.packVersion
+				chunkIndex = packet.chunkIndex
+				progress = (RESOURCE_PACK_CHUNK_SIZE * chunkIndex).toLong()
+				data = Unpooled.wrappedBuffer(getPackChunk(entry.second, progress.toInt(), RESOURCE_PACK_CHUNK_SIZE))
+			})
+			event.cancel()
+		}
+	}
 
     private fun getPackChunk(data: ByteArray, off: Int, len: Int): ByteArray? {
         val chunk = if (data.size - off > len) {

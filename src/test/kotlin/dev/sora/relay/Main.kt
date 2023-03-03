@@ -92,8 +92,6 @@ private fun craftSession() : GameSession {
     val commandManager = CommandManager(session)
     commandManager.init(moduleManager)
 
-    session.eventManager.registerListener(commandManager)
-
     val configManager = SingleFileConfigManager(moduleManager)
     configManager.loadConfig("default")
 

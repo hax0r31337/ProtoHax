@@ -5,6 +5,7 @@ import dev.sora.relay.cheat.value.NamedChoice
 import dev.sora.relay.game.GameSession
 import dev.sora.relay.game.entity.EntityPlayer
 import dev.sora.relay.game.entity.EntityPlayerSP
+import dev.sora.relay.game.event.EventManager
 
 object ModuleAntiBot : CheatModule("AntiBot") {
 

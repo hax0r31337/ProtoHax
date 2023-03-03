@@ -10,7 +10,7 @@ import java.util.function.Predicate
 /**
  * manages BLOB(Binary Large OBjects) cache
  */
-class BlobCacheManager : Listener {
+class BlobCacheManager(override val eventManager: EventManager) : Listenable {
 
     private val clientAcknowledgements = mutableListOf<Long>()
     private val cacheCallbacks = mutableMapOf<Long, (ByteBuf) -> Unit>()
@@ -19,24 +19,23 @@ class BlobCacheManager : Listener {
         cacheCallbacks[blobId] = callback
     }
 
-    @Listen
-    fun onDisconnect(event: EventDisconnect) {
-        clientAcknowledgements.clear()
-        cacheCallbacks.clear()
-    }
+	private val handleDisconnect = handle<EventDisconnect> {
+		clientAcknowledgements.clear()
+		cacheCallbacks.clear()
+	}
 
-    @Listen
-    fun onPacketOutbound(event: EventPacketOutbound) {
-        val packet = event.packet
-        if (packet is ClientCacheBlobStatusPacket) {
-            // sync the cache denylist
-            clientAcknowledgements.addAll(packet.acks)
-            clientAcknowledgements.removeIf { packet.naks.contains(it) }
+	private val handlePacketOutbound = handle<EventPacketOutbound> { event ->
+		val packet = event.packet
 
-            // because of we don't have such cache system, we just request cache which we required
-            packet.naks.addAll(packet.acks.filter { cacheCallbacks.containsKey(it) })
-            packet.acks.removeIf(Predicate { t -> packet.naks.contains(t) })
-        } /*else if (packet is ResourcePacksInfoPacket) {
+		if (packet is ClientCacheBlobStatusPacket) {
+			// sync the cache denylist
+			clientAcknowledgements.addAll(packet.acks)
+			clientAcknowledgements.removeIf { packet.naks.contains(it) }
+
+			// because of we don't have such cache system, we just request cache which we required
+			packet.naks.addAll(packet.acks.filter { cacheCallbacks.containsKey(it) })
+			packet.acks.removeIf(Predicate { t -> packet.naks.contains(t) })
+		} /*else if (packet is ResourcePacksInfoPacket) {
             // attempt disable cache
             val cacheStatusPacket = ClientCacheStatusPacket().apply {
                 isSupported = false
@@ -45,33 +44,31 @@ class BlobCacheManager : Listener {
         } else if (packet is ClientCacheStatusPacket) {
             packet.isSupported = false
         }*/
-    }
+	}
 
-    @Listen
-    fun onPacketInbound(event: EventPacketInbound) {
-        val packet = event.packet
-        if (packet is ClientCacheMissResponsePacket) {
-            // call cache callback
-            packet.blobs.forEach { (id, data) ->
-                cacheCallbacks[id]?.let {
-                    try {
-                        it(data)
-                    } catch (t: Throwable) {
-                        logError("cache callback", t)
-                    }
-                }
-            }
-            // prevent satisfied caches be sent to client
-            packet.blobs.keys.map { it }.forEach {
-                if (clientAcknowledgements.contains(it)) {
-                    packet.blobs.remove(it)
-                }
-            }
-            if (packet.blobs.isEmpty()) {
-                event.cancel()
-            }
-        }
-    }
+	private val handlePacketInbound = handle<EventPacketInbound> { event ->
+		val packet = event.packet
 
-    override fun listen() = true
+		if (packet is ClientCacheMissResponsePacket) {
+			// call cache callback
+			packet.blobs.forEach { (id, data) ->
+				cacheCallbacks[id]?.let {
+					try {
+						it(data)
+					} catch (t: Throwable) {
+						logError("cache callback", t)
+					}
+				}
+			}
+			// prevent satisfied caches be sent to client
+			packet.blobs.keys.map { it }.forEach {
+				if (clientAcknowledgements.contains(it)) {
+					packet.blobs.remove(it)
+				}
+			}
+			if (packet.blobs.isEmpty()) {
+				event.cancel()
+			}
+		}
+	}
 }

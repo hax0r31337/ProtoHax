@@ -2,7 +2,6 @@ package dev.sora.relay.cheat.module.impl
 
 import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.game.event.EventTick
-import dev.sora.relay.game.event.Listen
 import dev.sora.relay.utils.getRandomString
 import dev.sora.relay.utils.timing.TheTimer
 import org.cloudburstmc.protocol.bedrock.packet.TextPacket
@@ -15,17 +14,16 @@ class ModuleSpammer : CheatModule("Spammer") {
 
     private val spamTimer = TheTimer()
 
-    @Listen
-    fun onTick(event: EventTick) {
-        if (spamTimer.hasTimePassed(delayValue)) {
-            event.session.sendPacket(TextPacket().apply {
-                type = TextPacket.Type.CHAT
-                xuid = event.session.thePlayer.xuid
-                sourceName = event.session.thePlayer.username
-                platformChatId = ""
-                message = "${messageValue} >${getRandomString(10 + Random.nextInt(5))}<"
-            })
-            spamTimer.reset()
-        }
-    }
+	private val handleTick = handle<EventTick> { event ->
+		if (spamTimer.hasTimePassed(delayValue)) {
+			event.session.sendPacket(TextPacket().apply {
+				type = TextPacket.Type.CHAT
+				xuid = event.session.thePlayer.xuid
+				sourceName = event.session.thePlayer.username
+				platformChatId = ""
+				message = "${messageValue} >${getRandomString(10 + Random.nextInt(5))}<"
+			})
+			spamTimer.reset()
+		}
+	}
 }

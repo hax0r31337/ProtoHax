@@ -9,17 +9,19 @@ import dev.sora.relay.game.registry.LegacyBlockMapping
 import dev.sora.relay.game.world.WorldClient
 import dev.sora.relay.session.MinecraftRelayPacketListener
 import dev.sora.relay.session.MinecraftRelaySession
+import dev.sora.relay.utils.logInfo
 import org.cloudburstmc.protocol.bedrock.packet.BedrockPacket
 import org.cloudburstmc.protocol.bedrock.packet.LoginPacket
+import org.cloudburstmc.protocol.bedrock.packet.TextPacket
 
 class GameSession : MinecraftRelayPacketListener {
 
-    val thePlayer = EntityPlayerSP(this)
-    val theWorld = WorldClient(this)
+	val eventManager = EventManager()
 
-    val cacheManager = BlobCacheManager()
+    val thePlayer = EntityPlayerSP(this, eventManager)
+    val theWorld = WorldClient(this, eventManager)
 
-    val eventManager = EventManager()
+    val cacheManager = BlobCacheManager(eventManager)
 
     lateinit var netSession: MinecraftRelaySession
 
@@ -31,12 +33,6 @@ class GameSession : MinecraftRelayPacketListener {
 
     val netSessionInitialized: Boolean
         get() = this::netSession.isInitialized
-
-    init {
-        eventManager.registerListener(thePlayer)
-        eventManager.registerListener(theWorld)
-        eventManager.registerListener(cacheManager)
-    }
 
     override fun onPacketInbound(packet: BedrockPacket): Boolean {
         val event = EventPacketInbound(this, packet)
@@ -98,6 +94,18 @@ class GameSession : MinecraftRelayPacketListener {
         }
         netSession.inboundPacket(packet)
     }
+
+	fun chat(msg: String) {
+		logInfo("chat >> $msg")
+		if (!netSessionInitialized) return
+		sendPacketToClient(TextPacket().apply {
+			type = TextPacket.Type.RAW
+			isNeedsTranslation = false
+			message = "[§9§lProtoHax§r] $msg"
+			xuid = ""
+			sourceName = ""
+		})
+	}
 
     companion object {
         const val RECOMMENDED_VERSION = "1.19.50.02"

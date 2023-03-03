@@ -1,13 +1,13 @@
 package dev.sora.relay.cheat.module
 
-import dev.sora.relay.cheat.BasicThing
 import dev.sora.relay.cheat.value.Value
 import dev.sora.relay.cheat.value.Configurable
-import dev.sora.relay.game.event.Listener
+import dev.sora.relay.game.GameSession
+import dev.sora.relay.game.event.*
 
 abstract class CheatModule(val name: String,
                            val defaultOn: Boolean = false,
-                           val canToggle: Boolean = true) : BasicThing(), Listener, Configurable {
+                           val canToggle: Boolean = true) : Configurable {
 
     override val values = mutableListOf<Value<*>>()
 
@@ -28,6 +28,9 @@ abstract class CheatModule(val name: String,
             }
         }
 
+	protected val handlers = mutableListOf<EventHook<in GameEvent>>()
+	lateinit var session: GameSession
+
     open fun onEnable() {}
 
     open fun onDisable() {}
@@ -36,5 +39,11 @@ abstract class CheatModule(val name: String,
         this.state = !this.state
     }
 
-    override fun listen() = state
+	protected inline fun <reified T : GameEvent> handle(noinline handler: Handler<T>) {
+		handlers.add(EventHook(T::class.java, handler, this::state) as EventHook<in GameEvent>)
+	}
+
+	fun register(eventManager: EventManager) {
+		handlers.forEach(eventManager::register)
+	}
 }

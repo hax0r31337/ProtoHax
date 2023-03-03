@@ -1,9 +1,7 @@
 package dev.sora.relay.game.world
 
 import dev.sora.relay.game.GameSession
-import dev.sora.relay.game.event.EventDisconnect
-import dev.sora.relay.game.event.EventPacketInbound
-import dev.sora.relay.game.event.Listener
+import dev.sora.relay.game.event.*
 import dev.sora.relay.game.registry.BlockDefinition
 import dev.sora.relay.game.utils.constants.Dimension
 import dev.sora.relay.game.world.chunk.Chunk
@@ -11,7 +9,7 @@ import org.cloudburstmc.math.vector.Vector3i
 import org.cloudburstmc.protocol.bedrock.data.SubChunkRequestResult
 import org.cloudburstmc.protocol.bedrock.packet.*
 
-abstract class WorldwideBlockStorage(protected val session: GameSession) : Listener {
+abstract class WorldwideBlockStorage(protected val session: GameSession, override val eventManager: EventManager) : Listenable {
 
     protected val chunks = mutableMapOf<Long, Chunk>()
 
@@ -21,46 +19,47 @@ abstract class WorldwideBlockStorage(protected val session: GameSession) : Liste
     var viewDistance = -1
         protected set
 
-    open fun onDisconnect(event: EventDisconnect) {
-        chunks.clear()
-    }
+	private val handleDisconnect = handle<EventDisconnect> {
+		chunks.clear()
+	}
 
-    open fun onPacketInbound(event: EventPacketInbound) {
-        val packet = event.packet
-        if (packet is LevelChunkPacket) {
-            chunkOutOfRangeCheck()
-            val chunk = Chunk(packet.chunkX, packet.chunkZ,
-                dimension == Dimension.OVERWORLD && (!session.netSessionInitialized || session.netSession.codec.protocolVersion >= 440),
-                session.blockMapping, session.legacyBlockMapping)
-            chunk.read(packet.data, packet.subChunksLength)
-            packet.data.resetReaderIndex()
-            chunks[chunk.hash] = chunk
-        } else if (packet is ChunkRadiusUpdatedPacket) {
-            viewDistance = packet.radius
-            chunkOutOfRangeCheck()
-        } else if (packet is ChangeDimensionPacket) {
-            chunks.clear()
-        } else if (packet is UpdateBlockPacket && packet.dataLayer == 0) {
-            setBlockIdAt(packet.blockPosition.x, packet.blockPosition.y, packet.blockPosition.z, packet.definition.runtimeId)
-        } else if (packet is SubChunkPacket && packet.dimension == dimension) {
-            val centerPos = packet.centerPosition
-            packet.subChunks.forEach {
-                if (it.result != SubChunkRequestResult.SUCCESS) return@forEach
-                val position = it.position.add(centerPos).add(0, 4, 0)
-                val chunk = getChunk(position.x, position.z) ?: return@forEach
-                if (it.data.readableBytes() == 0) {
-                    // cached chunk
-                    session.cacheManager.registerCacheCallback(it.blobId) {
-                        chunk.readSubChunk(position.y, it)
-                        it.resetReaderIndex()
-                    }
-                } else {
-                    chunk.readSubChunk(position.y, it.data)
-                    it.data.resetReaderIndex()
-                }
-            }
-        }
-    }
+	private val handlePacketInbound = handle<EventPacketInbound> { event ->
+		val packet = event.packet
+
+		if (packet is LevelChunkPacket) {
+			chunkOutOfRangeCheck()
+			val chunk = Chunk(packet.chunkX, packet.chunkZ,
+				dimension == Dimension.OVERWORLD && (!session.netSessionInitialized || session.netSession.codec.protocolVersion >= 440),
+				session.blockMapping, session.legacyBlockMapping)
+			chunk.read(packet.data, packet.subChunksLength)
+			packet.data.resetReaderIndex()
+			chunks[chunk.hash] = chunk
+		} else if (packet is ChunkRadiusUpdatedPacket) {
+			viewDistance = packet.radius
+			chunkOutOfRangeCheck()
+		} else if (packet is ChangeDimensionPacket) {
+			chunks.clear()
+		} else if (packet is UpdateBlockPacket && packet.dataLayer == 0) {
+			setBlockIdAt(packet.blockPosition.x, packet.blockPosition.y, packet.blockPosition.z, packet.definition.runtimeId)
+		} else if (packet is SubChunkPacket && packet.dimension == dimension) {
+			val centerPos = packet.centerPosition
+			packet.subChunks.forEach {
+				if (it.result != SubChunkRequestResult.SUCCESS) return@forEach
+				val position = it.position.add(centerPos).add(0, 4, 0)
+				val chunk = getChunk(position.x, position.z) ?: return@forEach
+				if (it.data.readableBytes() == 0) {
+					// cached chunk
+					session.cacheManager.registerCacheCallback(it.blobId) {
+						chunk.readSubChunk(position.y, it)
+						it.resetReaderIndex()
+					}
+				} else {
+					chunk.readSubChunk(position.y, it.data)
+					it.data.resetReaderIndex()
+				}
+			}
+		}
+	}
 
     private fun chunkOutOfRangeCheck() {
         // if (viewDistance < 0) return
@@ -112,6 +111,4 @@ abstract class WorldwideBlockStorage(protected val session: GameSession) : Liste
     fun getChunkAt(x: Int, z: Int): Chunk? {
         return getChunk(x shr 4, z shr 4)
     }
-
-    override fun listen() = true
 }

@@ -8,9 +8,9 @@ class ModuleManager(private val session: GameSession) {
     val modules = mutableListOf<CheatModule>()
 
     fun registerModule(module: CheatModule) {
-        module.session = session
+		module.session = session
         modules.add(module)
-        session.eventManager.registerListener(module)
+        module.register(session.eventManager)
     }
 
     fun init() {

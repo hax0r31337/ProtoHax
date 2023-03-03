@@ -2,7 +2,6 @@ package dev.sora.relay.cheat.module.impl
 
 import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.game.event.EventPacketInbound
-import dev.sora.relay.game.event.Listen
 import org.cloudburstmc.protocol.bedrock.data.skin.ImageData
 import org.cloudburstmc.protocol.bedrock.data.skin.SerializedSkin
 import org.cloudburstmc.protocol.bedrock.packet.PlayerListPacket
@@ -14,20 +13,19 @@ class ModuleNoSkin : CheatModule("NoSkin") {
         ImageData.of(ByteArray(16384).also { for(i in it.indices) it[i] = Byte.MAX_VALUE })
     }
 
-    @Listen
-    fun onPacketInbound(event: EventPacketInbound) {
-        val packet = event.packet
+	private val handlePacketInbound = handle<EventPacketInbound> { event ->
+		val packet = event.packet
 
-        if (packet is PlayerListPacket) {
-            packet.entries.forEach {
-                if (it.skin != null) {
-                    it.skin = generateSkin(it.skin)
-                }
-            }
-        } else if (packet is PlayerSkinPacket && packet.skin != null) {
-            packet.skin = generateSkin(packet.skin)
-        }
-    }
+		if (packet is PlayerListPacket) {
+			packet.entries.forEach {
+				if (it.skin != null) {
+					it.skin = generateSkin(it.skin)
+				}
+			}
+		} else if (packet is PlayerSkinPacket && packet.skin != null) {
+			packet.skin = generateSkin(packet.skin)
+		}
+	}
 
     private fun generateSkin(skin: SerializedSkin): SerializedSkin {
         return SerializedSkin.of(skin.skinId, skin.playFabId, SKIN_RESOURCE_PATCH, skinData,
