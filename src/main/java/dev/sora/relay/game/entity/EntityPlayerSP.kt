@@ -52,6 +52,7 @@ class EntityPlayerSP(private val session: GameSession) : EntityPlayer(0L, UUID.r
         private set
 
     private val pendingItemInteraction = LinkedList<ItemUseTransaction>()
+    private var skipSwings = 0
 
     override fun rotate(yaw: Float, pitch: Float) {
         this.prevRotationYaw = rotationYaw
@@ -164,6 +165,9 @@ class EntityPlayerSP(private val session: GameSession) : EntityPlayer(0L, UUID.r
             }
         } else if (packet is InteractPacket && packet.action == InteractPacket.Action.OPEN_INVENTORY) {
             openContainer = inventory
+        } else if (skipSwings > 0 && packet is AnimatePacket && packet.action == AnimatePacket.Action.SWING_ARM) {
+            skipSwings--
+            event.cancel()
         }
         inventory.handleClientPacket(packet)
         openContainer?.also {
@@ -179,10 +183,12 @@ class EntityPlayerSP(private val session: GameSession) : EntityPlayer(0L, UUID.r
             runtimeEntityId = entityId
         }.also {
             // send the packet back to client in order to display the swing animation
-            if (swingValue == SwingMode.BOTH || swingValue == SwingMode.CLIENTSIDE)
-                session.netSession.inboundPacket(it)
             if (swingValue == SwingMode.BOTH || swingValue == SwingMode.SERVERSIDE)
                 session.sendPacket(it)
+            if (swingValue == SwingMode.BOTH || swingValue == SwingMode.CLIENTSIDE) {
+                session.netSession.inboundPacket(it)
+                skipSwings++
+            }
         }
         if (sound) {
             // this sound will be send to server if no object interacted
@@ -253,10 +259,10 @@ class EntityPlayerSP(private val session: GameSession) : EntityPlayer(0L, UUID.r
 
     fun getSwingMode(swingValue: String)
         = when(swingValue) {
-            "Both" -> EntityPlayerSP.SwingMode.BOTH
-            "Client" -> EntityPlayerSP.SwingMode.CLIENTSIDE
-            "Server" -> EntityPlayerSP.SwingMode.SERVERSIDE
-            else -> EntityPlayerSP.SwingMode.NONE
+            "Both" -> SwingMode.BOTH
+            "Client" -> SwingMode.CLIENTSIDE
+            "Server" -> SwingMode.SERVERSIDE
+            else -> SwingMode.NONE
         }
 
     enum class SwingMode {

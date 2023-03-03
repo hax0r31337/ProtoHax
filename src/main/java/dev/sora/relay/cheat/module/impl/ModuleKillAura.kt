@@ -24,8 +24,6 @@ class ModuleKillAura : CheatModule("KillAura") {
 
     @Listen
     fun onTick(event: EventTick) {
-        if (cpsValue.get() < 20 && !clickTimer.canClick())
-            return
 
         val session = event.session
 
@@ -34,7 +32,7 @@ class ModuleKillAura : CheatModule("KillAura") {
         if (entityList.isEmpty()) return
 
         val swingMode = session.thePlayer.getSwingMode(swingValue.get())
-        val aimTarget = if (Math.random() <= failRateValue.get()) {
+        val aimTarget = if (Math.random() <= failRateValue.get() || (cpsValue.get() < 20 && !clickTimer.canClick())) {
             session.thePlayer.swing(swingMode, failSoundValue.get())
             entityList.first()
         } else {
