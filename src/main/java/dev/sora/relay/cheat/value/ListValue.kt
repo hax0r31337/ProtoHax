@@ -21,9 +21,15 @@ open class ListValue<T : NamedChoice>(name: String, val values: Array<T>, value:
     }
 
     override fun fromString(newValue: String) {
-		println(newValue)
         value = values.find { it.choiceName.equals(newValue, true) } ?: defaultValue
     }
+
+	fun roll() {
+		val idx = values.indexOf(value) + 1
+		value = if (idx == values.size) {
+			values.first()
+		} else values[idx]
+	}
 }
 
 interface NamedChoice {

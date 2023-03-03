@@ -4,6 +4,7 @@ import dev.sora.relay.game.GameSession
 import dev.sora.relay.session.MinecraftRelaySession
 import io.netty.bootstrap.Bootstrap
 import io.netty.bootstrap.ServerBootstrap
+import io.netty.channel.ChannelFuture
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.nio.NioDatagramChannel
 import org.cloudburstmc.netty.channel.raknet.RakChannelFactory
@@ -24,11 +25,18 @@ class MinecraftRelay(private val listener: MinecraftRelayListener,
                      val motd: BedrockPong = DEFAULT_PONG,
                      val packetCodec: BedrockCodec = BedrockCompat.CODEC) {
 
+	private var channelFuture: ChannelFuture? = null
+
+	val isRunning: Boolean
+		get() = channelFuture != null
+
     fun bind(address: InetSocketAddress) {
+		assert(!isRunning) { "server is already running" }
+
         motd
             .ipv4Port(address.port)
             .ipv6Port(address.port)
-        ServerBootstrap()
+        channelFuture = ServerBootstrap()
             .channelFactory(RakChannelFactory.server(NioDatagramChannel::class.java))
             .option(RakChannelOption.RAK_ADVERTISEMENT, motd.toByteBuf())
             .group(NioEventLoopGroup())
@@ -36,6 +44,16 @@ class MinecraftRelay(private val listener: MinecraftRelayListener,
             .bind(address)
             .syncUninterruptibly()
     }
+
+	fun stop() {
+		assert(isRunning) { "server is not running" }
+
+		channelFuture?.channel()?.also {
+			it.close().syncUninterruptibly()
+			it.parent().close().syncUninterruptibly()
+		}
+		channelFuture = null
+	}
 
     inner class BedrockRelayInitializer : BedrockServerInitializer() {
 
