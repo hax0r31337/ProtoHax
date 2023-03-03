@@ -16,7 +16,7 @@ interface Configurable {
     fun intValue(name: String, value: Int, range: IntRange)
         = IntValue(name, value, range).also { values.add(it) }
 
-    fun listValue(name: String, valuesArr: Array<String>, value: String)
+    fun <T : NamedChoice> listValue(name: String, valuesArr: Array<T>, value: T)
         = ListValue(name, valuesArr, value).also { values.add(it) }
 
     fun stringValue(name: String, value: String)

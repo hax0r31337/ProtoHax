@@ -56,12 +56,12 @@ class CommandModule(private val module: CheatModule) : Command(module.name.lower
                     }
                 }
                 is ListValue -> {
-                    if (!value.contains(args[1])) {
+                    if (!value.hasValue(args[1])) {
                         chatSyntax("${args[0].lowercase()} <${value.values.joinToString(separator = "/").lowercase()}>")
                         return
                     }
 
-                    value.value = args[1]
+                    value.fromString(args[1])
                 }
                 is StringValue -> value.value = args.copyOfRange(2, args.size - 1).joinToString(separator = " ")
             }

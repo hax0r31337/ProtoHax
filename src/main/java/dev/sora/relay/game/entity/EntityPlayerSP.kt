@@ -2,6 +2,7 @@ package dev.sora.relay.game.entity
 
 import com.google.gson.JsonParser
 import dev.sora.relay.cheat.BasicThing
+import dev.sora.relay.cheat.value.NamedChoice
 import dev.sora.relay.game.GameSession
 import dev.sora.relay.game.event.*
 import dev.sora.relay.game.inventory.AbstractInventory
@@ -223,10 +224,6 @@ class EntityPlayerSP(private val session: GameSession) : EntityPlayer(0L, UUID.r
         }
     }
 
-    fun swing(swingValue: String, sound: Boolean = false) {
-        swing(getSwingMode(swingValue), sound)
-    }
-
     fun attackEntity(entity: Entity, swingValue: SwingMode = SwingMode.BOTH, sound: Boolean = false) {
         swing(swingValue)
 
@@ -252,24 +249,12 @@ class EntityPlayerSP(private val session: GameSession) : EntityPlayer(0L, UUID.r
             clickPosition = Vector3f.ZERO
         })
     }
-    
-    fun attackEntity(entity: Entity, swingValue: String, sound: Boolean = false) {
-        attackEntity(entity, getSwingMode(swingValue), sound)
-    }
 
-    fun getSwingMode(swingValue: String)
-        = when(swingValue) {
-            "Both" -> SwingMode.BOTH
-            "Client" -> SwingMode.CLIENTSIDE
-            "Server" -> SwingMode.SERVERSIDE
-            else -> SwingMode.NONE
-        }
-
-    enum class SwingMode {
-        CLIENTSIDE,
-        SERVERSIDE,
-        BOTH,
-        NONE
+    enum class SwingMode(override val choiceName: String) : NamedChoice {
+        CLIENTSIDE("Client"),
+        SERVERSIDE("Server"),
+        BOTH("Both"),
+        NONE("None")
     }
 
     override fun listen() = true

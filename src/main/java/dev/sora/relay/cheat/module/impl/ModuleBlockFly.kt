@@ -1,6 +1,8 @@
 package dev.sora.relay.cheat.module.impl
 
 import dev.sora.relay.cheat.module.CheatModule
+import dev.sora.relay.cheat.value.NamedChoice
+import dev.sora.relay.game.entity.EntityPlayerSP
 import dev.sora.relay.game.event.EventTick
 import dev.sora.relay.game.event.Listen
 import dev.sora.relay.game.registry.isBlock
@@ -18,9 +20,9 @@ import org.cloudburstmc.protocol.bedrock.packet.UpdateBlockPacket
 
 class ModuleBlockFly : CheatModule("BlockFly") {
 
-    private var swingValue by listValue("Swing", arrayOf("Both", "Client", "Server", "None"), "Server")
+    private var swingValue by listValue("Swing", EntityPlayerSP.SwingMode.values(), EntityPlayerSP.SwingMode.BOTH)
     private var adaptiveBlockIdValue by boolValue("AdaptiveBlockId", false)
-    private var heldBlockValue by listValue("HeldBlock", arrayOf("Manual", "Auto"), "Manual")
+    private var heldBlockValue by listValue("HeldBlock", HeldBlockMode.values(), HeldBlockMode.MANUAL)
     private var rotationValue by boolValue("Rotation", false)
 
     private val extendableFacing = arrayOf(EnumFacing.WEST, EnumFacing.EAST, EnumFacing.UP, EnumFacing.SOUTH, EnumFacing.NORTH)
@@ -80,8 +82,8 @@ class ModuleBlockFly : CheatModule("BlockFly") {
 
     private fun switchToBlock(): Boolean {
         return when(heldBlockValue) {
-            "Manual" -> session.thePlayer.inventory.hand.isBlock()
-            "Auto" -> {
+            HeldBlockMode.MANUAL -> session.thePlayer.inventory.hand.isBlock()
+            HeldBlockMode.AUTOMATIC -> {
                 if (!session.thePlayer.inventory.hand.isBlock()) {
                     val slot = session.thePlayer.inventory.searchForItem(0..8) {
                         (it.blockDefinition?.runtimeId ?: 0) != 0
@@ -96,7 +98,6 @@ class ModuleBlockFly : CheatModule("BlockFly") {
                 }
                 true
             }
-            else -> false
         }
     }
 
@@ -137,5 +138,10 @@ class ModuleBlockFly : CheatModule("BlockFly") {
             }
         }
         return null
+    }
+
+    enum class HeldBlockMode(override val choiceName: String) : NamedChoice {
+        MANUAL("Manual"),
+        AUTOMATIC("Auto")
     }
 }

@@ -2,6 +2,7 @@ package dev.sora.relay.cheat.module.impl
 
 import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.game.GameSession
+import dev.sora.relay.game.entity.EntityPlayerSP
 import dev.sora.relay.game.event.EventPacketInbound
 import dev.sora.relay.game.event.EventPacketOutbound
 import dev.sora.relay.game.event.EventTick
@@ -26,7 +27,7 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper") {
     private var simulateInventoryValue by boolValue("SimulateInventory", false)
     private var autoCloseValue by boolValue("AutoClose", false)
     private var throwUnnecessaryValue by boolValue("ThrowUnnecessary", true)
-    private var swingValue by listValue("Swing", arrayOf("Both", "Client", "Server", "None"), "Server")
+    private var swingValue by listValue("Swing", EntityPlayerSP.SwingMode.values(), EntityPlayerSP.SwingMode.BOTH)
     private var clickMaxCpsValue by intValue("ClickMaxCPS", 4, 1..20)
     private var clickMinCpsValue by intValue("ClickMinCPS", 2, 1..20)
     private var sortArmorValue by boolValue("Armor", true)

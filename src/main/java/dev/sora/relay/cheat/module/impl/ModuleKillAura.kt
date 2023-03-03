@@ -2,7 +2,9 @@ package dev.sora.relay.cheat.module.impl
 
 import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.cheat.module.impl.ModuleAntiBot.isBot
+import dev.sora.relay.cheat.value.NamedChoice
 import dev.sora.relay.game.entity.EntityPlayer
+import dev.sora.relay.game.entity.EntityPlayerSP
 import dev.sora.relay.game.event.EventTick
 import dev.sora.relay.game.event.Listen
 import dev.sora.relay.game.utils.toRotation
@@ -13,9 +15,9 @@ class ModuleKillAura : CheatModule("KillAura") {
 
     private var cpsValue by intValue("CPS", 7, 1..20)
     private var rangeValue by floatValue("Range", 3.7f, 2f..7f)
-    private var attackModeValue by listValue("AttackMode", arrayOf("Single", "Multi"), "Single")
-    private var rotationModeValue by listValue("RotationMode", arrayOf("Lock", "None"), "Lock")
-    private var swingValue by listValue("Swing", arrayOf("Both", "Client", "Server", "None"), "Both")
+    private var attackModeValue by listValue("AttackMode", AttackMode.values(), AttackMode.SINGLE)
+    private var rotationModeValue by listValue("RotationMode", RotationMode.values(), RotationMode.LOCK)
+    private var swingValue by listValue("Swing", EntityPlayerSP.SwingMode.values(), EntityPlayerSP.SwingMode.BOTH)
     private var swingSoundValue by boolValue("SwingSound", true)
     private var failRateValue by floatValue("FailRate", 0f, 0f..1f)
     private var failSoundValue by boolValue("FailSound", true)
@@ -30,26 +32,38 @@ class ModuleKillAura : CheatModule("KillAura") {
         val entityList = session.theWorld.entityMap.values.filter { it is EntityPlayer && it.distanceSq(session.thePlayer) < range && !it.isBot(session) }
         if (entityList.isEmpty()) return
 
-        val swingMode = session.thePlayer.getSwingMode(swingValue)
         val aimTarget = if (Math.random() <= failRateValue || (cpsValue < 20 && !clickTimer.canClick())) {
-            session.thePlayer.swing(swingMode, failSoundValue)
+            session.thePlayer.swing(swingValue, failSoundValue)
             entityList.first()
         } else {
             when(attackModeValue) {
-                "Multi" -> {
-                    entityList.forEach { session.thePlayer.attackEntity(it, swingMode, swingSoundValue) }
+                AttackMode.MULTI -> {
+                    entityList.forEach { session.thePlayer.attackEntity(it, swingValue, swingSoundValue) }
                     entityList.first()
                 }
-                else -> (entityList.minByOrNull { it.distanceSq(event.session.thePlayer) } ?: return).also {
-                    session.thePlayer.attackEntity(it, swingMode, swingSoundValue)
+                AttackMode.SINGLE -> (entityList.minByOrNull { it.distanceSq(event.session.thePlayer) } ?: return).also {
+                    session.thePlayer.attackEntity(it, swingValue, swingSoundValue)
                 }
             }
         }
 
-        if (rotationModeValue == "Lock") {
-            session.thePlayer.silentRotation = toRotation(session.thePlayer.vec3Position, aimTarget.vec3Position)
+        when (rotationModeValue) {
+            RotationMode.LOCK -> {
+                session.thePlayer.silentRotation = toRotation(session.thePlayer.vec3Position, aimTarget.vec3Position)
+            }
+            RotationMode.NONE -> {}
         }
 
         clickTimer.update(cpsValue, cpsValue + 1)
+    }
+
+    enum class AttackMode(override val choiceName: String) : NamedChoice {
+        SINGLE("Single"),
+        MULTI("Multi")
+    }
+
+    enum class RotationMode(override val choiceName: String) : NamedChoice {
+        LOCK("Lock"),
+        NONE("None")
     }
 }

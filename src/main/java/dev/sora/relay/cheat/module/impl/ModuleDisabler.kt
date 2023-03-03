@@ -1,6 +1,7 @@
 package dev.sora.relay.cheat.module.impl
 
 import dev.sora.relay.cheat.module.CheatModule
+import dev.sora.relay.cheat.value.NamedChoice
 import dev.sora.relay.game.event.EventPacketOutbound
 import dev.sora.relay.game.event.EventTick
 import dev.sora.relay.game.event.Listen
@@ -11,45 +12,51 @@ import org.cloudburstmc.protocol.bedrock.packet.PlayerAuthInputPacket
 
 class ModuleDisabler : CheatModule("Disabler") {
 
-    private var modeValue by listValue("Mode", arrayOf("Lifeboat","Mineplex","CubeCraft"), "Lifeboat")
+    private var modeValue by listValue("Mode", Mode.values(), Mode.LIFEBOAT)
 
     @Listen
     fun onPacketOutbound(event: EventPacketOutbound) {
         val packet = event.packet
 
-        if(modeValue == "Lifeboat"){
-            if (packet is MovePlayerPacket) {
-                packet.isOnGround = true
-                event.session.netSession.outboundPacket(MovePlayerPacket().apply {
-                    runtimeEntityId = packet.runtimeEntityId
-                    position = packet.position.add(0f, 0.1f, 0f)
-                    rotation = packet.rotation
-                    mode = packet.mode
-                    isOnGround = false
-                })
-            }
-        }else if(modeValue == "CubeCraft") {
-            if (packet is MovePlayerPacket) {
-                for(i in 0 until 9){
-                    event.session.netSession.outboundPacket(packet)
+        when (modeValue) {
+            Mode.LIFEBOAT -> {
+                if (packet is MovePlayerPacket) {
+                    packet.isOnGround = true
+                    event.session.netSession.outboundPacket(MovePlayerPacket().apply {
+                        runtimeEntityId = packet.runtimeEntityId
+                        position = packet.position.add(0f, 0.1f, 0f)
+                        rotation = packet.rotation
+                        mode = packet.mode
+                        isOnGround = false
+                    })
                 }
-            }else if (packet is PlayerAuthInputPacket) {
-                packet.motion = Vector2f.from(0.01f,0.01f)
+            }
 
-                for(i in 0 until 9){
-                    event.session.netSession.outboundPacket(packet)
+            Mode.CUBECRAFT -> {
+                if (packet is MovePlayerPacket) {
+                    for (i in 0 until 9) {
+                        event.session.netSession.outboundPacket(packet)
+                    }
+                } else if (packet is PlayerAuthInputPacket) {
+                    packet.motion = Vector2f.from(0.01f, 0.01f)
+
+                    for (i in 0 until 9) {
+                        event.session.netSession.outboundPacket(packet)
+                    }
+                } else if (packet is NetworkStackLatencyPacket) {
+                    event.cancel()
                 }
-            }else if(packet is NetworkStackLatencyPacket){
-                event.cancel()
             }
+
+            else -> {}
         }
     }
 
     @Listen
-    fun onTick(event: EventTick){
+    fun onTick(event: EventTick) {
         val session = event.session
 
-        if(modeValue == "Mineplex" || modeValue == "CubeCraft"){
+        if (modeValue == Mode.MINEPLEX || modeValue == Mode.CUBECRAFT) {
             session.sendPacket(MovePlayerPacket().apply {
                 runtimeEntityId = session.thePlayer.entityId
                 position = session.thePlayer.vec3Position
@@ -57,5 +64,11 @@ class ModuleDisabler : CheatModule("Disabler") {
                 isOnGround = true
             })
         }
+    }
+
+    enum class Mode(override val choiceName: String) : NamedChoice {
+        MINEPLEX("Mineplex"),
+        CUBECRAFT("CubeCraft"),
+        LIFEBOAT("LifeBoat")
     }
 }

@@ -1,6 +1,7 @@
 package dev.sora.relay.cheat.module.impl
 
 import dev.sora.relay.cheat.module.CheatModule
+import dev.sora.relay.cheat.value.NamedChoice
 import dev.sora.relay.game.event.EventPacketInbound
 import dev.sora.relay.game.event.EventPacketOutbound
 import dev.sora.relay.game.event.EventTick
@@ -19,7 +20,7 @@ import kotlin.math.sin
 
 class ModuleFly : CheatModule("Fly") {
 
-    private var modeValue by listValue("Mode", arrayOf("Vanilla", "Jetpack", "Mineplex"), "Vanilla")
+    private var modeValue by listValue("Mode", Mode.values(), Mode.VANILLA)
     private var speedValue by floatValue("Speed", 1.5f, 0.1f..5f)
     private var mineplexDirectValue by boolValue("MineplexDirect", false)
     private var mineplexMotionValue by boolValue("MineplexMotion", false)
@@ -41,7 +42,7 @@ class ModuleFly : CheatModule("Fly") {
 
     override fun onEnable() {
         canFly = false
-        if (modeValue == "Mineplex" && mineplexDirectValue) {
+        if (modeValue == Mode.MINEPLEX && mineplexDirectValue) {
             canFly = true
         }
         launchY = session.thePlayer.posY
@@ -51,40 +52,46 @@ class ModuleFly : CheatModule("Fly") {
     fun onTick(event: EventTick) {
         val session = event.session
 
-        if (modeValue == "Mineplex") {
-            session.netSession.inboundPacket(abilityPacket.apply {
-                uniqueEntityId = session.thePlayer.entityId
-            })
-            if (!canFly) return
-            val player = session.thePlayer
-            val yaw = Math.toRadians(player.rotationYaw.toDouble())
-            val value = speedValue
-            if (mineplexMotionValue) {
+        when (modeValue) {
+            Mode.MINEPLEX -> {
+                session.netSession.inboundPacket(abilityPacket.apply {
+                    uniqueEntityId = session.thePlayer.entityId
+                })
+                if (!canFly) return
+                val player = session.thePlayer
+                val yaw = Math.toRadians(player.rotationYaw.toDouble())
+                val value = speedValue
+                if (mineplexMotionValue) {
+                    session.netSession.inboundPacket(SetEntityMotionPacket().apply {
+                        runtimeEntityId = session.thePlayer.entityId
+                        motion = Vector3f.from(-sin(yaw) * value, 0.0, +cos(yaw) * value)
+                    })
+                } else {
+                    player.teleport(player.posX - sin(yaw) * value, launchY, player.posZ + cos(yaw) * value)
+                }
+            }
+            Mode.VANILLA -> {
+                if (!canFly) {
+                    canFly = true
+                    session.netSession.inboundPacket(abilityPacket.apply {
+                        uniqueEntityId = session.thePlayer.entityId
+                    })
+                }
+            }
+            Mode.JETPACK -> {
                 session.netSession.inboundPacket(SetEntityMotionPacket().apply {
                     runtimeEntityId = session.thePlayer.entityId
-                    motion = Vector3f.from(-sin(yaw) * value, 0.0, +cos(yaw) * value)
+
+                    val calcYaw: Double = (session.thePlayer.rotationYawHead + 90) * (PI / 180)
+                    val calcPitch: Double = (session.thePlayer.rotationPitch) * -(PI / 180)
+
+                    motion = Vector3f.from(
+                        cos(calcYaw) * cos(calcPitch) * speedValue,
+                        sin(calcPitch) * speedValue,
+                        sin(calcYaw) * cos(calcPitch) * speedValue
+                    )
                 })
-            } else {
-                player.teleport(player.posX - sin(yaw) * value, launchY, player.posZ + cos(yaw) * value)
             }
-        } else if (modeValue == "Vanilla" && !canFly) {
-            canFly = true
-            session.netSession.inboundPacket(abilityPacket.apply {
-                uniqueEntityId = session.thePlayer.entityId
-            })
-        } else if(modeValue == "Jetpack"){
-            session.netSession.inboundPacket(SetEntityMotionPacket().apply {
-                runtimeEntityId = session.thePlayer.entityId
-
-                val calcYaw: Double = (session.thePlayer.rotationYawHead + 90) * (PI / 180)
-                val calcPitch: Double = (session.thePlayer.rotationPitch) * -(PI / 180)
-
-                motion = Vector3f.from(
-                    cos(calcYaw) * cos(calcPitch) * speedValue,
-                    sin(calcPitch) * speedValue,
-                    sin(calcYaw) * cos(calcPitch) * speedValue
-                )
-            })
         }
     }
 
@@ -104,7 +111,7 @@ class ModuleFly : CheatModule("Fly") {
 
     @Listen
     fun onPacketOutbound(event: EventPacketOutbound) {
-        if (modeValue == "Mineplex") {
+        if (modeValue == Mode.MINEPLEX) {
             if (event.packet is RequestAbilityPacket && event.packet.ability == Ability.FLYING) {
                 canFly = !canFly
                 if (canFly) {
@@ -139,5 +146,11 @@ class ModuleFly : CheatModule("Fly") {
                 event.cancel()
             }
         }
+    }
+
+    enum class Mode(override val choiceName: String) : NamedChoice {
+        VANILLA("Vanilla"),
+        MINEPLEX("Mineplex"),
+        JETPACK("Jetpack")
     }
 }

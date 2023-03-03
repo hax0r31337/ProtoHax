@@ -15,12 +15,9 @@ import java.util.*
 import java.util.zip.ZipFile
 
 
-object ModuleResourcePackSpoof : CheatModule("ResourcePackSpoof") {
-
-    private const val RESOURCE_PACK_CHUNK_SIZE = 8 * 1024
+class ModuleResourcePackSpoof : CheatModule("ResourcePackSpoof") {
 
     private var acceptServerPacks by boolValue("AcceptServerPacks", false)
-    var resourcePackProvider: IResourcePackProvider = EmptyResourcePackProvider()
 
     @Listen
     fun onPacketInbound(event: EventPacketInbound) {
@@ -94,6 +91,12 @@ object ModuleResourcePackSpoof : CheatModule("ResourcePackSpoof") {
         return chunk
     }
 
+    companion object {
+
+        private const val RESOURCE_PACK_CHUNK_SIZE = 8 * 1024
+
+        var resourcePackProvider: IResourcePackProvider = EmptyResourcePackProvider()
+    }
 
     interface IResourcePackProvider {
 

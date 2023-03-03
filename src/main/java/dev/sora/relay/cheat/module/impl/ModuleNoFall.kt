@@ -1,6 +1,7 @@
 package dev.sora.relay.cheat.module.impl
 
 import dev.sora.relay.cheat.module.CheatModule
+import dev.sora.relay.cheat.value.NamedChoice
 import dev.sora.relay.game.event.EventPacketOutbound
 import dev.sora.relay.game.event.EventTick
 import dev.sora.relay.game.event.Listen
@@ -11,20 +12,18 @@ import org.cloudburstmc.protocol.bedrock.packet.PlayerActionPacket
 
 class ModuleNoFall : CheatModule("NoFall") {
 
-    private var modeValue by listValue("Mode", arrayOf("OnGround","AwayNoGround","Nukkit","CubeCraft"), "OnGround")
+    private var modeValue by listValue("Mode", Mode.values(), Mode.ON_GROUND)
 
     @Listen
-    fun onPacketOutbound(event: EventPacketOutbound){
+    fun onPacketOutbound(event: EventPacketOutbound) {
         val packet = event.packet
         val session = event.session
 
-        if (modeValue == "OnGround"){
-            if(session.thePlayer.motionY <= -5.5) {
-                if (packet is MovePlayerPacket) {
-                    packet.isOnGround = true
-                }
+        if (modeValue == Mode.ON_GROUND) {
+            if (packet is MovePlayerPacket) {
+                packet.isOnGround = true
             }
-        } else if (modeValue == "AwayNoGround") {
+        } else if (modeValue == Mode.NO_GROUND) {
             if (packet is MovePlayerPacket) {
                 packet.isOnGround = false
             }
@@ -32,20 +31,22 @@ class ModuleNoFall : CheatModule("NoFall") {
     }
 
     @Listen
-    fun onTick(event: EventTick){
+    fun onTick(event: EventTick) {
         val session = event.session
 
-        if(modeValue == "Nukkit") {
-            if(session.thePlayer.motionY <= -5.5){
-                session.sendPacket(PlayerActionPacket().apply {
-                    runtimeEntityId = session.thePlayer.entityId
-                    action = PlayerActionType.START_GLIDE
-                })
-            }
-        } else if(modeValue == "CubeCraft"){
-            if(session.thePlayer.motionY <= -5.5){
-
-            }
+        if (modeValue == Mode.ELYTRA_GLITCH) {
+            session.sendPacket(PlayerActionPacket().apply {
+                runtimeEntityId = session.thePlayer.entityId
+                action = PlayerActionType.START_GLIDE
+            })
+        } else if (modeValue == Mode.CUBECRAFT) {
         }
+    }
+
+    enum class Mode(override val choiceName: String) : NamedChoice {
+        ON_GROUND("OnGround"),
+        NO_GROUND("NoGround"),
+        ELYTRA_GLITCH("ElytraGlitch"),
+        CUBECRAFT("CubeCraft")
     }
 }
