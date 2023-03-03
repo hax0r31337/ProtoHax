@@ -8,6 +8,8 @@ class EventManager {
 
     fun register(hook: EventHook<out GameEvent>) {
         val handlers = registry.computeIfAbsent(hook.eventClass) { ArrayList() }
+
+		handlers.add(hook as EventHook<in GameEvent>)
     }
 
 //    fun register(listenable: Listenable) {

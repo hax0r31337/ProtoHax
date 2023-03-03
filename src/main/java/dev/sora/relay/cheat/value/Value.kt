@@ -39,6 +39,11 @@ abstract class Value<T>(val name: String, valueIn: T) {
 
     open fun validateValue(value: T): Boolean = true
 
+	fun listen(listener: ValueListener<T>): Value<T> {
+		listeners.add(listener)
+		return this
+	}
+
     abstract fun fromString(newValue: String)
 
     abstract fun toJson(): JsonElement?

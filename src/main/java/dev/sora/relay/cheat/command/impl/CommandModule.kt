@@ -19,7 +19,7 @@ class CommandModule(private val module: CheatModule) : Command(module.name.lower
      */
     override fun exec(args: Array<String>, session: GameSession) {
         val valueNames = module.values
-            .joinToString(separator = "/") { it.name.lowercase() }
+            .joinToString(separator = "/") { it.name }
 
         if (args.isEmpty()) {
             session.chatSyntax(if (module.values.size == 1) "$valueNames <value>" else "<$valueNames>")
@@ -37,19 +37,14 @@ class CommandModule(private val module: CheatModule) : Command(module.name.lower
             if (value is IntValue || value is FloatValue || value is StringValue || value is BoolValue) {
                 session.chatSyntax("${args[0].lowercase()} <value> (now=${value.value})")
             } else if (value is ListValue) {
-				session.chatSyntax("${args[0].lowercase()} <${value.values.joinToString(separator = "/").lowercase()}> (now=${value.value})")
+				session.chatSyntax("${args[0].lowercase()} <${value.values.map { (it as NamedChoice).choiceName }.joinToString(separator = "/")}> (now=${(value.value as NamedChoice).choiceName})")
             }
             return
         }
 
         try {
-            val oldValue = value.value
-            value.fromString(args.copyOfRange(2, args.size - 1).joinToString(separator = " "))
-            if (oldValue == value.value && value is ListValue) {
-				session.chatSyntax("${args[0].lowercase()} <${value.values.joinToString(separator = "/").lowercase()}>")
-                return
-            }
-            session.chat("${module.name} ${args[0]} was set to ${value.value}.")
+            value.fromString(args.copyOfRange(1, args.size).joinToString(separator = " "))
+            session.chat("${module.name} ${args[0]} was set to ${(value.value as NamedChoice).choiceName}.")
         } catch (e: NumberFormatException) {
             session.chat("${args[1]} cannot be converted to number!")
         }

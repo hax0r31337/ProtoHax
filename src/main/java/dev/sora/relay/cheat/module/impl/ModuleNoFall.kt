@@ -1,6 +1,7 @@
 package dev.sora.relay.cheat.module.impl
 
 import dev.sora.relay.cheat.module.CheatModule
+import dev.sora.relay.cheat.value.Choice
 import dev.sora.relay.cheat.value.NamedChoice
 import dev.sora.relay.game.event.EventPacketOutbound
 import dev.sora.relay.game.event.EventTick
@@ -11,38 +12,39 @@ import org.cloudburstmc.protocol.bedrock.packet.PlayerActionPacket
 
 class ModuleNoFall : CheatModule("NoFall") {
 
-    private var modeValue by listValue("Mode", Mode.values(), Mode.ON_GROUND)
+    private var modeValue by choiceValue("Mode", arrayOf(OnGround, NoGround, ElytraGlitch, Cubecraft), OnGround)
 
-	private val handlePacketOutbound = handle<EventPacketOutbound> { event ->
-		val packet = event.packet
+	object OnGround : Choice("OnGround") {
 
-		if (modeValue == Mode.ON_GROUND) {
-			if (packet is MovePlayerPacket) {
-				packet.isOnGround = true
-			}
-		} else if (modeValue == Mode.NO_GROUND) {
-			if (packet is MovePlayerPacket) {
-				packet.isOnGround = false
+		val handlePacketOutbound = handle<EventPacketOutbound> { event ->
+			if (event.packet is MovePlayerPacket) {
+				event.packet.isOnGround = true
 			}
 		}
 	}
 
-    private val handleTick = handle<EventTick> { event ->
-		val session = event.session
+	object NoGround : Choice("NoGround") {
 
-		if (modeValue == Mode.ELYTRA_GLITCH) {
-			session.sendPacket(PlayerActionPacket().apply {
-				runtimeEntityId = session.thePlayer.entityId
-				action = PlayerActionType.START_GLIDE
-			})
-		} else if (modeValue == Mode.CUBECRAFT) {
+		val handlePacketOutbound = handle<EventPacketOutbound> { event ->
+			if (event.packet is MovePlayerPacket) {
+				event.packet.isOnGround = false
+			}
 		}
 	}
 
-    enum class Mode(override val choiceName: String) : NamedChoice {
-        ON_GROUND("OnGround"),
-        NO_GROUND("NoGround"),
-        ELYTRA_GLITCH("ElytraGlitch"),
-        CUBECRAFT("CubeCraft")
-    }
+	object ElytraGlitch : Choice("ElytraGlitch") {
+
+		val handleTick = handle<EventTick> { event ->
+			if (event.session.thePlayer.tickExists % 10 == 0L) {
+				event.session.sendPacket(PlayerActionPacket().apply {
+					runtimeEntityId = event.session.thePlayer.entityId
+					action = PlayerActionType.START_GLIDE
+				})
+			}
+		}
+	}
+
+	object Cubecraft : Choice("Cubecraft") {
+
+	}
 }

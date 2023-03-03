@@ -21,6 +21,7 @@ open class ListValue<T : NamedChoice>(name: String, val values: Array<T>, value:
     }
 
     override fun fromString(newValue: String) {
+		println(newValue)
         value = values.find { it.choiceName.equals(newValue, true) } ?: defaultValue
     }
 }
