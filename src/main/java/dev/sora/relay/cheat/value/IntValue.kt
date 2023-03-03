@@ -19,4 +19,8 @@ open class IntValue(name: String, value: Int, val range: IntRange) : Value<Int>(
             value = element.asInt
         }
     }
+
+    override fun fromString(newValue: String) {
+        value = newValue.toInt()
+    }
 }

@@ -101,7 +101,6 @@ class EntityPlayerSP(private val session: GameSession) : EntityPlayer(0L, UUID.r
             entityId = packet.runtimeEntityId
         }*/ else if (packet is ContainerOpenPacket) {
             openContainer = if (packet.id.toInt() == 0) {
-//                inventory
                 return
             } else {
                 ContainerInventory(packet.id.toInt(), packet.type).also {
@@ -110,7 +109,7 @@ class EntityPlayerSP(private val session: GameSession) : EntityPlayer(0L, UUID.r
             }
         } else if (packet is ContainerClosePacket && packet.id.toInt() == openContainer?.containerId) {
             openContainer?.also {
-                session.eventManager.emit(EventContainerOpen(session, it))
+                session.eventManager.emit(EventContainerClose(session, it))
             }
             openContainer = null
         }

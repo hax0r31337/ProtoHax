@@ -19,4 +19,8 @@ open class FloatValue(name: String, value: Float, val range: ClosedFloatingPoint
             value = element.asFloat
         }
     }
+
+    override fun fromString(newValue: String) {
+        value = newValue.toFloat()
+    }
 }

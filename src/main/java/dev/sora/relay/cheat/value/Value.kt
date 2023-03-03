@@ -39,6 +39,8 @@ abstract class Value<T>(val name: String, valueIn: T) {
 
     open fun validateValue(value: T): Boolean = true
 
+    abstract fun fromString(newValue: String)
+
     abstract fun toJson(): JsonElement?
     abstract fun fromJson(element: JsonElement)
 

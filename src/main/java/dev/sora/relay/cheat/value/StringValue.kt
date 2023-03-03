@@ -14,4 +14,8 @@ open class StringValue(name: String, value: String) : Value<String>(name, value)
             value = element.asString
         }
     }
+
+    override fun fromString(newValue: String) {
+        value = newValue
+    }
 }

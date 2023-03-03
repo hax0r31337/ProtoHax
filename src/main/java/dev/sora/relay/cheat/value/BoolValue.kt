@@ -15,4 +15,13 @@ open class BoolValue(name: String, value: Boolean) : Value<Boolean>(name, value)
             value = element.asBoolean || element.asString.equals("true", ignoreCase = true)
         }
     }
+
+    override fun fromString(newValue: String) {
+        value = when (newValue.lowercase()) {
+            "on", "true" -> true
+            "off", "false" -> false
+            "!", "rev", "reverse" -> !value
+            else -> value
+        }
+    }
 }

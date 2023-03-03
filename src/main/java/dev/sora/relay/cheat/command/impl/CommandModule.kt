@@ -42,28 +42,11 @@ class CommandModule(private val module: CheatModule) : Command(module.name.lower
         }
 
         try {
-            when (value) {
-                is IntValue -> value.set(args[1].toInt())
-                is FloatValue -> value.set(args[1].toFloat())
-                is BoolValue -> {
-                    when (args[1].lowercase()) {
-                        "on", "true" -> value.value = true
-                        "off", "false" -> value.value = false
-                        "!", "rev", "reverse" -> value.value = !value.value
-                        else -> {
-                            chatSyntax("${args[0].lowercase()} <value> (now=${value.value})")
-                        }
-                    }
-                }
-                is ListValue -> {
-                    if (!value.hasValue(args[1])) {
-                        chatSyntax("${args[0].lowercase()} <${value.values.joinToString(separator = "/").lowercase()}>")
-                        return
-                    }
-
-                    value.fromString(args[1])
-                }
-                is StringValue -> value.value = args.copyOfRange(2, args.size - 1).joinToString(separator = " ")
+            val oldValue = value.value
+            value.fromString(args.copyOfRange(2, args.size - 1).joinToString(separator = " "))
+            if (oldValue == value.value && value is ListValue) {
+                chatSyntax("${args[0].lowercase()} <${value.values.joinToString(separator = "/").lowercase()}>")
+                return
             }
             chat("${module.name} ${args[0]} was set to ${value.value}.")
         } catch (e: NumberFormatException) {
