@@ -24,7 +24,6 @@ class ModuleKillAura : CheatModule("KillAura") {
 
     @Listen
     fun onTick(event: EventTick) {
-
         val session = event.session
 
         val range = rangeValue.get().pow(2)

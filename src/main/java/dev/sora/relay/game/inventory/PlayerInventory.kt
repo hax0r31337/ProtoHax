@@ -214,5 +214,6 @@ class PlayerInventory(private val player: EntityPlayerSP) : EntityInventory(0L) 
         const val SLOT_CHESTPLATE = 37
         const val SLOT_LEGGINGS = 38
         const val SLOT_BOOTS = 39
+        const val SLOT_OFFHAND = 40
     }
 }

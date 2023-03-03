@@ -30,6 +30,7 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper") {
     private val clickMaxCpsValue = intValue("ClickMaxCPS", 4, 1, 20)
     private val clickMinCpsValue = intValue("ClickMinCPS", 2, 1, 20)
     private val sortArmorValue = boolValue("Armor", true)
+    private val sortTotemValue = boolValue("Totem", true)
     private val sortSwordValue = intValue("SortSword", 0, -1, 8)
     private val sortPickaxeValue = intValue("SortPickaxe", 5, -1, 8)
     private val sortAxeValue = intValue("SortAxe", 6, -1, 8)
@@ -43,6 +44,9 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper") {
         Sort(PlayerInventory.SLOT_LEGGINGS, ItemTags.TAG_IS_LEGGINGS),
         Sort(PlayerInventory.SLOT_BOOTS, ItemTags.TAG_IS_BOOTS)
     )
+    private val sortTotem = Sort(PlayerInventory.SLOT_OFFHAND) {
+        if (it.itemDefinition.identifier == "minecraft:totem_of_undying") 1f else 0f
+    }
 
     private val clickTimer = ClickTimer()
     private var sorted = true
@@ -136,6 +140,9 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper") {
         val sorts = mutableListOf<Sort>()
         if (sortArmorValue.get()) {
             sorts.addAll(sortArmor)
+        }
+        if (sortTotemValue.get()) {
+            sorts.add(sortTotem)
         }
         if (sortSwordValue.get() != -1) {
             sorts.add(Sort(sortSwordValue.get(), ItemTags.TAG_IS_SWORD))
