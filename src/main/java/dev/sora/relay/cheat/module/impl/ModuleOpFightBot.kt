@@ -1,7 +1,6 @@
 package dev.sora.relay.cheat.module.impl
 
 import dev.sora.relay.cheat.module.CheatModule
-import dev.sora.relay.cheat.module.impl.ModuleAntiBot.isBot
 import dev.sora.relay.cheat.value.NamedChoice
 import dev.sora.relay.game.entity.EntityPlayer
 import dev.sora.relay.game.event.EventTick
@@ -19,7 +18,8 @@ class ModuleOpFightBot : CheatModule("OPFightBot") {
 
 	private val handleTick = handle<EventTick> { event ->
 		val session = event.session
-		val target = session.theWorld.entityMap.values.filter { it is EntityPlayer && !it.isBot(session) }
+		val moduleTargets = moduleManager.getModule(ModuleTargets::class.java) ?: error("no module found as Targets")
+		val target = session.theWorld.entityMap.values.filter { with(moduleTargets) { it.isTarget() } }
 			.minByOrNull { it.distanceSq(session.thePlayer) } ?: return@handle
 		if(target.distance(session.thePlayer) < 5) {
 			val direction = Math.toRadians(when(modeValue) {

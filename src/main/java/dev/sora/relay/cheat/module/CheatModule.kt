@@ -32,6 +32,7 @@ abstract class CheatModule(val name: String,
 
 	protected val handlers = mutableListOf<EventHook<in GameEvent>>()
 	lateinit var session: GameSession
+	lateinit var moduleManager: ModuleManager
 
     open fun onEnable() {
 		this.values.forEach {

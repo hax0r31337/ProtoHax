@@ -1,7 +1,6 @@
 package dev.sora.relay.cheat.module.impl
 
 import dev.sora.relay.cheat.module.CheatModule
-import dev.sora.relay.cheat.module.impl.ModuleAntiBot.isBot
 import dev.sora.relay.cheat.value.NamedChoice
 import dev.sora.relay.game.entity.EntityPlayer
 import dev.sora.relay.game.entity.EntityPlayerSP
@@ -27,7 +26,9 @@ class ModuleKillAura : CheatModule("KillAura") {
 		val session = event.session
 
 		val range = rangeValue.pow(2)
-		val entityList = session.theWorld.entityMap.values.filter { it is EntityPlayer && it.distanceSq(session.thePlayer) < range && !it.isBot(session) }
+		val moduleTargets = moduleManager.getModule(ModuleTargets::class.java) ?: error("no module found as Targets")
+		val entityList = session.theWorld.entityMap.values.filter {
+			it.distanceSq(session.thePlayer) < range && with(moduleTargets) { it.isTarget() } }
 		if (entityList.isEmpty()) return@handle
 
 		val aimTarget = if (Math.random() <= failRateValue || (cpsValue < 20 && !clickTimer.canClick())) {

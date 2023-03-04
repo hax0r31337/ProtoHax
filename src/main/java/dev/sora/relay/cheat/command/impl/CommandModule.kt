@@ -44,7 +44,7 @@ class CommandModule(private val module: CheatModule) : Command(module.name.lower
 
         try {
             value.fromString(args.copyOfRange(1, args.size).joinToString(separator = " "))
-            session.chat("${module.name} ${args[0]} was set to ${(value.value as NamedChoice).choiceName}.")
+            session.chat("${module.name} ${value.name} was set to ${if (value.value is NamedChoice) (value.value as NamedChoice).choiceName else value.value}.")
         } catch (e: NumberFormatException) {
             session.chat("${args[1]} cannot be converted to number!")
         }

@@ -9,6 +9,7 @@ class ModuleManager(private val session: GameSession) {
 
     fun registerModule(module: CheatModule) {
 		module.session = session
+		module.moduleManager = this
         modules.add(module)
         module.register(session.eventManager)
     }
@@ -24,7 +25,7 @@ class ModuleManager(private val session: GameSession) {
         registerModule(ModuleNoSkin())
         registerModule(ModuleDeviceSpoof())
         registerModule(ModuleResourcePackSpoof())
-        registerModule(ModuleAntiBot)
+        registerModule(ModuleTargets())
         registerModule(ModuleNoFall())
         registerModule(ModuleAntiBlind())
         registerModule(ModuleFastBreak())
@@ -32,4 +33,8 @@ class ModuleManager(private val session: GameSession) {
         registerModule(ModuleBlockFly())
         registerModule(ModuleInventoryHelper())
     }
+
+	inline fun <reified T : CheatModule> getModule(klass: Class<T>): T? {
+		return modules.filterIsInstance<T>().firstOrNull()
+	}
 }
