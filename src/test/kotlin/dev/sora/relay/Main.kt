@@ -36,12 +36,12 @@ fun main(args: Array<String>) {
     }
     val relay = MinecraftRelay(object : MinecraftRelayListener {
         override fun onSessionCreation(session: MinecraftRelaySession): InetSocketAddress {
-            msSession.session = session
-            session.listeners.add(msSession)
             session.listeners.add(RelayListenerNetworkSettings(session))
             session.listeners.add(RelayListenerAutoCodec(session))
+			gameSession.netSession = session
             session.listeners.add(gameSession)
-            gameSession.netSession = session
+			msSession.session = session
+			session.listeners.add(msSession)
 //            session.listeners.add(object : MinecraftRelayPacketListener {
 //                override fun onPacketInbound(packet: BedrockPacket): Boolean {
 //                    if (packet is TransferPacket) {
