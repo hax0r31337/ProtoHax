@@ -1,18 +1,27 @@
 package dev.sora.relay.session.listener
 
 import coelho.msftauth.api.xbox.*
+import com.google.gson.JsonObject
 import com.google.gson.JsonParser
-import com.nimbusds.jose.shaded.json.JSONObject
+import com.nimbusds.jose.JWSAlgorithm
+import com.nimbusds.jose.JWSHeader
+import com.nimbusds.jose.JWSObject
+import com.nimbusds.jose.Payload
 import com.nimbusds.jwt.SignedJWT
+import dev.sora.relay.cheat.config.AbstractConfigManager
 import dev.sora.relay.session.MinecraftRelayPacketListener
 import dev.sora.relay.session.MinecraftRelaySession
-import dev.sora.relay.utils.*
+import dev.sora.relay.utils.HttpUtils
+import dev.sora.relay.utils.base64Decode
+import dev.sora.relay.utils.logError
+import dev.sora.relay.utils.logInfo
 import org.cloudburstmc.protocol.bedrock.packet.*
 import org.cloudburstmc.protocol.bedrock.util.EncryptionUtils
 import java.io.InputStreamReader
+import java.net.URI
 import java.security.KeyPair
 import java.security.PublicKey
-import java.security.Signature
+import java.security.interfaces.ECPrivateKey
 import java.time.Instant
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -32,14 +41,20 @@ class RelayListenerMicrosoftLogin(val accessToken: String, val deviceInfo: Devic
             }
             return field
         }
-    private var chain: List<String>? = null
+    private var chain: List<SignedJWT>? = null
         get() {
             if (field == null || chainExpires < Instant.now().epochSecond) {
-                field = fetchChain(identityToken, keyPair).also {
-                    val json = JsonParser.parseReader(base64Decode(it[0].split(".")[1])
-                        .inputStream().reader()).asJsonObject
-                    chainExpires = json.get("exp").asLong
-                }
+                val chains = fetchChain(identityToken, keyPair)
+				field = chains
+
+				// search for chain expiry
+				chainExpires = 0L
+				chains.forEach {  chain ->
+					val expires = chain.payload.toJSONObject()["exp"] ?: return@forEach
+					if (expires is Number && (chainExpires == 0L || expires.toLong() < chainExpires)) {
+						chainExpires = expires.toLong()
+					}
+				}
             }
             return field
         }
@@ -72,10 +87,8 @@ class RelayListenerMicrosoftLogin(val accessToken: String, val deviceInfo: Devic
         if (packet is LoginPacket) {
             try {
                 packet.chain.clear()
-                chain!!.forEach {
-                    packet.chain.add(SignedJWT.parse(it))
-                }
-                packet.extra = SignedJWT.parse(toJWTRaw(packet.extra.payload.toBase64URL().toString(), keyPair))
+                packet.chain.addAll(chain!!)
+				packet.extra = signJWT(packet.extra.payload, keyPair)
             } catch (e: Throwable) {
                 session.inboundPacket(DisconnectPacket().apply {
                     kickMessage = e.toString()
@@ -153,10 +166,10 @@ class RelayListenerMicrosoftLogin(val accessToken: String, val deviceInfo: Devic
 
         fun fetchRawChain(identityToken: String, publicKey: PublicKey): InputStreamReader {
             // then, we can request the chain
-            val data = JSONObject().apply {
-                put("identityPublicKey", Base64.getEncoder().encodeToString(publicKey.encoded))
+            val data = JsonObject().apply {
+                addProperty("identityPublicKey", Base64.getEncoder().encodeToString(publicKey.encoded))
             }
-            val connection = HttpUtils.make("https://multiplayer.minecraft.net/authentication", "POST", data.toJSONString(),
+            val connection = HttpUtils.make("https://multiplayer.minecraft.net/authentication", "POST", AbstractConfigManager.DEFAULT_GSON.toJson(data),
                 mapOf("Content-Type" to "application/json", "Authorization" to identityToken,
                     "User-Agent" to "MCPE/UWP", "Client-Version" to "1.19.50"))
 
@@ -166,42 +179,32 @@ class RelayListenerMicrosoftLogin(val accessToken: String, val deviceInfo: Devic
             }
         }
 
-        fun fetchChain(identityToken: String, keyPair: KeyPair): List<String> {
+        fun fetchChain(identityToken: String, keyPair: KeyPair): List<SignedJWT> {
             val rawChain = JsonParser.parseReader(fetchRawChain(identityToken, keyPair.public)).asJsonObject
             val chains = rawChain.get("chain").asJsonArray
 
             // add the self-signed jwt
             val identityPubKey = JsonParser.parseString(base64Decode(chains.get(0).asString.split(".")[0]).toString(Charsets.UTF_8)).asJsonObject
-            val jwt = toJWTRaw(Base64.getEncoder().encodeToString(JSONObject().apply {
-                put("certificateAuthority", true)
-                put("exp", (Instant.now().epochSecond + TimeUnit.HOURS.toSeconds(6)).toInt())
-                put("nbf", (Instant.now().epochSecond - TimeUnit.HOURS.toSeconds(6)).toInt())
-                put("identityPublicKey", identityPubKey.get("x5u").asString)
-            }.toJSONString().toByteArray(Charsets.UTF_8)), keyPair)
 
-            val list = mutableListOf<String>(jwt)
-            chains.forEach {
-                list.add(it.asString)
-            }
+            val jwt = signJWT(Payload(AbstractConfigManager.DEFAULT_GSON.toJson(JsonObject().apply {
+				addProperty("certificateAuthority", true)
+				addProperty("exp", (Instant.now().epochSecond + TimeUnit.HOURS.toSeconds(6)).toInt())
+				addProperty("nbf", (Instant.now().epochSecond - TimeUnit.HOURS.toSeconds(6)).toInt())
+				addProperty("identityPublicKey", identityPubKey.get("x5u").asString)
+			})), keyPair)
+
+            val list = mutableListOf(jwt)
+			list.addAll(chains.map { SignedJWT.parse(it.asString) })
             return list
         }
 
-        private fun toJWTRaw(payload: String, keyPair: KeyPair): String {
-            val headerJson = JSONObject().apply {
-                put("alg", "ES384")
-                put("x5u", Base64.getEncoder().encodeToString(keyPair.public.encoded))
-            }
-            val header = Base64.getUrlEncoder().withoutPadding().encodeToString(headerJson.toJSONString().toByteArray(Charsets.UTF_8))
-            val sign = signBytes("$header.$payload".toByteArray(Charsets.UTF_8), keyPair)
-            return "$header.$payload.$sign"
-        }
-
-        private fun signBytes(dataToSign: ByteArray, keyPair: KeyPair): String {
-            val signature = Signature.getInstance("SHA384withECDSA")
-            signature.initSign(keyPair.private)
-            signature.update(dataToSign)
-            val signatureBytes = JoseStuff.DERToJOSE(signature.sign())
-            return Base64.getUrlEncoder().withoutPadding().encodeToString(signatureBytes)
-        }
+		fun signJWT(payload: Payload, keyPair: KeyPair): SignedJWT {
+			val header = JWSHeader.Builder(JWSAlgorithm.ES384)
+				.x509CertURL(URI(Base64.getEncoder().encodeToString(keyPair.public.encoded)))
+				.build()
+			val jws = JWSObject(header, payload)
+			EncryptionUtils.signJwt(jws, keyPair.private as ECPrivateKey)
+			return SignedJWT(jws.header.toBase64URL(), jws.payload.toBase64URL(), jws.signature)
+		}
     }
 }

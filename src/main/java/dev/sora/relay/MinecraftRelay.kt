@@ -2,6 +2,7 @@ package dev.sora.relay
 
 import dev.sora.relay.game.GameSession
 import dev.sora.relay.session.MinecraftRelaySession
+import dev.sora.relay.utils.logInfo
 import io.netty.bootstrap.Bootstrap
 import io.netty.bootstrap.ServerBootstrap
 import io.netty.channel.ChannelFuture
@@ -59,6 +60,7 @@ class MinecraftRelay(private val listener: MinecraftRelayListener,
 
         override fun createSession0(peer: BedrockPeer, subClientId: Int): BedrockServerSession {
             val session = MinecraftRelaySession(peer, subClientId)
+			logInfo("client connected")
 
             // establish connection to actual server
             Bootstrap()
@@ -67,6 +69,7 @@ class MinecraftRelay(private val listener: MinecraftRelayListener,
                 .option(RakChannelOption.RAK_PROTOCOL_VERSION, peer.channel.config().getOption(RakChannelOption.RAK_PROTOCOL_VERSION))
                 .handler(object : BedrockClientInitializer() {
                     override fun createSession0(peer: BedrockPeer, subClientId: Int): BedrockClientSession {
+						logInfo("server connected")
                         return session.MinecraftRelayClientSession(peer, subClientId).also {
                             session.client = it
                         }
