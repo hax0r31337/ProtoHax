@@ -18,7 +18,7 @@ class BlockStorage {
     var palette: IntArrayList
 
     constructor(airId: Int, version: BitArrayVersion = BitArrayVersion.V2) {
-        bitArray = version.createPalette(SIZE)
+        bitArray = version.createPalette(MAX_BLOCK_IN_SECTION)
         palette = IntArrayList(16)
         palette.add(airId)
     }
@@ -30,10 +30,8 @@ class BlockStorage {
 
         val bitArrayVersion = BitArrayVersion.get(paletteVersion, true)
 
-        val maxBlocksInSection = 4096 // 16*16*16
-
-        bitArray = bitArrayVersion.createPalette(maxBlocksInSection)
-        val wordsSize = bitArrayVersion.getWordsForSize(maxBlocksInSection)
+        bitArray = bitArrayVersion.createPalette(MAX_BLOCK_IN_SECTION)
+        val wordsSize = bitArrayVersion.getWordsForSize(MAX_BLOCK_IN_SECTION)
 
         for (wordIterationIndex in 0 until wordsSize) {
             val word = byteBuf.readIntLE()
@@ -90,8 +88,8 @@ class BlockStorage {
     }
 
     private fun onResize(version: BitArrayVersion) {
-        val newBitArray = version.createPalette(SIZE)
-        for (i in 0 until SIZE) {
+        val newBitArray = version.createPalette(MAX_BLOCK_IN_SECTION)
+        for (i in 0 until MAX_BLOCK_IN_SECTION) {
             newBitArray[i] = bitArray[i]
         }
         bitArray = newBitArray
@@ -114,7 +112,25 @@ class BlockStorage {
         return index
     }
 
+	fun write(buf: ByteBuf, useRuntime: Boolean) {
+		val bitArrayVersion = bitArray.version
+
+		// palette header
+		buf.writeByte(getPaletteHeader(bitArrayVersion, useRuntime))
+
+		bitArray.words.forEach(buf::writeIntLE)
+
+		VarInts.writeInt(buf, palette.size)
+		if (useRuntime) {
+			palette.forEach {
+				VarInts.writeInt(buf, it)
+			}
+		} else {
+			TODO("Not implemented")
+		}
+	}
+
     companion object {
-        const val SIZE = 4096
+        const val MAX_BLOCK_IN_SECTION = 4096
     }
 }

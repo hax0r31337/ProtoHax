@@ -2,6 +2,7 @@ package dev.sora.relay.game.event
 
 import dev.sora.relay.game.GameSession
 import dev.sora.relay.game.inventory.AbstractInventory
+import dev.sora.relay.game.world.chunk.Chunk
 import org.cloudburstmc.protocol.bedrock.packet.BedrockPacket
 
 abstract class GameEvent(val session: GameSession, val friendlyName: String)
@@ -35,3 +36,11 @@ class EventPacketOutbound(session: GameSession, val packet: BedrockPacket) : Gam
 class EventContainerOpen(session: GameSession, val container: AbstractInventory) : GameEvent(session, "container_open")
 
 class EventContainerClose(session: GameSession, val container: AbstractInventory) : GameEvent(session, "container_close")
+
+/**
+ * triggered on LevelChunkPacket,
+ * but be aware if the chunk have separate subchunks deliver, the subchunk will not be loaded on the event call
+ */
+class EventChunkLoad(session: GameSession, val chunk: Chunk) : GameEvent(session, "chunk_load")
+
+class EventDimensionChange(session: GameSession, val dimension: Int) : GameEvent(session, "dimension_change")

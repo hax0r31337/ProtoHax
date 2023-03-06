@@ -30,7 +30,7 @@ class ChunkSection(private val blockMapping: BlockMapping, private val legacyBlo
     private fun readModern(buf: ByteBuf, version: Int) {
         val layers = if(version == 1) 1 else buf.readByte().toInt()
         if (version >= 9) {
-            buf.readByte()
+            buf.readByte() // Y-Index
         }
         if (layers == 0) return
         storage = BlockStorage(buf, blockMapping)
@@ -61,6 +61,19 @@ class ChunkSection(private val blockMapping: BlockMapping, private val legacyBlo
             }
         }
     }
+
+	/**
+	 * write the chunk to version 8 chunk
+	 */
+	fun write(buf: ByteBuf, useRuntime: Boolean) {
+		// version
+		buf.writeByte(8)
+
+		// we only support one layer currently
+		buf.writeByte(1)
+
+		storage.write(buf, useRuntime)
+	}
 
     fun getBlockAt(x: Int, y: Int, z: Int): Int {
         assert(x in 0..15 && y in 0..15 && z in 0..15) { "query out of range (x=$x, y=$y, z=$z)" }
