@@ -11,9 +11,11 @@ import it.unimi.dsi.fastutil.ints.IntArrayList
 import org.cloudburstmc.nbt.NBTInputStream
 import org.cloudburstmc.nbt.NBTOutputStream
 import org.cloudburstmc.nbt.NbtMap
+import org.cloudburstmc.nbt.util.stream.LittleEndianDataInputStream
+import org.cloudburstmc.nbt.util.stream.LittleEndianDataOutputStream
 import org.cloudburstmc.nbt.util.stream.NetworkDataInputStream
+import org.cloudburstmc.nbt.util.stream.NetworkDataOutputStream
 import org.cloudburstmc.protocol.common.util.VarInts
-import java.io.DataOutputStream
 
 
 class BlockStorage {
@@ -27,8 +29,8 @@ class BlockStorage {
         palette.add(airId)
     }
 
-    constructor(byteBuf: ByteBuf, blockMapping: BlockMapping, network: Boolean) {
-        val paletteHeader = byteBuf.readByte().toInt()
+    constructor(buf: ByteBuf, blockMapping: BlockMapping, network: Boolean) {
+        val paletteHeader = buf.readByte().toInt()
         val isRuntime = (paletteHeader and 1) == 1
         val paletteVersion = paletteHeader or 1 shr 1
         val bitArrayVersion = BitArrayVersion.get(paletteVersion, true)
@@ -37,20 +39,23 @@ class BlockStorage {
 //        val wordsSize = bitArrayVersion.getWordsForSize(MAX_BLOCK_IN_SECTION)
 
         for (i in bitArray.words.indices) {
-            val word = byteBuf.readIntLE()
+            val word = buf.readIntLE()
             bitArray.words[i] = word
         }
 
 		fun readInt(): Int {
 			return if (network) {
-				VarInts.readInt(byteBuf)
+				VarInts.readInt(buf)
 			} else {
-				byteBuf.readIntLE()
+				buf.readIntLE()
 			}
 		}
         val paletteSize = readInt()
         palette = IntArrayList(paletteSize)
-        val nbtStream = if (isRuntime) null else NBTInputStream(NetworkDataInputStream(ByteBufInputStream(byteBuf)))
+        val nbtStream = if (isRuntime) null else {
+			val bis = ByteBufInputStream(buf)
+			NBTInputStream(if (network) NetworkDataInputStream(bis) else LittleEndianDataInputStream(bis))
+		}
         for (i in 0 until paletteSize) {
             if (isRuntime) {
                 palette.add(readInt())
@@ -148,8 +153,8 @@ class BlockStorage {
 				writeInt(it)
 			}
 		} else {
-			val dos = DataOutputStream(ByteBufOutputStream(buf))
-			val nbtos = NBTOutputStream(dos) // TODO: facing issues on nbt format
+			val bos = ByteBufOutputStream(buf)
+			val nbtos = NBTOutputStream(if (network) NetworkDataOutputStream(bos) else LittleEndianDataOutputStream(bos))
 			palette.forEach {
 				val tag = (blockMapping.getDefinition(it) as BlockDefinition).extraData.toBuilder()
 				tag.remove("id")
@@ -158,7 +163,6 @@ class BlockStorage {
 				tag.remove("stateOverload")
 				nbtos.writeTag(tag.build())
 			}
-			dos.flush()
 		}
 	}
 

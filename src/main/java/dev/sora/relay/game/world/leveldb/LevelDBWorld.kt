@@ -3,6 +3,7 @@ package dev.sora.relay.game.world.leveldb
 import dev.sora.relay.game.world.chunk.Chunk
 import dev.sora.relay.game.world.chunk.ChunkSection
 import io.netty.buffer.ByteBufAllocator
+import org.iq80.leveldb.CompressionType
 import org.iq80.leveldb.Options
 import org.iq80.leveldb.impl.Iq80DBFactory
 import java.io.File
@@ -13,7 +14,7 @@ import java.io.File
  */
 class LevelDBWorld(val folder: File) {
 
-	private val db = Iq80DBFactory.factory.open(folder, Options().createIfMissing(true))
+	private val db = Iq80DBFactory.factory.open(folder, Options().createIfMissing(true).compressionType(CompressionType.ZLIB_RAW))
 
 	fun close() {
 		db.close()
@@ -67,7 +68,7 @@ class LevelDBWorld(val folder: File) {
 
 		val yOffset = if (chunk.is384World) -4 else 0
 		chunk.sectionStorage.forEachIndexed { i, subChunk ->
-			saveSubChunk(chunk.x, chunk.z, dimension, i + yOffset, subChunk, true)
+			saveSubChunk(chunk.x, chunk.z, dimension, i + yOffset, subChunk, false)
 		}
 	}
 
