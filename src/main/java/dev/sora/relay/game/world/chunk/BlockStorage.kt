@@ -1,15 +1,19 @@
 package dev.sora.relay.game.world.chunk
 
+import dev.sora.relay.game.registry.BlockDefinition
 import dev.sora.relay.game.registry.BlockMapping
 import dev.sora.relay.game.world.chunk.palette.BitArray
 import dev.sora.relay.game.world.chunk.palette.BitArrayVersion
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.ByteBufInputStream
+import io.netty.buffer.ByteBufOutputStream
 import it.unimi.dsi.fastutil.ints.IntArrayList
 import org.cloudburstmc.nbt.NBTInputStream
+import org.cloudburstmc.nbt.NBTOutputStream
 import org.cloudburstmc.nbt.NbtMap
 import org.cloudburstmc.nbt.util.stream.NetworkDataInputStream
 import org.cloudburstmc.protocol.common.util.VarInts
+import java.io.DataOutputStream
 
 
 class BlockStorage {
@@ -23,27 +27,33 @@ class BlockStorage {
         palette.add(airId)
     }
 
-    constructor(byteBuf: ByteBuf, blockMapping: BlockMapping) {
+    constructor(byteBuf: ByteBuf, blockMapping: BlockMapping, network: Boolean) {
         val paletteHeader = byteBuf.readByte().toInt()
         val isRuntime = (paletteHeader and 1) == 1
         val paletteVersion = paletteHeader or 1 shr 1
-
         val bitArrayVersion = BitArrayVersion.get(paletteVersion, true)
 
         bitArray = bitArrayVersion.createPalette(MAX_BLOCK_IN_SECTION)
-        val wordsSize = bitArrayVersion.getWordsForSize(MAX_BLOCK_IN_SECTION)
+//        val wordsSize = bitArrayVersion.getWordsForSize(MAX_BLOCK_IN_SECTION)
 
-        for (wordIterationIndex in 0 until wordsSize) {
+        for (i in bitArray.words.indices) {
             val word = byteBuf.readIntLE()
-            bitArray.words[wordIterationIndex] = word
+            bitArray.words[i] = word
         }
 
-        val paletteSize = VarInts.readInt(byteBuf)
+		fun readInt(): Int {
+			return if (network) {
+				VarInts.readInt(byteBuf)
+			} else {
+				byteBuf.readIntLE()
+			}
+		}
+        val paletteSize = readInt()
         palette = IntArrayList(paletteSize)
         val nbtStream = if (isRuntime) null else NBTInputStream(NetworkDataInputStream(ByteBufInputStream(byteBuf)))
         for (i in 0 until paletteSize) {
             if (isRuntime) {
-                palette.add(VarInts.readInt(byteBuf))
+                palette.add(readInt())
             } else {
                 val map = (nbtStream!!.readTag() as NbtMap).toBuilder()
                 val name = map["name"].toString()
@@ -112,21 +122,43 @@ class BlockStorage {
         return index
     }
 
-	fun write(buf: ByteBuf, useRuntime: Boolean) {
+	/**
+	 * use persistent nbt tags if [blockMapping] is pass, otherwise runtime id is used
+	 */
+	fun write(buf: ByteBuf, blockMapping: BlockMapping? = null, network: Boolean) {
 		val bitArrayVersion = bitArray.version
 
 		// palette header
-		buf.writeByte(getPaletteHeader(bitArrayVersion, useRuntime))
+		buf.writeByte(getPaletteHeader(bitArrayVersion, blockMapping == null))
 
-		bitArray.words.forEach(buf::writeIntLE)
+		bitArray.words.forEach {
+			buf.writeIntLE(it)
+		}
 
-		VarInts.writeInt(buf, palette.size)
-		if (useRuntime) {
+		fun writeInt(int: Int) {
+			if (network) {
+				VarInts.writeInt(buf, int)
+			} else {
+				buf.writeIntLE(int)
+			}
+		}
+		writeInt(palette.size)
+		if (blockMapping == null) {
 			palette.forEach {
-				VarInts.writeInt(buf, it)
+				writeInt(it)
 			}
 		} else {
-			TODO("Not implemented")
+			val dos = DataOutputStream(ByteBufOutputStream(buf))
+			val nbtos = NBTOutputStream(dos) // TODO: facing issues on nbt format
+			palette.forEach {
+				val tag = (blockMapping.getDefinition(it) as BlockDefinition).extraData.toBuilder()
+				tag.remove("id")
+				tag.remove("data")
+				tag.remove("runtimeId")
+				tag.remove("stateOverload")
+				nbtos.writeTag(tag.build())
+			}
+			dos.flush()
 		}
 	}
 

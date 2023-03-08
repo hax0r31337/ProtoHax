@@ -1,5 +1,7 @@
 package dev.sora.relay.game.world.leveldb;
 
+import dev.sora.relay.game.utils.constants.Dimension;
+
 /**
  * From PowerNukkitX
  * @author Superrice666
@@ -88,5 +90,21 @@ public enum LevelDBChunkKey {
                 (byte) (dimension & 0xff), (byte) ((dimension >> 8) & 0xff), (byte) ((dimension >> 16) & 0xff), (byte) ((dimension >> 24) & 0xff),
                 (byte) this.id, (byte) extra
         };
+    }
+
+    public byte[] getKey(int x, int z, int dimension) {
+        if (dimension == Dimension.OVERWORLD) {
+            return getLevelDBKey(x, z);
+        } else {
+            return getLevelDBKeyWithDimension(x, z, dimension);
+        }
+    }
+
+    public byte[] getKey(int x, int z, int dimension, int extra) {
+        if (dimension == Dimension.OVERWORLD) {
+            return getLevelDBKey(x, z, extra);
+        } else {
+            return getLevelDBKeyWithDimension(x, z, dimension, extra);
+        }
     }
 }

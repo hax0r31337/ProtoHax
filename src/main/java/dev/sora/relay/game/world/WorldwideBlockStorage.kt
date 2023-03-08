@@ -11,7 +11,7 @@ import org.cloudburstmc.protocol.bedrock.packet.*
 
 abstract class WorldwideBlockStorage(protected val session: GameSession, override val eventManager: EventManager) : Listenable {
 
-    protected val chunks = mutableMapOf<Long, Chunk>()
+    val chunks = mutableMapOf<Long, Chunk>()
 
     var dimension = Dimension.OVERWORLD
         protected set

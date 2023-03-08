@@ -7,18 +7,18 @@ import org.cloudburstmc.protocol.common.DefinitionRegistry
 import java.io.DataInputStream
 import java.util.zip.GZIPInputStream
 
-class BlockMapping(private val runtimeToGameMap: Map<Int, String>, val airId: Int) : DefinitionRegistry<org.cloudburstmc.protocol.bedrock.data.defintions.BlockDefinition> {
+class BlockMapping(private val runtimeToGameMap: Map<Int, BlockDefinition>, val airId: Int) : DefinitionRegistry<org.cloudburstmc.protocol.bedrock.data.defintions.BlockDefinition> {
 
     private val gameToRuntimeMap = mutableMapOf<String, Int>()
 
     init {
         runtimeToGameMap.forEach { (k, v) ->
-            gameToRuntimeMap[v] = k
+            gameToRuntimeMap[v.identifier] = k
         }
     }
 
     override fun getDefinition(runtimeId: Int): org.cloudburstmc.protocol.bedrock.data.defintions.BlockDefinition {
-        return BlockDefinition(runtimeId, runtimeToGameMap[runtimeId] ?: return UnknownBlockDefinition(runtimeId))
+        return runtimeToGameMap[runtimeId] ?: return UnknownBlockDefinition(runtimeId)
     }
 
     override fun isRegistered(definition: org.cloudburstmc.protocol.bedrock.data.defintions.BlockDefinition): Boolean {
@@ -40,7 +40,7 @@ class BlockMapping(private val runtimeToGameMap: Map<Int, String>, val airId: In
             val tag = NBTInputStream(DataInputStream(
                 GZIPInputStream(MappingProvider::class.java.getResourceAsStream("${resourcePath}/runtime_block_states_$version.dat"))
             )).readTag() as NbtList<NbtMap>
-            val runtimeToBlock = mutableMapOf<Int, String>()
+            val runtimeToBlock = mutableMapOf<Int, BlockDefinition>()
             var airId = 0
 
             tag.forEach { subtag ->
@@ -51,7 +51,7 @@ class BlockMapping(private val runtimeToGameMap: Map<Int, String>, val airId: In
                     airId = runtime
                 }
 
-                runtimeToBlock[runtime] = name
+                runtimeToBlock[runtime] = BlockDefinition(runtime, name, subtag)
             }
 
             return BlockMapping(runtimeToBlock, airId)

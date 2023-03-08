@@ -18,3 +18,4 @@ gradle-app.setting
 /.ms_refresh_token
 /config.json
 /resource_packs
+/level

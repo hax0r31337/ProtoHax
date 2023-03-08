@@ -33,11 +33,11 @@ class ChunkSection(private val blockMapping: BlockMapping, private val legacyBlo
             buf.readByte() // Y-Index
         }
         if (layers == 0) return
-        storage = BlockStorage(buf, blockMapping)
+        storage = BlockStorage(buf, blockMapping, true)
 
         // consume other layers that we don't need
         repeat(layers - 1) {
-            BlockStorage(buf, blockMapping)
+            BlockStorage(buf, blockMapping, true)
         }
     }
 
@@ -65,14 +65,14 @@ class ChunkSection(private val blockMapping: BlockMapping, private val legacyBlo
 	/**
 	 * write the chunk to version 8 chunk
 	 */
-	fun write(buf: ByteBuf, useRuntime: Boolean) {
+	fun write(buf: ByteBuf, useRuntime: Boolean, network: Boolean) {
 		// version
 		buf.writeByte(8)
 
 		// we only support one layer currently
 		buf.writeByte(1)
 
-		storage.write(buf, useRuntime)
+		storage.write(buf, if (useRuntime) null else blockMapping, network)
 	}
 
     fun getBlockAt(x: Int, y: Int, z: Int): Int {
