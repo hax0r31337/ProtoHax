@@ -28,7 +28,6 @@ class CommandManager(private val session: GameSession) : Listenable {
             if (it.values.isEmpty()) return@forEach
             registerCommand(CommandModule(it))
         }
-		registerCommand(CommandDownloadWorld())
     }
 
     fun exec(msg: String) {

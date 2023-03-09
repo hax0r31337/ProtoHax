@@ -5,6 +5,7 @@ import org.cloudburstmc.nbt.NBTOutputStream
 import org.cloudburstmc.nbt.NbtList
 import org.cloudburstmc.nbt.NbtMap
 import org.cloudburstmc.nbt.NbtType
+import org.cloudburstmc.nbt.util.stream.LittleEndianDataOutputStream
 import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream
 
@@ -143,7 +144,7 @@ class LevelDBLevelData(var protocol: Int, var inventoryVersion: String) {
 	fun toBytes(): ByteArray {
 		val map = toNbtMap()
 		val os = ByteArrayOutputStream()
-		NBTOutputStream(DataOutputStream(os)).apply {
+		NBTOutputStream(LittleEndianDataOutputStream(os)).apply {
 			writeTag(map)
 			close()
 		}

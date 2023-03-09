@@ -2,6 +2,7 @@ package dev.sora.relay
 
 import com.google.gson.JsonParser
 import dev.sora.relay.cheat.command.CommandManager
+import dev.sora.relay.cheat.command.impl.CommandDownloadWorld
 import dev.sora.relay.cheat.module.ModuleManager
 import dev.sora.relay.cheat.module.impl.ModuleResourcePackSpoof
 import dev.sora.relay.game.GameSession
@@ -88,6 +89,7 @@ private fun craftSession() : GameSession {
 
     val commandManager = CommandManager(session)
     commandManager.init(moduleManager)
+	commandManager.registerCommand(CommandDownloadWorld(session.eventManager, File("./level")))
 
     val configManager = SingleFileConfigManager(moduleManager)
     configManager.loadConfig("default")
