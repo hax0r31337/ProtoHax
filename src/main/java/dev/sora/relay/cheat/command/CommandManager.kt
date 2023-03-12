@@ -1,5 +1,6 @@
 package dev.sora.relay.cheat.command
 
+import dev.sora.relay.cheat.command.impl.CommandDownloadWorld
 import dev.sora.relay.cheat.command.impl.CommandModule
 import dev.sora.relay.cheat.command.impl.CommandToggle
 import dev.sora.relay.cheat.module.ModuleManager

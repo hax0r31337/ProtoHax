@@ -208,9 +208,9 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper") {
     inner class Sort(val slot: Int, val judge: (ItemData) -> Float) {
 
         constructor(slot: Int, judgeTag: String) : this(slot, { item ->
-            val itemTags = item.itemDefinition.tags
-            if (itemTags.contains(judgeTag)) {
-                item.itemDefinition.getTier(itemTags).toFloat()
+			val def = item.itemDefinition
+            if (def.tags.contains(judgeTag)) {
+                def.getTier().toFloat()
             } else {
                 0f
             }

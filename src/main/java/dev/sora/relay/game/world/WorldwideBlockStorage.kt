@@ -11,7 +11,7 @@ import org.cloudburstmc.protocol.bedrock.packet.*
 
 abstract class WorldwideBlockStorage(protected val session: GameSession, override val eventManager: EventManager) : Listenable {
 
-    protected val chunks = mutableMapOf<Long, Chunk>()
+    val chunks = mutableMapOf<Long, Chunk>()
 
     var dimension = Dimension.OVERWORLD
         protected set
@@ -34,11 +34,13 @@ abstract class WorldwideBlockStorage(protected val session: GameSession, overrid
 			chunk.read(packet.data, packet.subChunksLength)
 			packet.data.resetReaderIndex()
 			chunks[chunk.hash] = chunk
+			session.eventManager.emit(EventChunkLoad(session, chunk))
 		} else if (packet is ChunkRadiusUpdatedPacket) {
 			viewDistance = packet.radius
 			chunkOutOfRangeCheck()
 		} else if (packet is ChangeDimensionPacket) {
 			chunks.clear()
+			session.eventManager.emit(EventDimensionChange(session, dimension))
 		} else if (packet is UpdateBlockPacket && packet.dataLayer == 0) {
 			setBlockIdAt(packet.blockPosition.x, packet.blockPosition.y, packet.blockPosition.z, packet.definition.runtimeId)
 		} else if (packet is SubChunkPacket && packet.dimension == dimension) {
