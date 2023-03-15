@@ -33,6 +33,7 @@ import org.cloudburstmc.protocol.bedrock.codec.v544.Bedrock_v544
 import org.cloudburstmc.protocol.bedrock.codec.v557.Bedrock_v557
 import org.cloudburstmc.protocol.bedrock.codec.v560.Bedrock_v560
 import org.cloudburstmc.protocol.bedrock.codec.v567.Bedrock_v567
+import org.cloudburstmc.protocol.bedrock.codec.v575.Bedrock_v575
 import org.cloudburstmc.protocol.bedrock.packet.BedrockPacket
 import org.cloudburstmc.protocol.bedrock.packet.LoginPacket
 import org.cloudburstmc.protocol.bedrock.packet.RequestNetworkSettingsPacket
@@ -68,7 +69,7 @@ class RelayListenerAutoCodec(private val session: MinecraftRelaySession) : Minec
             Bedrock_v471.CODEC, Bedrock_v475.CODEC, Bedrock_v486.CODEC,
             Bedrock_v503.CODEC, Bedrock_v527.CODEC, Bedrock_v534.CODEC,
             Bedrock_v544.CODEC, Bedrock_v557.CODEC, Bedrock_v560.CODEC,
-            Bedrock_v567.CODEC
+            Bedrock_v567.CODEC, Bedrock_v575.CODEC
         ).associateBy { it.protocolVersion }
 
         private fun pickProtocolCodec(version: Int): BedrockCodec {
