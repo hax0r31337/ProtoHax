@@ -1,10 +1,10 @@
 package dev.sora.relay.game.inventory
 
-import com.nukkitx.protocol.bedrock.BedrockPacket
-import com.nukkitx.protocol.bedrock.data.inventory.ContainerId
-import com.nukkitx.protocol.bedrock.data.inventory.ItemData
-import com.nukkitx.protocol.bedrock.packet.MobArmorEquipmentPacket
-import com.nukkitx.protocol.bedrock.packet.MobEquipmentPacket
+import org.cloudburstmc.protocol.bedrock.data.inventory.ContainerId
+import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData
+import org.cloudburstmc.protocol.bedrock.packet.BedrockPacket
+import org.cloudburstmc.protocol.bedrock.packet.MobArmorEquipmentPacket
+import org.cloudburstmc.protocol.bedrock.packet.MobEquipmentPacket
 
 open class EntityInventory(val entityId: Long) : AbstractInventory(0) {
 

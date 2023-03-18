@@ -1,22 +1,23 @@
 package dev.sora.relay.game.entity
 
 import com.google.gson.JsonParser
-import com.nukkitx.math.vector.Vector3f
-import com.nukkitx.protocol.bedrock.data.SoundEvent
-import com.nukkitx.protocol.bedrock.data.inventory.ItemData
-import com.nukkitx.protocol.bedrock.data.inventory.TransactionType
-import com.nukkitx.protocol.bedrock.packet.*
-import dev.sora.relay.RakNetRelaySession
-import dev.sora.relay.cheat.BasicThing
+import dev.sora.relay.cheat.value.NamedChoice
 import dev.sora.relay.game.GameSession
 import dev.sora.relay.game.event.*
 import dev.sora.relay.game.inventory.AbstractInventory
 import dev.sora.relay.game.inventory.ContainerInventory
 import dev.sora.relay.game.inventory.PlayerInventory
-import dev.sora.relay.utils.base64Decode
+import org.cloudburstmc.math.vector.Vector3f
+import org.cloudburstmc.protocol.bedrock.data.AuthoritativeMovementMode
+import org.cloudburstmc.protocol.bedrock.data.PlayerAuthInputData
+import org.cloudburstmc.protocol.bedrock.data.SoundEvent
+import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData
+import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.InventoryTransactionType
+import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.ItemUseTransaction
+import org.cloudburstmc.protocol.bedrock.packet.*
 import java.util.*
 
-class EntityPlayerSP(private val session: GameSession) : EntityPlayer(0L, UUID.randomUUID(), ""), Listener {
+class EntityPlayerSP(private val session: GameSession, override val eventManager: EventManager) : EntityPlayer(0L, UUID.randomUUID(), ""), Listenable {
 
     override var entityId: Long = 0L
         private set
@@ -42,15 +43,26 @@ class EntityPlayerSP(private val session: GameSession) : EntityPlayer(0L, UUID.r
             return (cur - lastTick).coerceIn(0L, 50L) / 50f
         }
 
+    // new introduced "server authoritative" mode
+    var blockBreakServerAuthoritative = false
+        private set
+    var movementServerAuthoritative = false
+        private set
+    var inventoriesServerAuthoritative = false
+        private set
+
+    private val pendingItemInteraction = LinkedList<ItemUseTransaction>()
+    private var skipSwings = 0
+
     override fun rotate(yaw: Float, pitch: Float) {
         this.prevRotationYaw = rotationYaw
         this.prevRotationPitch = rotationPitch
         super.rotate(yaw, pitch)
     }
 
-    fun teleport(x: Double, y: Double, z: Double, netSession: RakNetRelaySession) {
+    fun teleport(x: Double, y: Double, z: Double) {
         move(x, y, z)
-        netSession.inboundPacket(MovePlayerPacket().apply {
+        session.netSession.inboundPacket(MovePlayerPacket().apply {
             runtimeEntityId = entityId
             position = Vector3f.from(x, y, z)
             rotation = Vector3f.from(rotationPitch, rotationYaw, 0f)
@@ -58,102 +70,105 @@ class EntityPlayerSP(private val session: GameSession) : EntityPlayer(0L, UUID.r
         })
     }
 
-    @Listen
-    fun onDisconnect(event: EventDisconnect) {
-        reset()
-    }
+	override fun reset() {
+		super.reset()
+		inventory.reset()
+		username = ""
+	}
 
-    override fun reset() {
-        super.reset()
-        inventory.reset()
-        username = ""
-    }
+	private val disconnectHandler = handle<EventDisconnect> { reset() }
 
-    @Listen
-    fun onTick(event: EventTick) {
-        lastTick = System.currentTimeMillis()
-    }
+	private val tickHandler = handle<EventTick> {
+		lastTick = System.currentTimeMillis()
+	}
 
-    @Listen
-    fun handleServerPacket(event: EventPacketInbound) {
-        val packet = event.packet
+	private val handlePacketInbound = handle<EventPacketInbound> {
+		val packet = it.packet
 
-        if (packet is StartGamePacket) {
-            entityId = packet.runtimeEntityId
-            reset()
-        } /* else if (packet is RespawnPacket) {
+		if (packet is StartGamePacket) {
+			entityId = packet.runtimeEntityId
+			blockBreakServerAuthoritative = packet.isServerAuthoritativeBlockBreaking
+			movementServerAuthoritative = packet.authoritativeMovementMode != AuthoritativeMovementMode.CLIENT
+			inventoriesServerAuthoritative = packet.isInventoriesServerAuthoritative
+			reset()
+		} /* else if (packet is RespawnPacket) {
             entityId = packet.runtimeEntityId
         }*/ else if (packet is ContainerOpenPacket) {
-            openContainer = if (packet.id.toInt() == 0) {
-//                inventory
-                return
-            } else {
-                ContainerInventory(packet.id.toInt(), packet.type).also {
-                    session.eventManager.emit(EventContainerOpen(session, it))
-                }
-            }
-        } else if (packet is ContainerClosePacket && packet.id.toInt() == openContainer?.containerId) {
-            openContainer?.also {
-                session.eventManager.emit(EventContainerOpen(session, it))
-            }
-            openContainer = null
-        }
-        openContainer?.also {
-            if (it is ContainerInventory) {
-                it.handlePacket(packet)
-            }
-        }
-        super.onPacket(packet)
-    }
+			openContainer = if (packet.id.toInt() == 0) {
+				return@handle
+			} else {
+				ContainerInventory(packet.id.toInt(), packet.type).also {
+					session.eventManager.emit(EventContainerOpen(session, it))
+				}
+			}
+		} else if (packet is ContainerClosePacket && packet.id.toInt() == openContainer?.containerId) {
+			openContainer?.also {
+				session.eventManager.emit(EventContainerClose(session, it))
+			}
+			openContainer = null
+		}
+		openContainer?.also {
+			if (it is ContainerInventory) {
+				it.handlePacket(packet)
+			}
+		}
+		super.onPacket(packet)
+	}
 
-    @Listen
-    fun handleClientPacket(event: EventPacketOutbound) {
-        val packet = event.packet
-        if (packet is MovePlayerPacket) {
-            move(packet.position)
-            rotate(packet.rotation)
-            if (packet.runtimeEntityId != entityId) {
-                BasicThing.chat(session, "runtimeEntityId mismatch, desync occur? (client=${packet.runtimeEntityId}, relay=${entityId})")
-                entityId = packet.runtimeEntityId
-            }
-            session.onTick()
-            tickExists++
-            silentRotation?.let {
-                packet.rotation = Vector3f.from(it.first, it.second, packet.rotation.z)
-                silentRotation = null
-            }
-        } else if (packet is PlayerAuthInputPacket) {
-            move(packet.position)
-            rotate(packet.rotation)
-            session.onTick()
-            tickExists++
-            silentRotation?.let {
-                packet.rotation = Vector3f.from(it.first, it.second, packet.rotation.z)
-                silentRotation = null
-            }
-        } else if (packet is LoginPacket) {
-            val body = JsonParser.parseString(packet.chainData.toString()).asJsonObject.getAsJsonArray("chain")
-            for (chain in body) {
-                val chainBody = JsonParser.parseString(base64Decode(chain.asString.split(".")[1]).toString(Charsets.UTF_8)).asJsonObject
-                if (chainBody.has("extraData")) {
-                    val xData = chainBody.getAsJsonObject("extraData")
-                    uuid = UUID.fromString(xData.get("identity").asString)
-                    username = xData.get("displayName").asString
-                    if (xData.has("XUID")) {
-                        xuid = xData.get("XUID").asString
-                    }
-                }
-            }
-        } else if (packet is InteractPacket && packet.action == InteractPacket.Action.OPEN_INVENTORY) {
-            openContainer = inventory
-        }
-        inventory.handleClientPacket(packet)
-        openContainer?.also {
-            if (it is ContainerInventory) {
-                it.handleClientPacket(packet)
-            }
-        }
-    }
+	private val handlePacketOutbound = handle<EventPacketOutbound> { event ->
+		val packet = event.packet
+		if (packet is MovePlayerPacket) {
+			move(packet.position)
+			rotate(packet.rotation)
+			if (packet.runtimeEntityId != entityId) {
+				session.chat("runtimeEntityId mismatch, desync occur? (client=${packet.runtimeEntityId}, relay=${entityId})")
+				entityId = packet.runtimeEntityId
+			}
+			session.onTick()
+			tickExists++
+			silentRotation?.let {
+				packet.rotation = Vector3f.from(it.first, it.second, packet.rotation.z)
+				silentRotation = null
+			}
+		} else if (packet is PlayerAuthInputPacket) {
+			move(packet.position)
+			rotate(packet.rotation)
+			session.onTick()
+			tickExists++
+			silentRotation?.let {
+				packet.rotation = Vector3f.from(it.first, it.second, packet.rotation.z)
+				silentRotation = null
+			}
+
+			if (pendingItemInteraction.isNotEmpty() && !packet.inputData.contains(PlayerAuthInputData.PERFORM_ITEM_INTERACTION)) {
+				packet.inputData.add(PlayerAuthInputData.PERFORM_ITEM_INTERACTION)
+				packet.itemUseTransaction = pendingItemInteraction.pop()
+			}
+		} else if (packet is LoginPacket) {
+			packet.chain.forEach {
+				val chainBody = JsonParser.parseString(it.payload.toString()).asJsonObject
+				if (chainBody.has("extraData")) {
+					val xData = chainBody.getAsJsonObject("extraData")
+					uuid = UUID.fromString(xData.get("identity").asString)
+					username = xData.get("displayName").asString
+					if (xData.has("XUID")) {
+						xuid = xData.get("XUID").asString
+					}
+				}
+			}
+		} else if (packet is InteractPacket && packet.action == InteractPacket.Action.OPEN_INVENTORY) {
+			openContainer = inventory
+		} else if (skipSwings > 0 && packet is AnimatePacket && packet.action == AnimatePacket.Action.SWING_ARM) {
+			skipSwings--
+			event.cancel()
+		}
+		inventory.handleClientPacket(packet)
+		openContainer?.also {
+			if (it is ContainerInventory) {
+				it.handleClientPacket(packet)
+			}
+		}
+	}
 
     fun swing(swingValue: SwingMode = SwingMode.BOTH, sound: Boolean = false) {
         AnimatePacket().apply {
@@ -161,10 +176,12 @@ class EntityPlayerSP(private val session: GameSession) : EntityPlayer(0L, UUID.r
             runtimeEntityId = entityId
         }.also {
             // send the packet back to client in order to display the swing animation
-            if (swingValue == SwingMode.BOTH || swingValue == SwingMode.CLIENTSIDE)
-                session.netSession.inboundPacket(it)
             if (swingValue == SwingMode.BOTH || swingValue == SwingMode.SERVERSIDE)
                 session.sendPacket(it)
+            if (swingValue == SwingMode.BOTH || swingValue == SwingMode.CLIENTSIDE) {
+                session.netSession.inboundPacket(it)
+                skipSwings++
+            }
         }
         if (sound) {
             // this sound will be send to server if no object interacted
@@ -179,8 +196,24 @@ class EntityPlayerSP(private val session: GameSession) : EntityPlayer(0L, UUID.r
         }
     }
 
-    fun swing(swingValue: String, sound: Boolean = false) {
-        swing(getSwingMode(swingValue), sound)
+    fun useItem(inventoryTransaction: ItemUseTransaction) {
+        if (movementServerAuthoritative && inventoriesServerAuthoritative) {
+            pendingItemInteraction.add(inventoryTransaction)
+        } else {
+            session.sendPacket(InventoryTransactionPacket().apply {
+                transactionType = InventoryTransactionType.ITEM_USE
+                legacyRequestId = inventoryTransaction.legacyRequestId
+                actions.addAll(inventoryTransaction.actions)
+                actionType = inventoryTransaction.actionType
+                blockPosition = inventoryTransaction.blockPosition
+                blockFace = inventoryTransaction.blockFace
+                hotbarSlot = inventoryTransaction.hotbarSlot
+                itemInHand = inventoryTransaction.itemInHand
+                playerPosition = inventoryTransaction.playerPosition
+                clickPosition = inventoryTransaction.clickPosition
+                blockDefinition = inventoryTransaction.blockDefinition
+            })
+        }
     }
 
     fun attackEntity(entity: Entity, swingValue: SwingMode = SwingMode.BOTH, sound: Boolean = false) {
@@ -199,7 +232,7 @@ class EntityPlayerSP(private val session: GameSession) : EntityPlayer(0L, UUID.r
 
         // attack
         session.sendPacket(InventoryTransactionPacket().apply {
-            transactionType = TransactionType.ITEM_USE_ON_ENTITY
+            transactionType = InventoryTransactionType.ITEM_USE_ON_ENTITY
             actionType = 1
             runtimeEntityId = entity.entityId
             hotbarSlot = inventory.heldItemSlot
@@ -208,25 +241,11 @@ class EntityPlayerSP(private val session: GameSession) : EntityPlayer(0L, UUID.r
             clickPosition = Vector3f.ZERO
         })
     }
-    
-    fun attackEntity(entity: Entity, swingValue: String, sound: Boolean = false) {
-        attackEntity(entity, getSwingMode(swingValue), sound)
+
+    enum class SwingMode(override val choiceName: String) : NamedChoice {
+        CLIENTSIDE("Client"),
+        SERVERSIDE("Server"),
+        BOTH("Both"),
+        NONE("None")
     }
-
-    fun getSwingMode(swingValue: String)
-        = when(swingValue) {
-            "Both" -> EntityPlayerSP.SwingMode.BOTH
-            "Client" -> EntityPlayerSP.SwingMode.CLIENTSIDE
-            "Server" -> EntityPlayerSP.SwingMode.SERVERSIDE
-            else -> EntityPlayerSP.SwingMode.NONE
-        }
-
-    enum class SwingMode {
-        CLIENTSIDE,
-        SERVERSIDE,
-        BOTH,
-        NONE
-    }
-
-    override fun listen() = true
 }

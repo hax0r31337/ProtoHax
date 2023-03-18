@@ -1,8 +1,8 @@
 package dev.sora.relay.cheat.command
 
-import dev.sora.relay.cheat.BasicThing
+import dev.sora.relay.game.GameSession
 
-abstract class Command(vararg alias: String) : BasicThing() {
+abstract class Command(vararg alias: String) {
 
     val alias: Array<String>
 
@@ -13,5 +13,5 @@ abstract class Command(vararg alias: String) : BasicThing() {
         this.alias = alias.map { it }.toTypedArray()
     }
 
-    abstract fun exec(args: Array<String>)
+    abstract fun exec(args: Array<String>, session: GameSession)
 }

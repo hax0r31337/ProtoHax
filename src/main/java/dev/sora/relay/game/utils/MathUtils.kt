@@ -1,7 +1,7 @@
 package dev.sora.relay.game.utils
 
-import com.nukkitx.math.vector.Vector3f
-import com.nukkitx.math.vector.Vector3i
+import org.cloudburstmc.math.vector.Vector3f
+import org.cloudburstmc.math.vector.Vector3i
 import kotlin.math.roundToInt
 
 fun toRotation(from: Vector3f, to: Vector3f): Pair<Float, Float> {

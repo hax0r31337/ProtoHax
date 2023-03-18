@@ -1,51 +1,60 @@
 package dev.sora.relay.cheat.module.impl
 
-import com.nukkitx.protocol.bedrock.data.PlayerActionType
-import com.nukkitx.protocol.bedrock.packet.MovePlayerPacket
-import com.nukkitx.protocol.bedrock.packet.PlayerActionPacket
 import dev.sora.relay.cheat.module.CheatModule
+import dev.sora.relay.cheat.value.Choice
+import dev.sora.relay.cheat.value.NamedChoice
 import dev.sora.relay.game.event.EventPacketOutbound
 import dev.sora.relay.game.event.EventTick
-import dev.sora.relay.game.event.Listen
+import org.cloudburstmc.math.vector.Vector3f
+import org.cloudburstmc.protocol.bedrock.data.PlayerActionType
+import org.cloudburstmc.protocol.bedrock.packet.MovePlayerPacket
+import org.cloudburstmc.protocol.bedrock.packet.PlayerActionPacket
+import org.cloudburstmc.protocol.bedrock.packet.PlayerAuthInputPacket
 
 
 class ModuleNoFall : CheatModule("NoFall") {
 
-    private val modeValue = listValue("Mode", arrayOf("OnGround","AwayNoGround","Nukkit","CubeCraft"), "OnGround")
+    private var modeValue by choiceValue("Mode", arrayOf(OnGround, NoGround, ElytraGlitch, Cubecraft), OnGround)
 
-    @Listen
-    fun onPacketOutbound(event: EventPacketOutbound){
-        val packet = event.packet
-        val session = event.session
+	object OnGround : Choice("OnGround") {
 
-        if(modeValue.get() == "OnGround"){
-            if(session.thePlayer.motionY <= -5.5){
-                if (packet is MovePlayerPacket){
-                    packet.isOnGround = true
-                }
-            }
-        }else if(modeValue.get() == "AwayNoGround"){
-            if (packet is MovePlayerPacket){
-                packet.isOnGround = false
-            }
-        }
-    }
+		val handlePacketOutbound = handle<EventPacketOutbound> { event ->
+			if (event.packet is MovePlayerPacket) {
+				event.packet.isOnGround = true
+			}
+		}
+	}
 
-    @Listen
-    fun onTick(event: EventTick){
-        val session = event.session
+	object NoGround : Choice("NoGround") {
 
-        if(modeValue.get() == "Nukkit"){
-            if(session.thePlayer.motionY <= -5.5){
-                session.sendPacket(PlayerActionPacket().apply {
-                    runtimeEntityId = session.thePlayer.entityId
-                    action = PlayerActionType.START_GLIDE
-                })
-            }
-        }else if(modeValue.get() == "CubeCraft"){
-            if(session.thePlayer.motionY <= -5.5){
+		val handlePacketOutbound = handle<EventPacketOutbound> { event ->
+			if (event.packet is MovePlayerPacket) {
+				event.packet.isOnGround = false
+			}
+		}
+	}
 
-            }
-        }
-    }
+	object ElytraGlitch : Choice("ElytraGlitch") {
+
+		val handleTick = handle<EventTick> { event ->
+			if (event.session.thePlayer.tickExists % 10 == 0L) {
+				event.session.sendPacket(PlayerActionPacket().apply {
+					runtimeEntityId = event.session.thePlayer.entityId
+					action = PlayerActionType.START_GLIDE
+				})
+			}
+		}
+	}
+
+	object Cubecraft : Choice("Cubecraft") {
+
+		val handlePacketOutbound = handle<EventPacketOutbound> { event ->
+			val packet = event.packet
+			if (packet is PlayerAuthInputPacket) {
+				if (packet.delta.y < -0.3f) {
+					packet.delta = Vector3f.ZERO
+				}
+			}
+		}
+	}
 }

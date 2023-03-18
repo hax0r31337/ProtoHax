@@ -1,14 +1,11 @@
 package dev.sora.relay.game.entity
 
-import com.nukkitx.math.vector.Vector3f
-import com.nukkitx.protocol.bedrock.BedrockPacket
-import com.nukkitx.protocol.bedrock.data.AttributeData
-import com.nukkitx.protocol.bedrock.data.entity.EntityDataMap
-import com.nukkitx.protocol.bedrock.packet.MoveEntityAbsolutePacket
-import com.nukkitx.protocol.bedrock.packet.MoveEntityDeltaPacket
-import com.nukkitx.protocol.bedrock.packet.SetEntityDataPacket
-import com.nukkitx.protocol.bedrock.packet.UpdateAttributesPacket
 import dev.sora.relay.game.inventory.EntityInventory
+import org.cloudburstmc.math.vector.Vector2f
+import org.cloudburstmc.math.vector.Vector3f
+import org.cloudburstmc.protocol.bedrock.data.AttributeData
+import org.cloudburstmc.protocol.bedrock.data.entity.EntityDataMap
+import org.cloudburstmc.protocol.bedrock.packet.*
 import kotlin.math.sqrt
 
 abstract class Entity(open val entityId: Long) {
@@ -67,6 +64,10 @@ abstract class Entity(open val entityId: Long) {
     open fun rotate(yaw: Float, pitch: Float, headYaw: Float) {
         rotate(yaw, pitch)
         rotationYawHead = headYaw
+    }
+
+    open fun rotate(rotation: Vector2f) {
+        rotate(rotation.y, rotation.x)
     }
 
     open fun rotate(rotation: Vector3f) {

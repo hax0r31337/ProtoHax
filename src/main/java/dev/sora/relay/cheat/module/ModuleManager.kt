@@ -8,9 +8,10 @@ class ModuleManager(private val session: GameSession) {
     val modules = mutableListOf<CheatModule>()
 
     fun registerModule(module: CheatModule) {
-        module.session = session
+		module.session = session
+		module.moduleManager = this
         modules.add(module)
-        session.eventManager.registerListener(module)
+        module.register(session.eventManager)
     }
 
     fun init() {
@@ -23,8 +24,8 @@ class ModuleManager(private val session: GameSession) {
         registerModule(ModuleOpFightBot())
         registerModule(ModuleNoSkin())
         registerModule(ModuleDeviceSpoof())
-        registerModule(ModuleResourcePackSpoof)
-        registerModule(ModuleAntiBot)
+        registerModule(ModuleResourcePackSpoof())
+        registerModule(ModuleTargets())
         registerModule(ModuleNoFall())
         registerModule(ModuleAntiBlind())
         registerModule(ModuleFastBreak())
@@ -32,4 +33,8 @@ class ModuleManager(private val session: GameSession) {
         registerModule(ModuleBlockFly())
         registerModule(ModuleInventoryHelper())
     }
+
+	inline fun <reified T : CheatModule> getModule(klass: Class<T>): T? {
+		return modules.filterIsInstance<T>().firstOrNull()
+	}
 }

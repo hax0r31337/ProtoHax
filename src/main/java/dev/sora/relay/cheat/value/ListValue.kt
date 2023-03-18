@@ -2,35 +2,36 @@ package dev.sora.relay.cheat.value
 
 import com.google.gson.JsonElement
 import com.google.gson.JsonPrimitive
-import java.util.*
 
 /**
  * List value represents a selectable list of values
  */
-open class ListValue(name: String, val values: Array<String>, value: String) : Value<String>(name, value) {
+open class ListValue<T : NamedChoice>(name: String, val values: Array<T>, value: T) : Value<T>(name, value) {
 
-    var openList = false
-
-    init {
-        this.value = value
+    operator fun contains(value: T): Boolean {
+        return values.contains(value)
     }
 
-    operator fun contains(string: String?): Boolean {
-        return Arrays.stream(values).anyMatch { s: String -> s.equals(string, ignoreCase = true) }
-    }
+    override fun toJson() = JsonPrimitive(value.choiceName)
 
-    override fun changeValue(value: String) {
-        for (element in values) {
-            if (element.equals(value, ignoreCase = true)) {
-                this.value = element
-                break
-            }
+    override fun fromJson(element: JsonElement) {
+        if (element.isJsonPrimitive) {
+            fromString(element.asString)
         }
     }
 
-    override fun toJson() = JsonPrimitive(value)
-
-    override fun fromJson(element: JsonElement) {
-        if (element.isJsonPrimitive) changeValue(element.asString)
+    override fun fromString(newValue: String) {
+        value = values.find { it.choiceName.equals(newValue, true) } ?: defaultValue
     }
+
+	fun roll() {
+		val idx = values.indexOf(value) + 1
+		value = if (idx == values.size) {
+			values.first()
+		} else values[idx]
+	}
+}
+
+interface NamedChoice {
+    val choiceName: String
 }
