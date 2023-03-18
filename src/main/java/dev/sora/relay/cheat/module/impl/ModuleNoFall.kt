@@ -5,9 +5,11 @@ import dev.sora.relay.cheat.value.Choice
 import dev.sora.relay.cheat.value.NamedChoice
 import dev.sora.relay.game.event.EventPacketOutbound
 import dev.sora.relay.game.event.EventTick
+import org.cloudburstmc.math.vector.Vector3f
 import org.cloudburstmc.protocol.bedrock.data.PlayerActionType
 import org.cloudburstmc.protocol.bedrock.packet.MovePlayerPacket
 import org.cloudburstmc.protocol.bedrock.packet.PlayerActionPacket
+import org.cloudburstmc.protocol.bedrock.packet.PlayerAuthInputPacket
 
 
 class ModuleNoFall : CheatModule("NoFall") {
@@ -46,5 +48,13 @@ class ModuleNoFall : CheatModule("NoFall") {
 
 	object Cubecraft : Choice("Cubecraft") {
 
+		val handlePacketOutbound = handle<EventPacketOutbound> { event ->
+			val packet = event.packet
+			if (packet is PlayerAuthInputPacket) {
+				if (packet.delta.y < -0.3f) {
+					packet.delta = Vector3f.ZERO
+				}
+			}
+		}
 	}
 }
