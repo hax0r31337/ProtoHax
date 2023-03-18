@@ -14,7 +14,7 @@ import org.cloudburstmc.protocol.bedrock.packet.PlayerAuthInputPacket
 
 class ModuleNoFall : CheatModule("NoFall") {
 
-    private var modeValue by choiceValue("Mode", arrayOf(OnGround, NoGround, ElytraGlitch, Cubecraft), OnGround)
+  private var modeValue by choiceValue("Mode", arrayOf(OnGround, NoGround, ElytraGlitch, Cubecraft), OnGround)
 
 	object OnGround : Choice("OnGround") {
 
