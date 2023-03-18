@@ -1,16 +1,21 @@
 package dev.sora.relay.game.world.chunk
 
-import com.nukkitx.nbt.NBTInputStream
-import com.nukkitx.nbt.NbtMap
-import com.nukkitx.nbt.util.stream.NetworkDataInputStream
-import com.nukkitx.network.VarInts
-import dev.sora.relay.game.utils.mapping.BlockMappingUtils
-import dev.sora.relay.game.utils.mapping.RuntimeMapping
+import dev.sora.relay.game.registry.BlockDefinition
+import dev.sora.relay.game.registry.BlockMapping
 import dev.sora.relay.game.world.chunk.palette.BitArray
 import dev.sora.relay.game.world.chunk.palette.BitArrayVersion
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.ByteBufInputStream
+import io.netty.buffer.ByteBufOutputStream
 import it.unimi.dsi.fastutil.ints.IntArrayList
+import org.cloudburstmc.nbt.NBTInputStream
+import org.cloudburstmc.nbt.NBTOutputStream
+import org.cloudburstmc.nbt.NbtMap
+import org.cloudburstmc.nbt.util.stream.LittleEndianDataInputStream
+import org.cloudburstmc.nbt.util.stream.LittleEndianDataOutputStream
+import org.cloudburstmc.nbt.util.stream.NetworkDataInputStream
+import org.cloudburstmc.nbt.util.stream.NetworkDataOutputStream
+import org.cloudburstmc.protocol.common.util.VarInts
 
 
 class BlockStorage {
@@ -18,35 +23,42 @@ class BlockStorage {
     var bitArray: BitArray
     var palette: IntArrayList
 
-    constructor(blockMapping: RuntimeMapping, version: BitArrayVersion = BitArrayVersion.V2) {
-        bitArray = version.createPalette(SIZE)
+    constructor(airId: Int, version: BitArrayVersion = BitArrayVersion.V2) {
+        bitArray = version.createPalette(MAX_BLOCK_IN_SECTION)
         palette = IntArrayList(16)
-        palette.add(blockMapping.runtime("minecraft:air"))
+        palette.add(airId)
     }
 
-    constructor(byteBuf: ByteBuf, blockMapping: RuntimeMapping) {
-        val paletteHeader = byteBuf.readByte().toInt()
+    constructor(buf: ByteBuf, blockMapping: BlockMapping, network: Boolean) {
+        val paletteHeader = buf.readByte().toInt()
         val isRuntime = (paletteHeader and 1) == 1
         val paletteVersion = paletteHeader or 1 shr 1
-
         val bitArrayVersion = BitArrayVersion.get(paletteVersion, true)
 
-        val maxBlocksInSection = 4096 // 16*16*16
+        bitArray = bitArrayVersion.createPalette(MAX_BLOCK_IN_SECTION)
+//        val wordsSize = bitArrayVersion.getWordsForSize(MAX_BLOCK_IN_SECTION)
 
-        bitArray = bitArrayVersion.createPalette(maxBlocksInSection)
-        val wordsSize = bitArrayVersion.getWordsForSize(maxBlocksInSection)
-
-        for (wordIterationIndex in 0 until wordsSize) {
-            val word = byteBuf.readIntLE()
-            bitArray.words[wordIterationIndex] = word
+        for (i in bitArray.words.indices) {
+            val word = buf.readIntLE()
+            bitArray.words[i] = word
         }
 
-        val paletteSize = VarInts.readInt(byteBuf)
+		fun readInt(): Int {
+			return if (network) {
+				VarInts.readInt(buf)
+			} else {
+				buf.readIntLE()
+			}
+		}
+        val paletteSize = readInt()
         palette = IntArrayList(paletteSize)
-        val nbtStream = if (isRuntime) null else NBTInputStream(NetworkDataInputStream(ByteBufInputStream(byteBuf)))
+        val nbtStream = if (isRuntime) null else {
+			val bis = ByteBufInputStream(buf)
+			NBTInputStream(if (network) NetworkDataInputStream(bis) else LittleEndianDataInputStream(bis))
+		}
         for (i in 0 until paletteSize) {
             if (isRuntime) {
-                palette.add(VarInts.readInt(byteBuf))
+                palette.add(readInt())
             } else {
                 val map = (nbtStream!!.readTag() as NbtMap).toBuilder()
                 val name = map["name"].toString()
@@ -56,7 +68,7 @@ class BlockStorage {
                 } else {
                     name
                 })
-                palette.add(blockMapping.runtime(BlockMappingUtils.getBlockNameFromNbt(map.build())))
+                palette.add(blockMapping.getRuntimeByIdentifier(BlockMapping.Provider.getBlockNameFromNbt(map.build())))
             }
         }
     }
@@ -91,8 +103,8 @@ class BlockStorage {
     }
 
     private fun onResize(version: BitArrayVersion) {
-        val newBitArray = version.createPalette(SIZE)
-        for (i in 0 until SIZE) {
+        val newBitArray = version.createPalette(MAX_BLOCK_IN_SECTION)
+        for (i in 0 until MAX_BLOCK_IN_SECTION) {
             newBitArray[i] = bitArray[i]
         }
         bitArray = newBitArray
@@ -115,7 +127,46 @@ class BlockStorage {
         return index
     }
 
+	/**
+	 * use persistent nbt tags if [blockMapping] is pass, otherwise runtime id is used
+	 */
+	fun write(buf: ByteBuf, blockMapping: BlockMapping? = null, network: Boolean) {
+		val bitArrayVersion = bitArray.version
+
+		// palette header
+		buf.writeByte(getPaletteHeader(bitArrayVersion, blockMapping == null))
+
+		bitArray.words.forEach {
+			buf.writeIntLE(it)
+		}
+
+		fun writeInt(int: Int) {
+			if (network) {
+				VarInts.writeInt(buf, int)
+			} else {
+				buf.writeIntLE(int)
+			}
+		}
+		writeInt(palette.size)
+		if (blockMapping == null) {
+			palette.forEach {
+				writeInt(it)
+			}
+		} else {
+			val bos = ByteBufOutputStream(buf)
+			val nbtos = NBTOutputStream(if (network) NetworkDataOutputStream(bos) else LittleEndianDataOutputStream(bos))
+			palette.forEach {
+				val tag = (blockMapping.getDefinition(it) as BlockDefinition).extraData.toBuilder()
+				tag.remove("id")
+				tag.remove("data")
+				tag.remove("runtimeId")
+				tag.remove("stateOverload")
+				nbtos.writeTag(tag.build())
+			}
+		}
+	}
+
     companion object {
-        const val SIZE = 4096
+        const val MAX_BLOCK_IN_SECTION = 4096
     }
 }

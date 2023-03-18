@@ -1,13 +1,13 @@
 package dev.sora.relay.game.inventory
 
-import com.nukkitx.protocol.bedrock.BedrockPacket
-import com.nukkitx.protocol.bedrock.data.inventory.ContainerType
-import com.nukkitx.protocol.bedrock.data.inventory.InventoryActionData
-import com.nukkitx.protocol.bedrock.data.inventory.InventorySource
-import com.nukkitx.protocol.bedrock.data.inventory.ItemData
-import com.nukkitx.protocol.bedrock.packet.InventoryContentPacket
-import com.nukkitx.protocol.bedrock.packet.InventorySlotPacket
-import com.nukkitx.protocol.bedrock.packet.InventoryTransactionPacket
+import org.cloudburstmc.protocol.bedrock.data.inventory.ContainerType
+import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData
+import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.InventoryActionData
+import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.InventorySource
+import org.cloudburstmc.protocol.bedrock.packet.BedrockPacket
+import org.cloudburstmc.protocol.bedrock.packet.InventoryContentPacket
+import org.cloudburstmc.protocol.bedrock.packet.InventorySlotPacket
+import org.cloudburstmc.protocol.bedrock.packet.InventoryTransactionPacket
 
 class ContainerInventory(containerId: Int, val type: ContainerType) : AbstractInventory(containerId) {
 

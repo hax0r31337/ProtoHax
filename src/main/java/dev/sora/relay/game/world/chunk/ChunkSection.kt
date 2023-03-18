@@ -1,12 +1,12 @@
 package dev.sora.relay.game.world.chunk
 
-import dev.sora.relay.game.utils.mapping.RuntimeMapping
+import dev.sora.relay.game.registry.BlockMapping
+import dev.sora.relay.game.registry.LegacyBlockMapping
 import io.netty.buffer.ByteBuf
 
-class ChunkSection(private val blockMapping: RuntimeMapping,
-                   private val legacyBlockMapping: RuntimeMapping) {
+class ChunkSection(private val blockMapping: BlockMapping, private val legacyBlockMapping: LegacyBlockMapping) {
 
-    var storage = BlockStorage(blockMapping)
+    var storage = BlockStorage(blockMapping.airId)
         private set
 
     /**
@@ -30,14 +30,14 @@ class ChunkSection(private val blockMapping: RuntimeMapping,
     private fun readModern(buf: ByteBuf, version: Int) {
         val layers = if(version == 1) 1 else buf.readByte().toInt()
         if (version >= 9) {
-            buf.readByte()
+            buf.readByte() // Y-Index
         }
         if (layers == 0) return
-        storage = BlockStorage(buf, blockMapping)
+        storage = BlockStorage(buf, blockMapping, true)
 
         // consume other layers that we don't need
         repeat(layers - 1) {
-            BlockStorage(buf, blockMapping)
+            BlockStorage(buf, blockMapping, true)
         }
     }
 
@@ -55,13 +55,25 @@ class ChunkSection(private val blockMapping: RuntimeMapping,
                     val idx = (x shl 8) + (z shl 4) + y
                     val id = blockIds[idx].toInt()
                     val meta = metaIds[idx shr 1].toInt() shr (idx and 1) * 4 and 15
-                    val name = legacyBlockMapping.game(id shl 6 or meta)
-                    storage.setBlock(index, blockMapping.runtime(name))
+                    storage.setBlock(index, legacyBlockMapping.toRuntime(id, meta))
                     index++
                 }
             }
         }
     }
+
+	/**
+	 * write the chunk to version 8 chunk
+	 */
+	fun write(buf: ByteBuf, useRuntime: Boolean, network: Boolean) {
+		// version
+		buf.writeByte(8)
+
+		// we only support one layer currently
+		buf.writeByte(1)
+
+		storage.write(buf, if (useRuntime) null else blockMapping, network)
+	}
 
     fun getBlockAt(x: Int, y: Int, z: Int): Int {
         assert(x in 0..15 && y in 0..15 && z in 0..15) { "query out of range (x=$x, y=$y, z=$z)" }

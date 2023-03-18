@@ -1,15 +1,15 @@
 package dev.sora.relay
 
 import com.google.gson.JsonParser
-import com.nukkitx.network.raknet.RakNetServerSession
-import com.nukkitx.protocol.bedrock.BedrockPacket
-import com.nukkitx.protocol.bedrock.packet.TransferPacket
 import dev.sora.relay.cheat.command.CommandManager
+import dev.sora.relay.cheat.command.impl.CommandDownloadWorld
 import dev.sora.relay.cheat.module.ModuleManager
 import dev.sora.relay.cheat.module.impl.ModuleResourcePackSpoof
 import dev.sora.relay.game.GameSession
-import dev.sora.relay.session.RakNetRelaySessionListenerAutoCodec
-import dev.sora.relay.session.RakNetRelaySessionListenerMicrosoft
+import dev.sora.relay.session.MinecraftRelaySession
+import dev.sora.relay.session.listener.RelayListenerAutoCodec
+import dev.sora.relay.session.listener.RelayListenerMicrosoftLogin
+import dev.sora.relay.session.listener.RelayListenerNetworkSettings
 import dev.sora.relay.utils.HttpUtils
 import dev.sora.relay.utils.logInfo
 import io.netty.util.internal.logging.InternalLoggerFactory
@@ -24,48 +24,42 @@ fun main(args: Array<String>) {
     InternalLoggerFactory.setDefaultFactory(LoggerFactory())
     val gameSession = craftSession()
 
-    val relay = RakNetRelay(InetSocketAddress("0.0.0.0", 19132))
-    var dst = InetSocketAddress("mco.mineplex.com", 19132)
-    dst = InetSocketAddress("127.0.0.1", 19136)
-    val deviceInfo = RakNetRelaySessionListenerMicrosoft.DEVICE_NINTENDO
-    val msSession = RakNetRelaySessionListenerMicrosoft(getMSAccessToken(deviceInfo.appId), deviceInfo).also {
+    val dst = InetSocketAddress("127.0.0.1", 19136)
+    val deviceInfo = RelayListenerMicrosoftLogin.DEVICE_NINTENDO
+    val msSession = RelayListenerMicrosoftLogin(getMSAccessToken(deviceInfo.appId), deviceInfo).also {
         thread {
             it.forceFetchChain()
             println("chain ok")
         }
     }
-    relay.listener = object : RakNetRelayListener {
-        override fun onQuery(address: InetSocketAddress) =
-            "MCPE;RakNet Relay;560;1.19.50;0;10;${relay.server.guid};Bedrock level;Survival;1;19132;19132;".toByteArray()
+    val relay = MinecraftRelay(object : MinecraftRelayListener {
+        override fun onSessionCreation(session: MinecraftRelaySession): InetSocketAddress {
+            session.listeners.add(RelayListenerNetworkSettings(session))
+            session.listeners.add(RelayListenerAutoCodec(session))
+			gameSession.netSession = session
+            session.listeners.add(gameSession)
+			msSession.session = session
+			session.listeners.add(msSession)
+//            session.listeners.add(object : MinecraftRelayPacketListener {
+//                override fun onPacketInbound(packet: BedrockPacket): Boolean {
+//                    if (packet is TransferPacket) {
+//                        println("Transfer: ${packet.address}:${packet.port}")
+//                        dst = InetSocketAddress(packet.address, packet.port)
+//                        packet.address = "192.168.2.103"
+//                        packet.port = 19132
+//                    }
+//                    return true
+//                }
+//
+//                override fun onPacketOutbound(packet: BedrockPacket): Boolean {
+//                    return true
+//                }
+//            })
 
-        override fun onSessionCreation(serverSession: RakNetServerSession): InetSocketAddress {
             return dst
         }
-
-        override fun onSession(session: RakNetRelaySession) {
-            session.listener.childListener.add(gameSession)
-            gameSession.netSession = session
-            msSession.session = session
-            session.listener.childListener.add(msSession)
-            session.listener.childListener.add(RakNetRelaySessionListenerAutoCodec(session))
-            session.listener.childListener.add(object : RakNetRelaySessionListener.PacketListener {
-                override fun onPacketInbound(packet: BedrockPacket): Boolean {
-                    if (packet is TransferPacket) {
-                        println("Transfer: ${packet.address}:${packet.port}")
-                        dst = InetSocketAddress(packet.address, packet.port)
-                        packet.address = "192.168.2.103"
-                        packet.port = 19132
-                    }
-                    return true
-                }
-
-                override fun onPacketOutbound(packet: BedrockPacket): Boolean {
-                    return true
-                }
-            })
-        }
-    }
-    relay.bind()
+    })
+    relay.bind(InetSocketAddress("0.0.0.0", 19132))
     println("bind")
     ModuleResourcePackSpoof.resourcePackProvider = ModuleResourcePackSpoof.FileSystemResourcePackProvider(File("./resource_packs"))
     Thread.sleep(Long.MAX_VALUE)
@@ -95,12 +89,12 @@ private fun craftSession() : GameSession {
 
     val commandManager = CommandManager(session)
     commandManager.init(moduleManager)
-
-    session.eventManager.registerListener(commandManager)
+	commandManager.registerCommand(CommandDownloadWorld(session.eventManager, File("./level")))
 
     val configManager = SingleFileConfigManager(moduleManager)
     configManager.loadConfig("default")
 
+    // save config automatically
     Timer().schedule(20000L, 20000L) {
         configManager.saveConfig("default")
         logInfo("saving config")

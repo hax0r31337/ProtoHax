@@ -1,7 +1,7 @@
 package dev.sora.relay.game.utils
 
-import com.nukkitx.math.vector.Vector3d
-import com.nukkitx.math.vector.Vector3i
+import org.cloudburstmc.math.vector.Vector3d
+import org.cloudburstmc.math.vector.Vector3i
 import kotlin.math.floor
 
 data class AxisAlignedBB(var minX: Double, var minY: Double, var minZ: Double,

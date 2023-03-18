@@ -1,13 +1,13 @@
 package dev.sora.relay.game.event
 
-import com.nukkitx.network.util.DisconnectReason
-import com.nukkitx.protocol.bedrock.BedrockPacket
 import dev.sora.relay.game.GameSession
 import dev.sora.relay.game.inventory.AbstractInventory
+import dev.sora.relay.game.world.chunk.Chunk
+import org.cloudburstmc.protocol.bedrock.packet.BedrockPacket
 
-abstract class GameEvent(val session: GameSession)
+abstract class GameEvent(val session: GameSession, val friendlyName: String)
 
-abstract class GameEventCancellable(session: GameSession) : GameEvent(session) {
+abstract class GameEventCancellable(session: GameSession, friendlyName: String) : GameEvent(session, friendlyName) {
 
     private var canceled = false
 
@@ -19,17 +19,28 @@ abstract class GameEventCancellable(session: GameSession) : GameEvent(session) {
 
 }
 
-class EventTick(session: GameSession) : GameEvent(session)
+class EventTick(session: GameSession) : GameEvent(session, "tick")
 
-class EventDisconnect(session: GameSession, val client: Boolean, val reason: DisconnectReason) : GameEvent(session)
+/**
+ * @param reason BedrockDisconnectReasons
+ */
+class EventDisconnect(session: GameSession, val client: Boolean, val reason: String) : GameEvent(session, "disconnect")
 
-class EventPacketInbound(session: GameSession, val packet: BedrockPacket) : GameEventCancellable(session)
+class EventPacketInbound(session: GameSession, val packet: BedrockPacket) : GameEventCancellable(session, "packet_inbound")
 
-class EventPacketOutbound(session: GameSession, val packet: BedrockPacket) : GameEventCancellable(session)
+class EventPacketOutbound(session: GameSession, val packet: BedrockPacket) : GameEventCancellable(session, "packet_outbound")
 
 /**
  * the container just "initialized", the content not received
  */
-class EventContainerOpen(session: GameSession, val container: AbstractInventory) : GameEvent(session)
+class EventContainerOpen(session: GameSession, val container: AbstractInventory) : GameEvent(session, "container_open")
 
-class EventContainerClose(session: GameSession, val container: AbstractInventory) : GameEvent(session)
+class EventContainerClose(session: GameSession, val container: AbstractInventory) : GameEvent(session, "container_close")
+
+/**
+ * triggered on LevelChunkPacket,
+ * but be aware if the chunk have separate subchunks deliver, the subchunk will not be loaded on the event call
+ */
+class EventChunkLoad(session: GameSession, val chunk: Chunk) : GameEvent(session, "chunk_load")
+
+class EventDimensionChange(session: GameSession, val dimension: Int) : GameEvent(session, "dimension_change")

@@ -1,6 +1,6 @@
 package dev.sora.relay.game.utils.constants
 
-import com.nukkitx.math.vector.Vector3i
+import org.cloudburstmc.math.vector.Vector3i
 
 enum class EnumFacing(val opposite: Int, val horizontalIndex: Int, val humanized: String, val unitVector: Vector3i) {
     DOWN(1, -1, "down", Vector3i.from(0, -1, 0)),

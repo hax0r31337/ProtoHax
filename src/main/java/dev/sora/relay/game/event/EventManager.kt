@@ -4,31 +4,30 @@ import dev.sora.relay.utils.logError
 
 class EventManager {
 
-    private val handlers = mutableMapOf<Class<out GameEvent>, MutableList<Handler>>()
+    private val registry = mutableMapOf<Class<out GameEvent>, ArrayList<EventHook<in GameEvent>>>()
 
-    fun registerListener(listener: Listener) {
-        for (method in listener.javaClass.declaredMethods) {
-            if (method.isAnnotationPresent(Listen::class.java)) {
-                registerHandler(HandlerMethod(method, listener))
-            }
-        }
+    fun register(hook: EventHook<out GameEvent>) {
+        val handlers = registry.computeIfAbsent(hook.eventClass) { ArrayList() }
+
+		handlers.add(hook as EventHook<in GameEvent>)
     }
 
-    fun registerHandler(handler: Handler) {
-        (handlers[handler.target] ?: mutableListOf<Handler>().also { handlers[handler.target] = it })
-            .add(handler)
-    }
+//    fun register(listenable: Listenable) {
+//        listenable.listeners.forEach(this::register)
+//    }
 
-    fun <T : GameEvent> registerFunction(target: Class<T>, func: (T) -> Unit) {
-        registerHandler(HandlerFunction(func, target))
+    inline fun <reified T : GameEvent> listenNoCondition(noinline handler: Handler<T>) {
+        register(EventHook(T::class.java, handler) as EventHook<in GameEvent>)
     }
 
     fun emit(event: GameEvent) {
-        for (handler in (handlers[event.javaClass] ?: return)) {
+        for (handler in (registry[event.javaClass] ?: return)) {
             try {
-                handler.invoke(event)
+				if (handler.condition()) {
+					handler.handler(event)
+				}
             } catch (t: Throwable) {
-                logError("event", t)
+                logError("event ${event.friendlyName}", t)
             }
         }
     }

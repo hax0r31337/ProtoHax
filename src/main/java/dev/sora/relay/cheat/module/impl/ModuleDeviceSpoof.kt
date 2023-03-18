@@ -2,41 +2,47 @@ package dev.sora.relay.cheat.module.impl
 
 import com.google.gson.Gson
 import com.google.gson.JsonParser
-import com.nukkitx.protocol.bedrock.data.InputMode
-import com.nukkitx.protocol.bedrock.packet.LoginPacket
-import com.nukkitx.protocol.bedrock.packet.PlayerAuthInputPacket
+import com.nimbusds.jose.JWSAlgorithm
+import com.nimbusds.jose.JWSHeader
+import com.nimbusds.jose.JWSObject
+import com.nimbusds.jose.Payload
+import com.nimbusds.jwt.SignedJWT
+import dev.sora.relay.cheat.config.AbstractConfigManager
 import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.game.event.EventPacketOutbound
-import dev.sora.relay.game.event.Listen
 import dev.sora.relay.game.utils.constants.DeviceOS
+import dev.sora.relay.session.listener.RelayListenerMicrosoftLogin
 import dev.sora.relay.utils.toHexString
-import io.netty.util.AsciiString
-import java.util.*
+import org.cloudburstmc.protocol.bedrock.data.InputMode
+import org.cloudburstmc.protocol.bedrock.packet.LoginPacket
+import org.cloudburstmc.protocol.bedrock.packet.PlayerAuthInputPacket
+import org.cloudburstmc.protocol.bedrock.util.EncryptionUtils
+import java.security.interfaces.ECPrivateKey
 import kotlin.random.Random
 
 class ModuleDeviceSpoof : CheatModule("DeviceSpoof") {
 
-    private val deviceIdValue = boolValue("DeviceId", true)
-    private val platformValue = boolValue("Platform", true)
+    private var deviceIdValue by boolValue("DeviceId", true)
+    private var platformValue by boolValue("Platform", true)
 
-    @Listen
-    fun onPacketOutbound(event: EventPacketOutbound) {
-        val packet = event.packet
+	private val handlePacketOutbound = handle<EventPacketOutbound> { event ->
+		val packet = event.packet
 
-        if (packet is LoginPacket) {
-            val body = JsonParser.parseString(Base64.getDecoder().decode(packet.skinData.toString().split(".")[1]).toString(Charsets.UTF_8)).asJsonObject
-            if (deviceIdValue.get()) {
-                body.addProperty("ClientRandomId", Random.nextLong())
-                body.addProperty("DeviceId", Random.nextBytes(ByteArray(16)).toHexString())
-            }
-            if (platformValue.get()) {
-                body.addProperty("DeviceModel","Nintendo Switch")
-                body.addProperty("DeviceOS", DeviceOS.NINTENDO)
-                body.addProperty("CurrentInputMode", 2) //Touch
-            }
-            packet.skinData = AsciiString(".${Base64.getEncoder().encodeToString(Gson().toJson(body).toByteArray(Charsets.UTF_8))}.")
-        } else if (platformValue.get() && packet is PlayerAuthInputPacket) {
-            packet.inputMode = InputMode.TOUCH
-        }
-    }
+		if (packet is LoginPacket) {
+			val body = JsonParser.parseString(packet.extra.payload.toString()).asJsonObject
+			if (deviceIdValue) {
+				body.addProperty("ClientRandomId", Random.nextLong())
+				body.addProperty("DeviceId", Random.nextBytes(ByteArray(16)).toHexString())
+			}
+			if (platformValue) {
+				body.addProperty("DeviceModel","Nintendo Switch")
+				body.addProperty("DeviceOS", DeviceOS.NINTENDO)
+				body.addProperty("CurrentInputMode", 2) // Touch
+			}
+
+			packet.extra = RelayListenerMicrosoftLogin.signJWT(Payload(AbstractConfigManager.DEFAULT_GSON.toJson(body)), EncryptionUtils.createKeyPair())
+		} else if (platformValue && packet is PlayerAuthInputPacket) {
+			packet.inputMode = InputMode.TOUCH
+		}
+	}
 }
