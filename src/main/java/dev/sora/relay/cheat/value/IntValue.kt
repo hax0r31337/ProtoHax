@@ -9,7 +9,7 @@ import com.google.gson.JsonPrimitive
 open class IntValue(name: String, value: Int, val range: IntRange) : Value<Int>(name, value) {
 
     fun set(newValue: Number) {
-        value = newValue.toInt()
+        set(newValue.toInt())
     }
 
     override fun toJson() = JsonPrimitive(value)

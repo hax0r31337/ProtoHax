@@ -2,10 +2,13 @@ package dev.sora.relay.cheat.module
 
 import dev.sora.relay.cheat.value.Choice
 import dev.sora.relay.cheat.value.ChoiceValue
-import dev.sora.relay.cheat.value.Value
 import dev.sora.relay.cheat.value.Configurable
+import dev.sora.relay.cheat.value.Value
 import dev.sora.relay.game.GameSession
-import dev.sora.relay.game.event.*
+import dev.sora.relay.game.event.EventHook
+import dev.sora.relay.game.event.EventManager
+import dev.sora.relay.game.event.GameEvent
+import dev.sora.relay.game.event.Handler
 
 abstract class CheatModule(val name: String,
                            val defaultOn: Boolean = false,

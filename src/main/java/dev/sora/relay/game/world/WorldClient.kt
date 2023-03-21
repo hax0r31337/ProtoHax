@@ -5,7 +5,10 @@ import dev.sora.relay.game.entity.Entity
 import dev.sora.relay.game.entity.EntityItem
 import dev.sora.relay.game.entity.EntityPlayer
 import dev.sora.relay.game.entity.EntityUnknown
-import dev.sora.relay.game.event.*
+import dev.sora.relay.game.event.EventDisconnect
+import dev.sora.relay.game.event.EventManager
+import dev.sora.relay.game.event.EventPacketInbound
+import dev.sora.relay.game.event.handle
 import org.cloudburstmc.protocol.bedrock.packet.*
 import java.util.*
 

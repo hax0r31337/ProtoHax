@@ -6,6 +6,7 @@ import org.cloudburstmc.protocol.bedrock.BedrockClientSession
 import org.cloudburstmc.protocol.bedrock.BedrockPeer
 import org.cloudburstmc.protocol.bedrock.BedrockServerSession
 import org.cloudburstmc.protocol.bedrock.codec.BedrockCodec
+import org.cloudburstmc.protocol.bedrock.netty.BedrockPacketWrapper
 import org.cloudburstmc.protocol.bedrock.packet.BedrockPacket
 
 class MinecraftRelaySession(peer: BedrockPeer, subClientId: Int) : BedrockServerSession(peer, subClientId) {
@@ -41,7 +42,9 @@ class MinecraftRelaySession(peer: BedrockPeer, subClientId: Int) : BedrockServer
         }
     }
 
-    override fun onPacket(packet: BedrockPacket) {
+    override fun onPacket(wrapper: BedrockPacketWrapper) {
+		val packet = wrapper.packet
+
         listeners.forEach { l ->
             try {
                 if (!l.onPacketOutbound(packet)) {
@@ -61,12 +64,7 @@ class MinecraftRelaySession(peer: BedrockPeer, subClientId: Int) : BedrockServer
     }
 
     fun outboundPacket(packet: BedrockPacket) {
-        val client = client
-        if (client == null) {
-            queuedPackets.add(packet)
-        } else {
-            client.sendPacket(packet)
-        }
+		client?.sendPacket(packet) ?: queuedPackets.add(packet)
     }
 
     fun inboundPacket(packet: BedrockPacket) {
@@ -91,7 +89,9 @@ class MinecraftRelaySession(peer: BedrockPeer, subClientId: Int) : BedrockServer
             }
         }
 
-        override fun onPacket(packet: BedrockPacket) {
+        override fun onPacket(wrapper: BedrockPacketWrapper) {
+			val packet = wrapper.packet
+
             listeners.forEach { l ->
                 try {
                     if (!l.onPacketInbound(packet)) {

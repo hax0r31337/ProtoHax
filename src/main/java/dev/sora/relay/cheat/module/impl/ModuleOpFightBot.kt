@@ -2,7 +2,6 @@ package dev.sora.relay.cheat.module.impl
 
 import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.cheat.value.NamedChoice
-import dev.sora.relay.game.entity.EntityPlayer
 import dev.sora.relay.game.event.EventTick
 import kotlin.math.atan2
 import kotlin.math.cos
