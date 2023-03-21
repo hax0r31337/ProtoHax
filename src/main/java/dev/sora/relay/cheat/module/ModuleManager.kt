@@ -34,7 +34,7 @@ class ModuleManager(private val session: GameSession) {
         registerModule(ModuleInventoryHelper())
     }
 
-	inline fun <reified T : CheatModule> getModule(klass: Class<T>): T? {
-		return modules.filterIsInstance<T>().firstOrNull()
+	inline fun <reified T : CheatModule> getModule(): T {
+		return modules.filterIsInstance<T>().first()
 	}
 }

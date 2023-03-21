@@ -25,7 +25,7 @@ object NoteBlockUtils {
         fun readNbs(inputIn: InputStream) {
             val dataInputStream = DataInputStream(inputIn)
             var length = readShort(dataInputStream)
-            var firstcustominstrument = 10 //Backward compatibility - most of songs with old structure are from 1.12
+            var firstcustominstrument = 10 // Backward compatibility - most of songs with old structure are from 1.12
             var nbsversion = 0
             if (length.toInt() == 0) {
                 nbsversion = dataInputStream.readByte().toInt()

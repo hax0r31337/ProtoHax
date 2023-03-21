@@ -21,10 +21,9 @@ configurations {
 }
 
 dependencies {
-    embed('dev.sora.protohax.protocol:bedrock-connection:3.0.0.Beta1-SNAPSHOT') {
+    embed('org.cloudburstmc.protocol:bedrock-connection:3.0.0.Beta1-SNAPSHOT') {
         exclude group: 'com.nukkitx', module: 'natives'
     }
-    embed project(':natives')
 
     embed 'com.google.code.gson:gson:2.10.1'
     embed 'coelho.msftauth:minecraft-msftauth:2.1.2'
