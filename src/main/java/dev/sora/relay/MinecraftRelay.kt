@@ -90,8 +90,7 @@ open class MinecraftRelay(private val listener: MinecraftRelayListener,
 					override fun postInitChannel(channel: Channel) {
 						super.postInitChannel(channel)
 						// use custom reliability settings
-						channel.pipeline().addBefore(FrameIdCodec.NAME, CustomFrameIdCodec.NAME, CustomFrameIdCodec(BedrockChannelInitializer.RAKNET_MINECRAFT_ID, RakReliability.RELIABLE))
-						channel.pipeline().remove(FrameIdCodec.NAME)
+						injectFrameIdCodec(channel, CustomFrameIdCodec(reliability = RakReliability.RELIABLE))
 					}
 
                     override fun initSession(session: BedrockClientSession) {}
@@ -109,10 +108,16 @@ open class MinecraftRelay(private val listener: MinecraftRelayListener,
 		override fun postInitChannel(channel: Channel) {
 			super.postInitChannel(channel)
 			// use custom reliability settings
-			channel.pipeline().addBefore(FrameIdCodec.NAME, CustomFrameIdCodec.NAME, CustomFrameIdCodec(BedrockChannelInitializer.RAKNET_MINECRAFT_ID))
-			channel.pipeline().remove(FrameIdCodec.NAME)
+			injectFrameIdCodec(channel)
 		}
     }
+
+	private fun injectFrameIdCodec(channel: Channel, codec: CustomFrameIdCodec = CustomFrameIdCodec.INSTANCE) {
+		channel.pipeline().addBefore(FrameIdCodec.NAME, CustomFrameIdCodec.NAME, codec)
+		channel.pipeline().remove(FrameIdCodec.NAME)
+		channel.pipeline().addBefore(CustomFrameIdCodec.NAME, FrameIdCodec.NAME, codec)
+		channel.pipeline().remove(CustomFrameIdCodec.NAME)
+	}
 
     companion object {
         private val DEFAULT_PONG = BedrockPong()

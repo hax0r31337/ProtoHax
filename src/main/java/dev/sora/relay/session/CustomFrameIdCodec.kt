@@ -7,12 +7,14 @@ import io.netty.handler.codec.MessageToMessageCodec
 import io.netty.util.internal.StringUtil
 import org.cloudburstmc.netty.channel.raknet.RakReliability
 import org.cloudburstmc.netty.channel.raknet.packet.RakMessage
+import org.cloudburstmc.protocol.bedrock.netty.initializer.BedrockChannelInitializer
 
 /**
  * custom [FrameIdCodec] with reliability support
  */
 @Sharable
-class CustomFrameIdCodec(private val frameId: Int, private val reliability: RakReliability? = null) : MessageToMessageCodec<Any, ByteBuf>() {
+class CustomFrameIdCodec(private val frameId: Int = BedrockChannelInitializer.RAKNET_MINECRAFT_ID,
+						 private val reliability: RakReliability? = null) : MessageToMessageCodec<Any, ByteBuf>() {
 
     override fun encode(ctx: ChannelHandlerContext, msg: ByteBuf, out: MutableList<Any>) {
         val buf = ctx.alloc().compositeDirectBuffer(2)
@@ -48,5 +50,6 @@ class CustomFrameIdCodec(private val frameId: Int, private val reliability: RakR
 
     companion object {
         const val NAME = "frame-id-codec-custom"
+		val INSTANCE = CustomFrameIdCodec()
     }
 }
