@@ -6,7 +6,10 @@ import dev.sora.relay.session.MinecraftRelaySession
 import dev.sora.relay.utils.logInfo
 import io.netty.bootstrap.Bootstrap
 import io.netty.bootstrap.ServerBootstrap
-import io.netty.channel.*
+import io.netty.channel.Channel
+import io.netty.channel.ChannelFactory
+import io.netty.channel.ChannelFuture
+import io.netty.channel.ServerChannel
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.nio.NioDatagramChannel
 import org.cloudburstmc.netty.channel.raknet.RakChannelFactory
@@ -20,7 +23,6 @@ import org.cloudburstmc.protocol.bedrock.codec.BedrockCodec
 import org.cloudburstmc.protocol.bedrock.codec.compat.BedrockCompat
 import org.cloudburstmc.protocol.bedrock.codec.v567.Bedrock_v567
 import org.cloudburstmc.protocol.bedrock.netty.codec.FrameIdCodec
-import org.cloudburstmc.protocol.bedrock.netty.initializer.BedrockChannelInitializer
 import org.cloudburstmc.protocol.bedrock.netty.initializer.BedrockClientInitializer
 import org.cloudburstmc.protocol.bedrock.netty.initializer.BedrockServerInitializer
 import java.net.InetSocketAddress
@@ -36,11 +38,7 @@ open class MinecraftRelay(private val listener: MinecraftRelayListener,
 		get() = channelFuture != null
 
 	open fun channelFactory(): ChannelFactory<out ServerChannel> {
-		return RakChannelFactory.server(NioDatagramChannel::class.java).also {
-			it.newChannel().also { c ->
-				c.close(c.newPromise())
-			}
-		}
+		return RakChannelFactory.server(NioDatagramChannel::class.java)
 	}
 
     fun bind(address: InetSocketAddress) {
