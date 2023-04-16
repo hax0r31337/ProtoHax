@@ -36,7 +36,11 @@ open class MinecraftRelay(private val listener: MinecraftRelayListener,
 		get() = channelFuture != null
 
 	open fun channelFactory(): ChannelFactory<out ServerChannel> {
-		return RakChannelFactory.server(NioDatagramChannel::class.java)
+		return RakChannelFactory.server(NioDatagramChannel::class.java).also {
+			it.newChannel().also { c ->
+				c.close(c.newPromise())
+			}
+		}
 	}
 
     fun bind(address: InetSocketAddress) {

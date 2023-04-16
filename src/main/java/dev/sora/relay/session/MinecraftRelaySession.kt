@@ -30,7 +30,7 @@ class MinecraftRelaySession(peer: BedrockPeer, subClientId: Int) : BedrockServer
         packetHandler = SessionCloseHandler {
             logInfo("client disconnect: $it")
             try {
-                this@MinecraftRelaySession.close(it)
+                client?.disconnect()
                 listeners.forEach { l ->
                     try {
                         l.onDisconnect(true, it)
@@ -71,13 +71,17 @@ class MinecraftRelaySession(peer: BedrockPeer, subClientId: Int) : BedrockServer
         sendPacket(packet)
     }
 
+	override fun disconnect(reason: String?, hideReason: Boolean) {
+		close(reason)
+	}
+
     inner class MinecraftRelayClientSession(peer: BedrockPeer, subClientId: Int) : BedrockClientSession(peer, subClientId) {
 
         init {
             packetHandler = SessionCloseHandler {
                 logInfo("server disconnect: $it")
                 try {
-                    this@MinecraftRelaySession.close(it)
+                    this@MinecraftRelaySession.disconnect()
                     listeners.forEach { l ->
                         try {
                             l.onDisconnect(true, it)
