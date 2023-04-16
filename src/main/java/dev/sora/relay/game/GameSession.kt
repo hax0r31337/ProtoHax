@@ -108,6 +108,6 @@ class GameSession : MinecraftRelayPacketListener {
 	}
 
     companion object {
-        const val RECOMMENDED_VERSION = "1.19.50.02"
+        const val RECOMMENDED_VERSION = "1.19.73.02"
     }
 }
