@@ -6,16 +6,16 @@ import io.netty.util.internal.logging.InternalLoggerFactory
 
 private val logger = InternalLoggerFactory.getInstance(GameSession::class.java)
 
-fun logInfo(msg: String) {
-    logger.info(msg)
+fun logInfo(vararg msg: String) {
+    logger.info(msg.joinToString(" "))
 }
 
-fun logWarn(msg: String) {
-    logger.warn(msg)
+fun logWarn(vararg msg: String) {
+    logger.warn(msg.joinToString(" "))
 }
 
-fun logError(msg: String) {
-    logger.error(msg)
+fun logError(vararg msg: String) {
+    logger.error(msg.joinToString(" "))
 }
 
 fun logError(msg: String, t: Throwable) {
