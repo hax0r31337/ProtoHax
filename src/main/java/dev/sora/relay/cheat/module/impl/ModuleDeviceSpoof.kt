@@ -6,6 +6,7 @@ import dev.sora.relay.cheat.config.AbstractConfigManager
 import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.game.event.EventPacketOutbound
 import dev.sora.relay.game.utils.constants.DeviceOS
+import dev.sora.relay.session.listener.RelayListenerEncryptedSession
 import dev.sora.relay.session.listener.RelayListenerMicrosoftLogin
 import dev.sora.relay.utils.toHexString
 import org.cloudburstmc.protocol.bedrock.data.InputMode
@@ -34,7 +35,7 @@ class ModuleDeviceSpoof : CheatModule("DeviceSpoof") {
 				body.addProperty("CurrentInputMode", 2) // Touch
 			}
 
-			packet.extra = RelayListenerMicrosoftLogin.signJWT(Payload(AbstractConfigManager.DEFAULT_GSON.toJson(body)), EncryptionUtils.createKeyPair())
+			packet.extra = RelayListenerEncryptedSession.signJWT(Payload(AbstractConfigManager.DEFAULT_GSON.toJson(body)), EncryptionUtils.createKeyPair())
 		} else if (platformValue && packet is PlayerAuthInputPacket) {
 			packet.inputMode = InputMode.TOUCH
 		}

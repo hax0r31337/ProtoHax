@@ -27,7 +27,7 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
 
-class RelayListenerMicrosoftLogin(val accessToken: String, val deviceInfo: DeviceInfo) : MinecraftRelayPacketListener {
+class RelayListenerMicrosoftLogin(val accessToken: String, val deviceInfo: DeviceInfo) : RelayListenerEncryptedSession() {
 
     constructor(accessToken: String, deviceInfo: DeviceInfo, session: MinecraftRelaySession) : this(accessToken, deviceInfo) {
         this.session = session
@@ -59,28 +59,8 @@ class RelayListenerMicrosoftLogin(val accessToken: String, val deviceInfo: Devic
             return field
         }
 
-    private val keyPair = EncryptionUtils.createKeyPair()
-
-    lateinit var session: MinecraftRelaySession
-
     fun forceFetchChain() {
         chain
-    }
-
-    override fun onPacketInbound(packet: BedrockPacket): Boolean {
-        if (packet is ServerToClientHandshakePacket) {
-            val jwtSplit = packet.jwt.split(".")
-            val headerObject = JsonParser.parseString(base64Decode(jwtSplit[0]).toString(Charsets.UTF_8)).asJsonObject
-            val payloadObject = JsonParser.parseString(base64Decode(jwtSplit[1]).toString(Charsets.UTF_8)).asJsonObject
-            val serverKey = EncryptionUtils.generateKey(headerObject.get("x5u").asString)
-            val key = EncryptionUtils.getSecretKey(keyPair.private, serverKey,
-                base64Decode(payloadObject.get("salt").asString))
-            session.client!!.enableEncryption(key)
-            session.outboundPacket(ClientToServerHandshakePacket())
-            return false
-        }
-
-        return true
     }
 
     override fun onPacketOutbound(packet: BedrockPacket): Boolean {
@@ -197,14 +177,5 @@ class RelayListenerMicrosoftLogin(val accessToken: String, val deviceInfo: Devic
 			list.addAll(chains.map { SignedJWT.parse(it.asString) })
             return list
         }
-
-		fun signJWT(payload: Payload, keyPair: KeyPair): SignedJWT {
-			val header = JWSHeader.Builder(JWSAlgorithm.ES384)
-				.x509CertURL(URI(Base64.getEncoder().encodeToString(keyPair.public.encoded)))
-				.build()
-			val jws = JWSObject(header, payload)
-			EncryptionUtils.signJwt(jws, keyPair.private as ECPrivateKey)
-			return SignedJWT(jws.header.toBase64URL(), jws.payload.toBase64URL(), jws.signature)
-		}
     }
 }
