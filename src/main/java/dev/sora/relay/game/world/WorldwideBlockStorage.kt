@@ -5,19 +5,20 @@ import dev.sora.relay.game.event.*
 import dev.sora.relay.game.registry.BlockDefinition
 import dev.sora.relay.game.utils.constants.Dimension
 import dev.sora.relay.game.world.chunk.Chunk
+import dev.sora.relay.utils.logError
 import org.cloudburstmc.math.vector.Vector3i
 import org.cloudburstmc.protocol.bedrock.data.SubChunkRequestResult
 import org.cloudburstmc.protocol.bedrock.packet.*
 
 abstract class WorldwideBlockStorage(protected val session: GameSession, override val eventManager: EventManager) : Listenable {
 
-    val chunks = mutableMapOf<Long, Chunk>()
+	val chunks = mutableMapOf<Long, Chunk>()
 
-    var dimension = Dimension.OVERWORLD
-        protected set
+	var dimension = Dimension.OVERWORLD
+		protected set
 
-    var viewDistance = -1
-        protected set
+	var viewDistance = -1
+		protected set
 
 	private val handleDisconnect = handle<EventDisconnect> {
 		chunks.clear()
@@ -31,8 +32,28 @@ abstract class WorldwideBlockStorage(protected val session: GameSession, overrid
 			val chunk = Chunk(packet.chunkX, packet.chunkZ,
 				dimension == Dimension.OVERWORLD && (!session.netSessionInitialized || session.netSession.codec.protocolVersion >= 440),
 				session.blockMapping, session.legacyBlockMapping)
-			chunk.read(packet.data, packet.subChunksLength)
-			packet.data.resetReaderIndex()
+			if (!packet.isCachingEnabled && !packet.isRequestSubChunks) {
+				val readerIndex = packet.data.readerIndex()
+				try {
+					chunk.read(packet.data, packet.subChunksLength)
+				} catch (t: Throwable) {
+					logError("exception thrown whilst read chunk", t)
+				}
+				packet.data.readerIndex(readerIndex)
+			} else if (packet.isCachingEnabled && !packet.isRequestSubChunks) {
+				packet.blobIds.forEachIndexed { index, blobId ->
+					if (index >= packet.subChunksLength) return@forEachIndexed
+					session.cacheManager.registerCacheCallback(blobId) {
+						val readerIndex = it.readerIndex()
+						try {
+							chunk.readSubChunk(index, it)
+						} catch (t: Throwable) {
+							logError("exception thrown whilst read subchunk", t)
+						}
+						it.readerIndex(readerIndex)
+					}
+				}
+			} // we handle SubChunkPackets for isCachingEnabled && isRequestSubChunks cases
 			chunks[chunk.hash] = chunk
 			session.eventManager.emit(EventChunkLoad(session, chunk))
 		} else if (packet is ChunkRadiusUpdatedPacket) {
@@ -52,65 +73,77 @@ abstract class WorldwideBlockStorage(protected val session: GameSession, overrid
 				if (it.data.readableBytes() == 0) {
 					// cached chunk
 					session.cacheManager.registerCacheCallback(it.blobId) {
-						chunk.readSubChunk(position.y, it)
-						it.resetReaderIndex()
+						val readerIndex = it.readerIndex()
+						try {
+							chunk.readSubChunk(position.y, it)
+						} catch (t: Throwable) {
+							logError("exception thrown whilst read subchunk", t)
+						}
+						it.readerIndex(readerIndex)
 					}
 				} else {
-					chunk.readSubChunk(position.y, it.data)
-					it.data.resetReaderIndex()
+					val readerIndex = it.data.readerIndex()
+					try {
+						chunk.readSubChunk(position.y, it.data)
+					} catch (t: Throwable) {
+						logError("exception thrown whilst read subchunk", t)
+					}
+					it.data.readerIndex(readerIndex)
 				}
 			}
 		}
 	}
 
-    private fun chunkOutOfRangeCheck() {
-        // if (viewDistance < 0) return
-        // val playerChunkX = floor(session.thePlayer.posX).toInt() shr 4
-        // val playerChunkZ = floor(session.thePlayer.posZ).toInt() shr 4
-        // chunks.entries.removeIf { (_, chunk) ->
-        //     !chunk.isInRadius(playerChunkX, playerChunkZ, viewDistance+1)
-        // }
-    }
+	protected fun chunkOutOfRangeCheck() {
+		// TODO: fix
 
-    fun getBlockIdAt(x: Int, y: Int, z: Int): Int {
-        val chunk = getChunkAt(x, z) ?: return session.blockMapping.airId
-        return chunk.getBlockAt(x and 0x0f, y, z and 0x0f)
-    }
+//         if (viewDistance < 0) return
+//         val playerChunkX = floor(session.thePlayer.posX).toInt() shr 4
+//         val playerChunkZ = floor(session.thePlayer.posZ).toInt() shr 4
+//         chunks.entries.removeIf { (_, chunk) ->
+//             !chunk.isInRadius(playerChunkX, playerChunkZ, viewDistance+1)
+//         }
+	}
 
-    fun getBlockAt(x: Int, y: Int, z: Int): BlockDefinition {
-        return session.netSession.peer.codecHelper.blockDefinitions.getDefinition(getBlockIdAt(x, y, z)) as BlockDefinition
-    }
+	fun getBlockIdAt(x: Int, y: Int, z: Int): Int {
+		val chunk = getChunkAt(x, z) ?: return session.blockMapping.airId
+		return chunk.getBlockAt(x and 0x0f, y, z and 0x0f)
+	}
 
-    fun getBlockAt(vec: Vector3i)
-        = getBlockAt(vec.x, vec.y, vec.z)
+	fun getBlockAt(x: Int, y: Int, z: Int): BlockDefinition {
+		return session.netSession.peer.codecHelper.blockDefinitions.getDefinition(getBlockIdAt(x, y, z)) as BlockDefinition
+	}
 
-    fun getBlockIdAt(vec: Vector3i)
-            = getBlockIdAt(vec.x, vec.y, vec.z)
+	fun getBlockAt(vec: Vector3i)
+		= getBlockAt(vec.x, vec.y, vec.z)
 
-    fun setBlockIdAt(x: Int, y: Int, z: Int, id: Int) {
-        val chunk = getChunkAt(x, z) ?: return
-        chunk.setBlockAt(x and 0x0f, y, z and 0x0f, id)
-    }
+	fun getBlockIdAt(vec: Vector3i)
+		= getBlockIdAt(vec.x, vec.y, vec.z)
 
-    fun setBlockAt(x: Int, y: Int, z: Int, name: String) {
-        setBlockIdAt(x, y, z, session.blockMapping.getRuntimeByIdentifier(name))
-    }
+	fun setBlockIdAt(x: Int, y: Int, z: Int, id: Int) {
+		val chunk = getChunkAt(x, z) ?: return
+		chunk.setBlockAt(x and 0x0f, y, z and 0x0f, id)
+	}
 
-    fun setBlockAt(x: Int, y: Int, z: Int, block: BlockDefinition) {
-        setBlockIdAt(x, y, z, block.runtimeId)
-    }
+	fun setBlockAt(x: Int, y: Int, z: Int, name: String) {
+		setBlockIdAt(x, y, z, session.blockMapping.getRuntimeByIdentifier(name))
+	}
 
-    /**
-     * get chunk by chunk position
-     */
-    fun getChunk(chunkX: Int, chunkZ: Int): Chunk? {
-        return chunks[Chunk.hash(chunkX, chunkZ)]
-    }
+	fun setBlockAt(x: Int, y: Int, z: Int, block: BlockDefinition) {
+		setBlockIdAt(x, y, z, block.runtimeId)
+	}
 
-    /**
-     * get chunk by actual position
-     */
-    fun getChunkAt(x: Int, z: Int): Chunk? {
-        return getChunk(x shr 4, z shr 4)
-    }
+	/**
+	 * get chunk by chunk position
+	 */
+	fun getChunk(chunkX: Int, chunkZ: Int): Chunk? {
+		return chunks[Chunk.hash(chunkX, chunkZ)]
+	}
+
+	/**
+	 * get chunk by actual position
+	 */
+	fun getChunkAt(x: Int, z: Int): Chunk? {
+		return getChunk(x shr 4, z shr 4)
+	}
 }

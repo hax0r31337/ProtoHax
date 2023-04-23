@@ -15,7 +15,7 @@ class Chunk(val x: Int, val z: Int, val is384World: Boolean,
     val maximumHeight = sectionStorage.size * 16
 
     fun isInRadius(playerChunkX: Int, playerChunkZ: Int, radius: Int): Boolean {
-        return abs(x - playerChunkX) <= radius && abs(z - playerChunkZ) <= radius
+        return abs(x - playerChunkX) <= radius + 1 && abs(z - playerChunkZ) <= radius + 1
     }
 
     fun read(buf: ByteBuf, subChunks: Int) {

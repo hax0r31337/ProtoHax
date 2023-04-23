@@ -80,7 +80,7 @@ fun main(args: Array<String>) {
 
 private fun getMSAccessToken(appId: String): String {
     val token = tokenFile.readText(Charsets.UTF_8)
-    val body = JsonParser.parseReader(if (token.length == 45) {
+    val body = JsonParser.parseReader(if (token.length < 70) {
         HttpUtils.make("https://login.live.com/oauth20_token.srf", "POST",
             "client_id=$appId&redirect_uri=https://login.live.com/oauth20_desktop.srf&grant_type=authorization_code&code=$token",
             mapOf("Content-Type" to "application/x-www-form-urlencoded"))

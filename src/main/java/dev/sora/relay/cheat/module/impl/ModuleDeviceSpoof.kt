@@ -7,7 +7,6 @@ import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.game.event.EventPacketOutbound
 import dev.sora.relay.game.utils.constants.DeviceOS
 import dev.sora.relay.session.listener.RelayListenerEncryptedSession
-import dev.sora.relay.session.listener.RelayListenerMicrosoftLogin
 import dev.sora.relay.utils.toHexString
 import org.cloudburstmc.protocol.bedrock.data.InputMode
 import org.cloudburstmc.protocol.bedrock.packet.LoginPacket
