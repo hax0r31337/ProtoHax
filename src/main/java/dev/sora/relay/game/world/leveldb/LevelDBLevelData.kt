@@ -14,7 +14,7 @@ class LevelDBLevelData(var protocol: Int, var inventoryVersion: String) {
     var hasBeenLoadedInCreative = false
     var hasLockedResourcePack = false
     var hasLockedBehaviorPack = false
-    var experiments = NbtMap.EMPTY // TODO: Implement actual experiments object once you figure out experiments
+    var experiments = NbtMap.EMPTY
     var isForcedGamemode = false
     var isImmutable = false
     var isConfirmedPlatformLockedContent = false

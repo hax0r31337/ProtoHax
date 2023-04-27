@@ -27,7 +27,8 @@ fun main(args: Array<String>) {
     InternalLoggerFactory.setDefaultFactory(LoggerFactory())
     val gameSession = craftSession()
 
-    val dst = InetSocketAddress("127.0.0.1", 19136)
+//    val dst = InetSocketAddress("127.0.0.1", 19136)
+	val dst = InetSocketAddress("pe.mineplex.com", 19132)
 	var loginThread: Thread? = null
     val sessionEncryptor = if(tokenFile.exists()) {
 		val deviceInfo = RelayListenerMicrosoftLogin.DEVICE_NINTENDO
