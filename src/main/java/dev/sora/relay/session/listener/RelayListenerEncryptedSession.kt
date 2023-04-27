@@ -6,6 +6,7 @@ import com.nimbusds.jose.JWSHeader
 import com.nimbusds.jose.JWSObject
 import com.nimbusds.jose.Payload
 import com.nimbusds.jwt.SignedJWT
+import dev.sora.relay.cheat.config.AbstractConfigManager
 import dev.sora.relay.session.MinecraftRelayPacketListener
 import dev.sora.relay.session.MinecraftRelaySession
 import dev.sora.relay.utils.base64Decode
@@ -53,7 +54,8 @@ open class RelayListenerEncryptedSession() : MinecraftRelayPacketListener {
 			packet.chain.forEach {
 				val chainBody = JsonParser.parseString(it.payload.toString()).asJsonObject
 				if (chainBody.has("extraData")) {
-					newChain = signJWT(it.payload, keyPair)
+					chainBody.addProperty("identityPublicKey", Base64.getEncoder().encodeToString(keyPair.public.encoded))
+					newChain = signJWT(Payload(AbstractConfigManager.DEFAULT_GSON.toJson(chainBody)), keyPair)
 				}
 			}
 			packet.chain.clear()
