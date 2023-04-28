@@ -5,6 +5,7 @@ import org.cloudburstmc.math.vector.Vector2f
 import org.cloudburstmc.math.vector.Vector3f
 import org.cloudburstmc.protocol.bedrock.data.AttributeData
 import org.cloudburstmc.protocol.bedrock.data.entity.EntityDataMap
+import org.cloudburstmc.protocol.bedrock.data.entity.EntityLinkData
 import org.cloudburstmc.protocol.bedrock.packet.*
 import kotlin.math.sqrt
 
@@ -28,6 +29,8 @@ abstract class Entity(open val entityId: Long) {
 
     open var tickExists = 0L
         protected set
+
+	var rideEntity: Long? = null
 
     open val attributes = mutableMapOf<String, AttributeData>()
     open val metadata = EntityDataMap()
@@ -107,7 +110,14 @@ abstract class Entity(open val entityId: Long) {
             handleSetData(packet.metadata)
         } else if (packet is UpdateAttributesPacket && packet.runtimeEntityId == entityId) {
             handleSetAttribute(packet.attributes)
-        } else {
+        } else if (packet is SetEntityLinkPacket) {
+			when(packet.entityLink.type) {
+				EntityLinkData.Type.RIDER -> if (packet.entityLink.from == entityId) rideEntity = packet.entityLink.to
+				EntityLinkData.Type.REMOVE -> if (packet.entityLink.from == entityId) rideEntity = null
+				EntityLinkData.Type.PASSENGER -> if (packet.entityLink.to == entityId) rideEntity = packet.entityLink.from
+				else -> {}
+			}
+		} else {
             inventory.handlePacket(packet)
         }
     }

@@ -1,6 +1,5 @@
 package dev.sora.relay.game.utils
 
-import org.cloudburstmc.math.vector.Vector3d
 import org.cloudburstmc.math.vector.Vector3f
 import org.cloudburstmc.math.vector.Vector3i
 import kotlin.math.floor

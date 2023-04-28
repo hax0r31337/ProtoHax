@@ -131,10 +131,9 @@ class ModuleFly : CheatModule("Fly") {
 					uniqueEntityId = session.thePlayer.entityId
 				})
 				event.cancel()
-			} else if (packet is MovePlayerPacket && canFly) {
-				packet.isOnGround = true
+			} else if (packet is PlayerAuthInputPacket && canFly) {
 				packet.position = packet.position.let {
-					Vector3f.from(it.x, launchY.toFloat(), it.z)
+					Vector3f.from(it.x, launchY, it.z)
 				}
 			}
 		}

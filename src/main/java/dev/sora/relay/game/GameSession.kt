@@ -6,17 +6,12 @@ import dev.sora.relay.game.management.BlobCacheManager
 import dev.sora.relay.game.registry.BlockMapping
 import dev.sora.relay.game.registry.ItemMapping
 import dev.sora.relay.game.registry.LegacyBlockMapping
-import dev.sora.relay.game.utils.toVector3i
 import dev.sora.relay.game.utils.toVector3iFloor
 import dev.sora.relay.game.world.WorldClient
 import dev.sora.relay.session.MinecraftRelayPacketListener
 import dev.sora.relay.session.MinecraftRelaySession
 import dev.sora.relay.utils.logInfo
-import org.cloudburstmc.protocol.bedrock.packet.BedrockPacket
-import org.cloudburstmc.protocol.bedrock.packet.LoginPacket
-import org.cloudburstmc.protocol.bedrock.packet.MovePlayerPacket
-import org.cloudburstmc.protocol.bedrock.packet.PlayerAuthInputPacket
-import org.cloudburstmc.protocol.bedrock.packet.TextPacket
+import org.cloudburstmc.protocol.bedrock.packet.*
 
 class GameSession : MinecraftRelayPacketListener {
 
@@ -67,7 +62,10 @@ class GameSession : MinecraftRelayPacketListener {
             }
             blockMapping = blockDefinitions
             legacyBlockMapping = LegacyBlockMapping.Provider.craftMapping(packet.protocolVersion)
-        }
+        } else if (!thePlayer.movementServerAuthoritative && packet is PlayerAuthInputPacket) {
+			convertAuthInput(packet)?.also { netSession.outboundPacket(it) }
+			return false
+		}
 
         return true
     }
@@ -111,22 +109,30 @@ class GameSession : MinecraftRelayPacketListener {
 		})
 	}
 
-//	private fun convertAuthInput(packet: PlayerAuthInputPacket): MovePlayerPacket? {
-//		var mode = MovePlayerPacket.Mode.NORMAL
-//		if (packet.position.x == thePlayer.posX)
-//
-//		val result = MovePlayerPacket().let {
-//			it.runtimeEntityId = thePlayer.entityId
-//			// TODO: handle riding
-//			it.mode = mode
-//			it.isOnGround = if (packet.position.y % 0.125 == .0) {
-//				packet.position.toVector3iFloor()
-//					.let { if (packet.position.y % 1.0 == .0) it.add(0, -1, 0) else it }
-//					.let { theWorld.getBlockAt(it.x, it.y - 1, it.z).identifier != "minecraft:air" }
-//			} else false
-//			it.tick = packet.tick
-//		}
-//	}
+	private fun convertAuthInput(packet: PlayerAuthInputPacket): MovePlayerPacket? {
+		var mode = MovePlayerPacket.Mode.NORMAL
+		if (packet.position.x == thePlayer.prevPosX && packet.position.y == thePlayer.prevPosY && packet.position.z == thePlayer.prevPosZ) {
+			if (packet.rotation.x == thePlayer.prevRotationPitch && packet.rotation.y == thePlayer.prevRotationYaw) {
+				return null
+			} else {
+				mode = MovePlayerPacket.Mode.HEAD_ROTATION
+			}
+		}
+
+		return MovePlayerPacket().also {
+			it.runtimeEntityId = thePlayer.entityId
+			thePlayer.rideEntity?.also { ride -> it.ridingRuntimeEntityId = ride; println(ride) }
+			it.mode = mode
+			it.isOnGround = if (packet.position.y % 0.125 == .0) {
+				packet.position.toVector3iFloor()
+					.let { if (packet.position.y % 1.0 == .0) it.add(0, -1, 0) else it }
+					.let { theWorld.getBlockAt(it.x, it.y - 1, it.z).identifier != "minecraft:air" }
+			} else false
+			it.tick = packet.tick
+			it.rotation = packet.rotation
+			it.position = packet.position
+		}
+	}
 
     companion object {
         const val RECOMMENDED_VERSION = "1.19.73.02"

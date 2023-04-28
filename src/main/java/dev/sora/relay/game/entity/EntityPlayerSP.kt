@@ -48,6 +48,8 @@ class EntityPlayerSP(private val session: GameSession, override val eventManager
         private set
     var movementServerAuthoritative = false
         private set
+	var movementServerRewind = false
+		private set
     var inventoriesServerAuthoritative = false
         private set
 
@@ -89,7 +91,14 @@ class EntityPlayerSP(private val session: GameSession, override val eventManager
 			entityId = packet.runtimeEntityId
 			blockBreakServerAuthoritative = packet.isServerAuthoritativeBlockBreaking
 			movementServerAuthoritative = packet.authoritativeMovementMode != AuthoritativeMovementMode.CLIENT
+			movementServerRewind = packet.authoritativeMovementMode == AuthoritativeMovementMode.SERVER_WITH_REWIND
 			inventoriesServerAuthoritative = packet.isInventoriesServerAuthoritative
+
+			// override movement authoritative mode
+			if (!movementServerAuthoritative) {
+				packet.authoritativeMovementMode = AuthoritativeMovementMode.SERVER
+			}
+
 			reset()
 		} /* else if (packet is RespawnPacket) {
             entityId = packet.runtimeEntityId
@@ -112,11 +121,12 @@ class EntityPlayerSP(private val session: GameSession, override val eventManager
 				it.handlePacket(packet)
 			}
 		}
-		super.onPacket(packet)
+		onPacket(packet)
 	}
 
 	private val handlePacketOutbound = handle<EventPacketOutbound> { event ->
 		val packet = event.packet
+		// client still sends MovePlayerPacket sometime on if server-auth movement mode
 		if (packet is MovePlayerPacket) {
 			move(packet.position)
 			rotate(packet.rotation)
