@@ -2,6 +2,7 @@ package dev.sora.relay.cheat.module.impl
 
 import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.cheat.value.NamedChoice
+import dev.sora.relay.game.entity.EntityPlayer
 import dev.sora.relay.game.entity.EntityPlayerSP
 import dev.sora.relay.game.event.EventTick
 import dev.sora.relay.game.registry.isBlock
@@ -46,7 +47,7 @@ class ModuleBlockFly : CheatModule("BlockFly") {
 		} else {
 			session.blockMapping.airId
 		}
-		val possibilities = searchBlocks(session.thePlayer.posX, session.thePlayer.posY - 1.62f,
+		val possibilities = searchBlocks(session.thePlayer.posX, session.thePlayer.posY - EntityPlayer.EYE_HEIGHT,
 			session.thePlayer.posZ, 1, world, airId)
 		val block = possibilities.firstOrNull() ?: return@handle
 		val facing = getFacing(block, world, airId) ?: return@handle
@@ -109,7 +110,7 @@ class ModuleBlockFly : CheatModule("BlockFly") {
             for (z in -range..range) {
                 val pos = Vector3i.from(offsetX + x.toDouble(), offsetY - 0.625, offsetZ + z.toDouble())
                 if (world.getBlockIdAt(pos) != expected) continue
-                else if (pos.distanceSquared(offsetX.toDouble(), offsetY + 1.62, offsetZ.toDouble()) > rangeSq) continue
+                else if (pos.distanceSquared(offsetX.toDouble(), offsetY + EntityPlayer.EYE_HEIGHT.toDouble(), offsetZ.toDouble()) > rangeSq) continue
                 EnumFacing.values().forEach {
                     val offset = pos.add(it.unitVector)
                     if (world.getBlockIdAt(offset) != expected/*

@@ -43,7 +43,7 @@ class WorldClient(session: GameSession, eventManager: EventManager) : WorldwideB
 			}
 		} else if (packet is AddPlayerPacket) {
 			entityMap[packet.runtimeEntityId] = EntityPlayer(packet.runtimeEntityId, packet.uuid, packet.username).apply {
-				move(packet.position.add(0f, 1.62f, 0f))
+				move(packet.position.add(0f, EntityPlayer.EYE_HEIGHT, 0f))
 				rotate(packet.rotation)
 				handleSetData(packet.metadata)
 			}

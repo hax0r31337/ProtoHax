@@ -14,4 +14,8 @@ open class EntityPlayer(entityId: Long, open val uuid: UUID, open val username: 
             tickExists++
         }
     }
+
+	companion object {
+		val EYE_HEIGHT = 1.62f
+	}
 }

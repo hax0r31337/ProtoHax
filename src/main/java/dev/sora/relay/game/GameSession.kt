@@ -1,5 +1,6 @@
 package dev.sora.relay.game
 
+import dev.sora.relay.game.entity.EntityPlayer
 import dev.sora.relay.game.entity.EntityPlayerSP
 import dev.sora.relay.game.event.*
 import dev.sora.relay.game.management.BlobCacheManager
@@ -12,6 +13,7 @@ import dev.sora.relay.session.MinecraftRelayPacketListener
 import dev.sora.relay.session.MinecraftRelaySession
 import dev.sora.relay.utils.logInfo
 import org.cloudburstmc.protocol.bedrock.packet.*
+import kotlin.math.floor
 
 class GameSession : MinecraftRelayPacketListener {
 
@@ -123,11 +125,12 @@ class GameSession : MinecraftRelayPacketListener {
 			it.runtimeEntityId = thePlayer.entityId
 			thePlayer.rideEntity?.also { ride -> it.ridingRuntimeEntityId = ride; println(ride) }
 			it.mode = mode
-			it.isOnGround = if (packet.position.y % 0.125 == .0) {
-				packet.position.toVector3iFloor()
-					.let { if (packet.position.y % 1.0 == .0) it.add(0, -1, 0) else it }
-					.let { theWorld.getBlockAt(it.x, it.y - 1, it.z).identifier != "minecraft:air" }
-			} else false
+			val playerMinY = floor((packet.position.y - EntityPlayer.EYE_HEIGHT) * 1000) / 1000
+			it.isOnGround = if (playerMinY % 0.125f == 0f) {
+				packet.position.add(0f, -EntityPlayer.EYE_HEIGHT, 0f).toVector3iFloor()
+					.let { if (playerMinY % 1 == 0f) it.add(0, -1, 0) else it }
+					.let { theWorld.getBlockAt(it.x, it.y, it.z).identifier != "minecraft:air" }
+			} else thePlayer.posY == thePlayer.prevPosY
 			it.tick = packet.tick
 			it.rotation = packet.rotation
 			it.position = packet.position
