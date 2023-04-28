@@ -28,7 +28,6 @@ class GameSession : MinecraftRelayPacketListener {
     var legacyBlockMapping = LegacyBlockMapping(emptyMap())
         private set
 
-
     val netSessionInitialized: Boolean
         get() = this::netSession.isInitialized
 

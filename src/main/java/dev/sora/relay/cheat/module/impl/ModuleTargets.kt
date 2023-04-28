@@ -7,7 +7,7 @@ import dev.sora.relay.game.entity.EntityPlayer
 import dev.sora.relay.game.entity.EntityPlayerSP
 import dev.sora.relay.game.entity.EntityUnknown
 
-class ModuleTargets : CheatModule("Targets") {
+class ModuleTargets : CheatModule("Targets", canToggle = false) {
 
 	private var targetPlayersValue by boolValue("TargetPlayers", true)
 	private var targetEntitiesValue by boolValue("TargetEntities", false)
