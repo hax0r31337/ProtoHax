@@ -30,7 +30,6 @@ open class RelayListenerEncryptedSession() : MinecraftRelayPacketListener {
 
 	lateinit var session: MinecraftRelaySession
 
-
 	open override fun onPacketInbound(packet: BedrockPacket): Boolean {
 		if (packet is ServerToClientHandshakePacket) {
 			val jwtSplit = packet.jwt.split(".")
@@ -54,7 +53,7 @@ open class RelayListenerEncryptedSession() : MinecraftRelayPacketListener {
 			packet.chain.forEach {
 				val chainBody = JsonParser.parseString(it.payload.toString()).asJsonObject
 				if (chainBody.has("extraData")) {
-					chainBody.addProperty("identityPublicKey", Base64.getEncoder().encodeToString(keyPair.public.encoded))
+					chainBody.addProperty("identityPublicKey", Base64.getEncoder().withoutPadding().encodeToString(keyPair.public.encoded))
 					newChain = signJWT(Payload(AbstractConfigManager.DEFAULT_GSON.toJson(chainBody)), keyPair)
 				}
 			}
@@ -69,7 +68,7 @@ open class RelayListenerEncryptedSession() : MinecraftRelayPacketListener {
 
 		fun signJWT(payload: Payload, keyPair: KeyPair): SignedJWT {
 			val header = JWSHeader.Builder(JWSAlgorithm.ES384)
-				.x509CertURL(URI(Base64.getEncoder().encodeToString(keyPair.public.encoded)))
+				.x509CertURL(URI(Base64.getEncoder().withoutPadding().encodeToString(keyPair.public.encoded)))
 				.build()
 			val jws = JWSObject(header, payload)
 			EncryptionUtils.signJwt(jws, keyPair.private as ECPrivateKey)

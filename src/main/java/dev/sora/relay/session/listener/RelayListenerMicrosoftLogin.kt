@@ -142,7 +142,7 @@ class RelayListenerMicrosoftLogin(val accessToken: String, val deviceInfo: Devic
         fun fetchRawChain(identityToken: String, publicKey: PublicKey): InputStreamReader {
             // then, we can request the chain
             val data = JsonObject().apply {
-                addProperty("identityPublicKey", Base64.getEncoder().encodeToString(publicKey.encoded))
+                addProperty("identityPublicKey", Base64.getEncoder().withoutPadding().encodeToString(publicKey.encoded))
             }
             val connection = HttpUtils.make("https://multiplayer.minecraft.net/authentication", "POST", AbstractConfigManager.DEFAULT_GSON.toJson(data),
                 mapOf("Content-Type" to "application/json", "Authorization" to identityToken,

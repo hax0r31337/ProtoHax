@@ -134,7 +134,7 @@ class EntityPlayerSP(private val session: GameSession, override val eventManager
 			move(packet.position)
 			rotate(packet.rotation)
 			session.onTick()
-			tickExists++
+			tickExists = packet.tick
 			silentRotation?.let {
 				packet.rotation = Vector3f.from(it.first, it.second, packet.rotation.z)
 				silentRotation = null

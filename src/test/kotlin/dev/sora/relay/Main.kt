@@ -29,7 +29,7 @@ fun main(args: Array<String>) {
 
     val dst = InetSocketAddress("127.0.0.1", 19136)
 	var loginThread: Thread? = null
-    val sessionEncryptor = if(tokenFile.exists()) {
+    val sessionEncryptor = if(tokenFile.exists() && !args.contains("--offline")) {
 		val deviceInfo = RelayListenerMicrosoftLogin.DEVICE_NINTENDO
 		RelayListenerMicrosoftLogin(getMSAccessToken(deviceInfo.appId), deviceInfo).also {
 			loginThread = thread {
@@ -38,7 +38,7 @@ fun main(args: Array<String>) {
 			}
 		}
 	} else {
-		logWarn("no token file found, you won't able to join xbox authenticated servers")
+		logWarn("Logged in as Offline Mode, you won't able to join xbox authenticated servers")
 		RelayListenerEncryptedSession()
 	}
     val relay = MinecraftRelay(object : MinecraftRelayListener {
