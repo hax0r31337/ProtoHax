@@ -7,6 +7,7 @@ import dev.sora.relay.game.event.*
 import dev.sora.relay.game.inventory.AbstractInventory
 import dev.sora.relay.game.inventory.ContainerInventory
 import dev.sora.relay.game.inventory.PlayerInventory
+import dev.sora.relay.game.utils.toVector3iFloor
 import org.cloudburstmc.math.vector.Vector3f
 import org.cloudburstmc.protocol.bedrock.data.AuthoritativeMovementMode
 import org.cloudburstmc.protocol.bedrock.data.PlayerAuthInputData
@@ -16,6 +17,7 @@ import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.InventoryTra
 import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.ItemUseTransaction
 import org.cloudburstmc.protocol.bedrock.packet.*
 import java.util.*
+import kotlin.math.floor
 
 class EntityPlayerSP(private val session: GameSession, override val eventManager: EventManager) : EntityPlayer(0L, UUID.randomUUID(), ""), Listenable {
 
@@ -43,6 +45,9 @@ class EntityPlayerSP(private val session: GameSession, override val eventManager
             return (cur - lastTick).coerceIn(0L, 50L) / 50f
         }
 
+	var onGround = false
+	var prevOnGround = false
+
     // new introduced "server authoritative" mode
     var blockBreakServerAuthoritative = false
         private set
@@ -53,6 +58,7 @@ class EntityPlayerSP(private val session: GameSession, override val eventManager
     var inventoriesServerAuthoritative = false
         private set
 
+	val inputData = mutableListOf<PlayerAuthInputData>()
     private val pendingItemInteraction = LinkedList<ItemUseTransaction>()
     private var skipSwings = 0
 
@@ -130,10 +136,15 @@ class EntityPlayerSP(private val session: GameSession, override val eventManager
 		if (packet is MovePlayerPacket) {
 			move(packet.position)
 			rotate(packet.rotation)
+
 			if (packet.runtimeEntityId != entityId) {
 				session.chat("runtimeEntityId mismatch, desync occur? (client=${packet.runtimeEntityId}, relay=${entityId})")
 				entityId = packet.runtimeEntityId
 			}
+
+			prevOnGround = onGround
+			onGround = packet.isOnGround
+
 			session.onTick()
 			tickExists = packet.tick
 			silentRotation?.let {
@@ -143,16 +154,29 @@ class EntityPlayerSP(private val session: GameSession, override val eventManager
 		} else if (packet is PlayerAuthInputPacket) {
 			move(packet.position)
 			rotate(packet.rotation)
+
+			prevOnGround = onGround
+			val playerMinY = floor((posY - EYE_HEIGHT) * 1000) / 1000
+			onGround = if (playerMinY % 0.125f == 0f) {
+				packet.position.add(0f, -EYE_HEIGHT, 0f).toVector3iFloor()
+					.let { if (playerMinY % 1 == 0f) it.add(0, -1, 0) else it }
+					.let { session.theWorld.getBlockAt(it.x, it.y, it.z).identifier != "minecraft:air" }
+			} else prevPosY == posY
+
+			inputData.clear()
+			inputData.addAll(packet.inputData)
+
 			session.onTick()
-			tickExists = packet.tick
-			silentRotation?.let {
-				packet.rotation = Vector3f.from(it.first, it.second, packet.rotation.z)
-				silentRotation = null
-			}
 
 			if (pendingItemInteraction.isNotEmpty() && !packet.inputData.contains(PlayerAuthInputData.PERFORM_ITEM_INTERACTION)) {
 				packet.inputData.add(PlayerAuthInputData.PERFORM_ITEM_INTERACTION)
 				packet.itemUseTransaction = pendingItemInteraction.pop()
+			}
+
+			tickExists = packet.tick
+			silentRotation?.let {
+				packet.rotation = Vector3f.from(it.first, it.second, packet.rotation.z)
+				silentRotation = null
 			}
 		} else if (packet is LoginPacket) {
 			packet.chain.forEach {

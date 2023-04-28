@@ -8,6 +8,7 @@ import dev.sora.relay.game.event.EventTick
 import org.cloudburstmc.math.vector.Vector3f
 import org.cloudburstmc.protocol.bedrock.data.Ability
 import org.cloudburstmc.protocol.bedrock.data.AbilityLayer
+import org.cloudburstmc.protocol.bedrock.data.PlayerAuthInputData
 import org.cloudburstmc.protocol.bedrock.data.PlayerPermission
 import org.cloudburstmc.protocol.bedrock.data.command.CommandPermission
 import org.cloudburstmc.protocol.bedrock.data.entity.EntityEventType
@@ -141,8 +142,15 @@ class ModuleFly : CheatModule("Fly") {
 
 	inner class Jetpack : Choice("Jetpack") {
 
+		private var pressJumpValue by boolValue("PressJump", true)
+
 		private val handleTick = handle<EventTick> { event ->
 			val session = event.session
+
+			if (pressJumpValue && !session.thePlayer.inputData.contains(PlayerAuthInputData.JUMP_DOWN)) {
+				return@handle
+			}
+
 			session.netSession.inboundPacket(SetEntityMotionPacket().apply {
 				runtimeEntityId = session.thePlayer.entityId
 

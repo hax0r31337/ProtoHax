@@ -32,6 +32,7 @@ class ModuleManager(private val session: GameSession) {
         registerModule(ModuleBlink())
         registerModule(ModuleBlockFly())
         registerModule(ModuleInventoryHelper())
+		registerModule(ModuleAirJump())
     }
 
 	inline fun <reified T : CheatModule> getModule(t: Class<T>): T {
