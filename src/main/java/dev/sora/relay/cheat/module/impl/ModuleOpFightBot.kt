@@ -17,7 +17,7 @@ class ModuleOpFightBot : CheatModule("OPFightBot") {
 
 	private val handleTick = handle<EventTick> { event ->
 		val session = event.session
-		val moduleTargets = moduleManager.getModule(ModuleTargets::class.java) ?: error("no module found as Targets")
+		val moduleTargets = moduleManager.getModule(ModuleTargets::class.java)
 		val target = session.theWorld.entityMap.values.filter { with(moduleTargets) { it.isTarget() } }
 			.minByOrNull { it.distanceSq(session.thePlayer) } ?: return@handle
 		if(target.distance(session.thePlayer) < 5) {
@@ -25,10 +25,10 @@ class ModuleOpFightBot : CheatModule("OPFightBot") {
 				Mode.RANDOM -> Math.random() * 360
 				Mode.STRAFE -> ((session.thePlayer.tickExists * strafeSpeedValue) % 360).toDouble()
 				Mode.BEHIND -> target.rotationYaw + 180.0
-			})
-			session.thePlayer.teleport(target.posX - sin(direction) * rangeValue, target.posY + 0.5, target.posZ + cos(direction) * rangeValue)
+			}).toFloat()
+			session.thePlayer.teleport(target.posX - sin(direction) * rangeValue, target.posY + 0.5f, target.posZ + cos(direction) * rangeValue)
 		} else {
-			val direction = atan2(target.posZ - session.thePlayer.posZ, target.posX - session.thePlayer.posX) - Math.toRadians(90.0)
+			val direction = atan2(target.posZ - session.thePlayer.posZ, target.posX - session.thePlayer.posX) - Math.toRadians(90.0).toFloat()
 			session.thePlayer.teleport(session.thePlayer.posX - sin(direction) * horizontalSpeedValue,
 				target.posY.coerceIn(session.thePlayer.posY - verticalSpeedValue, session.thePlayer.posY + verticalSpeedValue),
 				session.thePlayer.posZ + cos(direction) * horizontalSpeedValue)

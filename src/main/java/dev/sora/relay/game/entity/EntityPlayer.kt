@@ -9,7 +9,7 @@ open class EntityPlayer(entityId: Long, open val uuid: UUID, open val username: 
     override fun onPacket(packet: BedrockPacket) {
         super.onPacket(packet)
         if (packet is MovePlayerPacket && packet.runtimeEntityId == entityId) {
-            move(packet.position.x.toDouble(), packet.position.y.toDouble(), packet.position.z.toDouble())
+            move(packet.position.x, packet.position.y, packet.position.z)
             rotate(packet.rotation)
             tickExists++
         }

@@ -25,7 +25,7 @@ class ModuleKillAura : CheatModule("KillAura") {
 		val session = event.session
 
 		val range = rangeValue.pow(2)
-		val moduleTargets = moduleManager.getModule(ModuleTargets::class.java) ?: error("no module found as Targets")
+		val moduleTargets = moduleManager.getModule(ModuleTargets::class.java)
 		val entityList = session.theWorld.entityMap.values.filter {
 			it.distanceSq(session.thePlayer) < range && with(moduleTargets) { it.isTarget() } }
 		if (entityList.isEmpty()) return@handle

@@ -1,15 +1,16 @@
 package dev.sora.relay.game.utils
 
 import org.cloudburstmc.math.vector.Vector3d
+import org.cloudburstmc.math.vector.Vector3f
 import org.cloudburstmc.math.vector.Vector3i
 import kotlin.math.floor
 
-data class AxisAlignedBB(var minX: Double, var minY: Double, var minZ: Double,
-                         var maxX: Double, var maxY: Double, var maxZ: Double) {
+data class AxisAlignedBB(var minX: Float, var minY: Float, var minZ: Float,
+                         var maxX: Float, var maxY: Float, var maxZ: Float) {
 
-    constructor(minX: Int, minY: Int, minZ: Int, maxX: Int, maxY: Int, maxZ: Int) : this(minX.toDouble(), minY.toDouble(), minZ.toDouble(), maxX.toDouble(), maxY.toDouble(), maxZ.toDouble())
+    constructor(minX: Int, minY: Int, minZ: Int, maxX: Int, maxY: Int, maxZ: Int) : this(minX.toFloat(), minY.toFloat(), minZ.toFloat(), maxX.toFloat(), maxY.toFloat(), maxZ.toFloat())
 
-    constructor(vec: Vector3d, vec1: Vector3d) : this(vec.x, vec.y, vec.z, vec1.x, vec1.y, vec1.z)
+    constructor(vec: Vector3f, vec1: Vector3f) : this(vec.x, vec.y, vec.z, vec1.x, vec1.y, vec1.z)
 
     constructor(vec: Vector3i, vec1: Vector3i) : this(vec.x, vec.y, vec.z, vec1.x, vec1.y, vec1.z)
 
@@ -22,7 +23,7 @@ data class AxisAlignedBB(var minX: Double, var minY: Double, var minZ: Double,
         this.maxZ = floor(this.maxZ)
     }
 
-    fun addCoord(x: Double, y: Double, z: Double) {
+    fun addCoord(x: Float, y: Float, z: Float) {
         if (x < 0) this.minX += x
         else this.maxX += x
 
@@ -33,7 +34,7 @@ data class AxisAlignedBB(var minX: Double, var minY: Double, var minZ: Double,
         else this.maxZ += z
     }
 
-    fun contract(x: Double, y: Double, z: Double) {
+    fun contract(x: Float, y: Float, z: Float) {
         this.minX += x
         this.minY += y
         this.minZ += z
@@ -42,7 +43,7 @@ data class AxisAlignedBB(var minX: Double, var minY: Double, var minZ: Double,
         this.maxZ -= z
     }
 
-    fun expand(x: Double, y: Double, z: Double) {
+    fun expand(x: Float, y: Float, z: Float) {
         this.minX -= x
         this.minY -= y
         this.minZ -= z
@@ -51,7 +52,7 @@ data class AxisAlignedBB(var minX: Double, var minY: Double, var minZ: Double,
         this.maxZ += z
     }
 
-    fun offset(x: Double, y: Double, z: Double) {
+    fun offset(x: Float, y: Float, z: Float) {
         this.minX += x
         this.minY += y
         this.minZ += z
@@ -60,7 +61,7 @@ data class AxisAlignedBB(var minX: Double, var minY: Double, var minZ: Double,
         this.maxZ += z
     }
 
-    fun intersects(minX: Double, minY: Double, minZ: Double, maxX: Double, maxY: Double, maxZ: Double): Boolean {
+    fun intersects(minX: Float, minY: Float, minZ: Float, maxX: Float, maxY: Float, maxZ: Float): Boolean {
         return this.minX < maxX && this.maxX > minX && this.minY < maxY &&
                 this.maxY > minY && this.minZ < maxZ && this.maxZ > minZ
     }

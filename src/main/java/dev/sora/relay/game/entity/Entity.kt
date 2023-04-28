@@ -10,21 +10,21 @@ import kotlin.math.sqrt
 
 abstract class Entity(open val entityId: Long) {
 
-    open var posX = 0.0
-    open var posY = 0.0
-    open var posZ = 0.0
+    open var posX = 0f
+    open var posY = 0f
+    open var posZ = 0f
 
-    open var prevPosX = 0.0
-    open var prevPosY = 0.0
-    open var prevPosZ = 0.0
+    open var prevPosX = 0f
+    open var prevPosY = 0f
+    open var prevPosZ = 0f
 
     open var rotationYaw = 0f
     open var rotationPitch = 0f
     open var rotationYawHead = 0f
 
-    open var motionX = 0.0
-    open var motionY = 0.0
-    open var motionZ = 0.0
+    open var motionX = 0f
+    open var motionY = 0f
+    open var motionZ = 0f
 
     open var tickExists = 0L
         protected set
@@ -40,7 +40,7 @@ abstract class Entity(open val entityId: Long) {
     val vec3Rotation: Vector3f
         get() = Vector3f.from(rotationPitch, rotationYaw, rotationYawHead)
 
-    open fun move(x: Double, y: Double, z: Double) {
+    open fun move(x: Float, y: Float, z: Float) {
         this.prevPosX = this.posX
         this.prevPosY = this.posY
         this.prevPosZ = this.posZ
@@ -53,7 +53,7 @@ abstract class Entity(open val entityId: Long) {
     }
 
     open fun move(position: Vector3f) {
-        move(position.x.toDouble(), position.y.toDouble(), position.z.toDouble())
+        move(position.x, position.y, position.z)
     }
 
     open fun rotate(yaw: Float, pitch: Float) {
@@ -74,7 +74,7 @@ abstract class Entity(open val entityId: Long) {
         rotate(rotation.y, rotation.x, rotation.z)
     }
 
-    fun distanceSq(x: Double, y: Double, z: Double): Double {
+    fun distanceSq(x: Float, y: Float, z: Float): Float {
         val dx = posX - x
         val dy = posY - y
         val dz = posZ - z
@@ -84,7 +84,7 @@ abstract class Entity(open val entityId: Long) {
     fun distanceSq(entity: Entity)
             = distanceSq(entity.posX, entity.posY, entity.posZ)
 
-    fun distance(x: Double, y: Double, z: Double)
+    fun distance(x: Float, y: Float, z: Float)
         = sqrt(distanceSq(x, y, z))
 
     fun distance(entity: Entity)

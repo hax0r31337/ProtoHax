@@ -21,3 +21,7 @@ fun Vector3i.toVector3f(): Vector3f {
 fun Vector3f.toVector3i(): Vector3i {
     return Vector3i.from(x.roundToInt(), y.roundToInt(), z.roundToInt())
 }
+
+fun Vector3f.toVector3iFloor(): Vector3i {
+	return Vector3i.from(kotlin.math.floor(x).toInt(), kotlin.math.floor(y).toInt(), kotlin.math.floor(z).toInt())
+}

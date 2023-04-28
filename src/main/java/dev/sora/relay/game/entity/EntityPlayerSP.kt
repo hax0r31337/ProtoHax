@@ -60,7 +60,7 @@ class EntityPlayerSP(private val session: GameSession, override val eventManager
         super.rotate(yaw, pitch)
     }
 
-    fun teleport(x: Double, y: Double, z: Double) {
+    fun teleport(x: Float, y: Float, z: Float) {
         move(x, y, z)
         session.netSession.inboundPacket(MovePlayerPacket().apply {
             runtimeEntityId = entityId
@@ -125,7 +125,7 @@ class EntityPlayerSP(private val session: GameSession, override val eventManager
 				entityId = packet.runtimeEntityId
 			}
 			session.onTick()
-			tickExists++
+			tickExists = packet.tick
 			silentRotation?.let {
 				packet.rotation = Vector3f.from(it.first, it.second, packet.rotation.z)
 				silentRotation = null

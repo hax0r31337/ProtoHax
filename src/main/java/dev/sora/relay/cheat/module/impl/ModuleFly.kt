@@ -22,7 +22,7 @@ class ModuleFly : CheatModule("Fly") {
     private var modeValue by choiceValue("Mode", arrayOf(Vanilla(), Mineplex(), Jetpack()), "Vanilla")
     private var speedValue by floatValue("Speed", 1.5f, 0.1f..5f)
 
-    private var launchY = 0.0
+    private var launchY = 0f
     private var canFly = false
 
     private val abilityPacket = UpdateAbilitiesPacket().apply {
@@ -93,12 +93,12 @@ class ModuleFly : CheatModule("Fly") {
 			})
 			if (!canFly) return@handle
 			val player = session.thePlayer
-			val yaw = Math.toRadians(player.rotationYaw.toDouble())
+			val yaw = Math.toRadians(player.rotationYaw.toDouble()).toFloat()
 			val value = speedValue
 			if (mineplexMotionValue) {
 				session.netSession.inboundPacket(SetEntityMotionPacket().apply {
 					runtimeEntityId = session.thePlayer.entityId
-					motion = Vector3f.from(-sin(yaw) * value, 0.0, +cos(yaw) * value)
+					motion = Vector3f.from(-sin(yaw) * value, 0f, +cos(yaw) * value)
 				})
 			} else {
 				player.teleport(player.posX - sin(yaw) * value, launchY, player.posZ + cos(yaw) * value)
@@ -111,7 +111,7 @@ class ModuleFly : CheatModule("Fly") {
 			if (packet is RequestAbilityPacket && packet.ability == Ability.FLYING) {
 				canFly = !canFly
 				if (canFly) {
-					launchY = floor(session.thePlayer.posY) - 0.38
+					launchY = floor(session.thePlayer.posY) - 0.38f
 					event.session.sendPacketToClient(EntityEventPacket().apply {
 						runtimeEntityId = event.session.thePlayer.entityId
 						type = EntityEventType.HURT
