@@ -78,7 +78,7 @@ class EntityPlayerSP(private val session: GameSession, override val eventManager
             runtimeEntityId = this@EntityPlayerSP.runtimeEntityId
             position = Vector3f.from(x, y, z)
             rotation = Vector3f.from(rotationPitch, rotationYaw, 0f)
-            mode = MovePlayerPacket.Mode.NORMAL
+            mode = MovePlayerPacket.Mode.TELEPORT
         })
     }
 
