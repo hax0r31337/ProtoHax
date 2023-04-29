@@ -1,6 +1,7 @@
 package dev.sora.relay.game.inventory
 
 import dev.sora.relay.game.GameSession
+import dev.sora.relay.utils.logInfo
 import org.cloudburstmc.protocol.bedrock.data.inventory.ContainerId
 import org.cloudburstmc.protocol.bedrock.data.inventory.ContainerSlotType
 import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData
@@ -28,9 +29,9 @@ abstract class AbstractInventory(val containerId: Int) {
         return containerId to slot
     }
 
-    private fun getSlotTypeFromInventoryId(id: Int, slot: Int): ContainerSlotType? {
+    private fun getSlotTypeFromInventoryId(id: Int, slot: Int): ContainerSlotType {
         return when(id) {
-            ContainerId.INVENTORY -> (if (slot < 9) ContainerSlotType.HOTBAR else ContainerSlotType.INVENTORY)
+            ContainerId.INVENTORY -> ContainerSlotType.INVENTORY
             ContainerId.ARMOR -> ContainerSlotType.ARMOR
             ContainerId.OFFHAND -> ContainerSlotType.OFFHAND
             else -> ContainerSlotType.LEVEL_ENTITY
@@ -65,6 +66,7 @@ abstract class AbstractInventory(val containerId: Int) {
         // send packet to server
         val pk = moveItem(sourceSlot, destinationSlot, destinationInventory,
             if (session.thePlayer.inventoriesServerAuthoritative) session.thePlayer.inventory.getRequestId() else Int.MAX_VALUE)
+		logInfo("$pk")
         sendInventoryPacket(pk, destinationInventory, session)
 
         // sync with client
@@ -106,6 +108,7 @@ abstract class AbstractInventory(val containerId: Int) {
         // send packet to server
         val pk = dropItem(slot,
             if (session.thePlayer.inventoriesServerAuthoritative) session.thePlayer.inventory.getRequestId() else Int.MAX_VALUE)
+		logInfo("$pk")
         sendInventoryPacket(pk, null, session)
 
         // sync with client
@@ -120,14 +123,15 @@ abstract class AbstractInventory(val containerId: Int) {
     private fun sendInventoryPacket(pk: BedrockPacket, destinationInventory: AbstractInventory?, session: GameSession) {
         if (pk is ItemStackRequestPacket) {
             if (destinationInventory is PlayerInventory) {
-                destinationInventory
+				pk.requests.forEach { request ->
+					destinationInventory.itemStackRequest(request, session)
+				}
             } else if (this is PlayerInventory) {
-                this
+				pk.requests.forEach { request ->
+					this.itemStackRequest(request, session)
+				}
             } else {
                 session.sendPacket(pk)
-                null
-            }?.also {
-                it.itemStackRequest(pk.requests[0], session)
             }
         } else {
             session.sendPacket(pk)

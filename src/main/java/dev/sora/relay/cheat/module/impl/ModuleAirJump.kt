@@ -23,8 +23,6 @@ class ModuleAirJump : CheatModule("AirJump") {
 						runtimeEntityId = player.runtimeEntityId
 						motion = Vector3f.from(player.posX - player.prevPosX, 0.42f, player.posZ - player.prevPosZ)
 					})
-				} else {
-					println("skip")
 				}
 			}
 			jumpPressed = true

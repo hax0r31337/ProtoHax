@@ -23,6 +23,10 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper") {
 
     private var stealChestValue by boolValue("StealChest", true)
     private var guiOpenValue by boolValue("GuiOpen", false)
+
+	/**
+	 * FIXME
+	 */
     private var simulateInventoryValue by boolValue("SimulateInventory", false)
     private var autoCloseValue by boolValue("AutoClose", false)
     private var throwUnnecessaryValue by boolValue("ThrowUnnecessary", true)

@@ -2,6 +2,7 @@ package dev.sora.relay.game.inventory
 
 import dev.sora.relay.game.GameSession
 import dev.sora.relay.game.entity.EntityPlayerSP
+import dev.sora.relay.utils.logInfo
 import org.cloudburstmc.protocol.bedrock.data.PlayerAuthInputData
 import org.cloudburstmc.protocol.bedrock.data.inventory.ContainerId
 import org.cloudburstmc.protocol.bedrock.data.inventory.ContainerSlotType
@@ -157,6 +158,7 @@ class PlayerInventory(private val player: EntityPlayerSP) : EntityInventory(0L) 
             ContainerSlotType.INVENTORY -> 0
             ContainerSlotType.ARMOR -> 36
             ContainerSlotType.OFFHAND -> 40
+			ContainerSlotType.HOTBAR -> 27
             else -> null
         }
     }

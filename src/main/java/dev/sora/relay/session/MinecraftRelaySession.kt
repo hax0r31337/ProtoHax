@@ -2,6 +2,7 @@ package dev.sora.relay.session
 
 import dev.sora.relay.utils.logError
 import dev.sora.relay.utils.logInfo
+import io.netty.util.ReferenceCountUtil
 import org.cloudburstmc.protocol.bedrock.BedrockClientSession
 import org.cloudburstmc.protocol.bedrock.BedrockPeer
 import org.cloudburstmc.protocol.bedrock.BedrockServerSession
@@ -44,6 +45,7 @@ class MinecraftRelaySession(peer: BedrockPeer, subClientId: Int) : BedrockServer
 
     override fun onPacket(wrapper: BedrockPacketWrapper) {
 		val packet = wrapper.packet
+		ReferenceCountUtil.retain(packet)
 
         listeners.forEach { l ->
             try {
@@ -95,6 +97,7 @@ class MinecraftRelaySession(peer: BedrockPeer, subClientId: Int) : BedrockServer
 
         override fun onPacket(wrapper: BedrockPacketWrapper) {
 			val packet = wrapper.packet
+			ReferenceCountUtil.retain(packet)
 
             listeners.forEach { l ->
                 try {

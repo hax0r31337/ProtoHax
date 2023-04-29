@@ -11,20 +11,20 @@ import org.cloudburstmc.protocol.bedrock.data.AbilityLayer
 import org.cloudburstmc.protocol.bedrock.data.PlayerAuthInputData
 import org.cloudburstmc.protocol.bedrock.data.PlayerPermission
 import org.cloudburstmc.protocol.bedrock.data.command.CommandPermission
-import org.cloudburstmc.protocol.bedrock.data.entity.EntityEventType
 import org.cloudburstmc.protocol.bedrock.packet.*
 import kotlin.math.PI
 import kotlin.math.cos
-import kotlin.math.floor
 import kotlin.math.sin
 
 class ModuleFly : CheatModule("Fly") {
 
     private var modeValue by choiceValue("Mode", arrayOf(Vanilla(), Mineplex(), Jetpack()), "Vanilla")
     private var speedValue by floatValue("Speed", 1.5f, 0.1f..5f)
+	private var pressJumpValue by boolValue("PressJump", true)
 
     private var launchY = 0f
-    private var canFly = false
+	private val canFly: Boolean
+		get() = !(pressJumpValue && !session.thePlayer.inputData.contains(PlayerAuthInputData.JUMP_DOWN))
 
     private val abilityPacket = UpdateAbilitiesPacket().apply {
         playerPermission = PlayerPermission.OPERATOR
@@ -39,7 +39,6 @@ class ModuleFly : CheatModule("Fly") {
     }
 
     override fun onEnable() {
-        canFly = false
         launchY = session.thePlayer.posY
     }
 
@@ -67,10 +66,9 @@ class ModuleFly : CheatModule("Fly") {
 	inner class Vanilla : Choice("Vanilla") {
 
 		private val handleTick = handle<EventTick> { event ->
-			if (!canFly) {
-				canFly = true
+			if (event.session.thePlayer.tickExists % 10 == 0L) {
 				event.session.netSession.inboundPacket(abilityPacket.apply {
-					uniqueEntityId = session.thePlayer.uniqueEntityId
+					uniqueEntityId = event.session.thePlayer.uniqueEntityId
 				})
 			}
 		}
@@ -78,21 +76,19 @@ class ModuleFly : CheatModule("Fly") {
 
 	inner class Mineplex : Choice("Mineplex") {
 
-		private var mineplexDirectValue by boolValue("MineplexDirect", false)
 		private var mineplexMotionValue by boolValue("MineplexMotion", false)
-
-		override fun onEnable() {
-			if (mineplexDirectValue) {
-				canFly = true
-			}
-		}
 
 		private val handleTick = handle<EventTick> { event ->
 			val session = event.session
-			session.netSession.inboundPacket(abilityPacket.apply {
-				uniqueEntityId = session.thePlayer.uniqueEntityId
-			})
-			if (!canFly) return@handle
+			if (session.thePlayer.tickExists % 10 == 0L) {
+				session.netSession.inboundPacket(abilityPacket.apply {
+					uniqueEntityId = session.thePlayer.uniqueEntityId
+				})
+			}
+			if (!canFly) {
+				launchY = session.thePlayer.posY
+				return@handle
+			}
 			val player = session.thePlayer
 			val yaw = Math.toRadians(player.rotationYaw.toDouble()).toFloat()
 			val value = speedValue
@@ -110,24 +106,6 @@ class ModuleFly : CheatModule("Fly") {
 			val packet = event.packet
 
 			if (packet is RequestAbilityPacket && packet.ability == Ability.FLYING) {
-				canFly = !canFly
-				if (canFly) {
-					launchY = floor(session.thePlayer.posY) - 0.38f
-					event.session.sendPacketToClient(EntityEventPacket().apply {
-						runtimeEntityId = event.session.thePlayer.runtimeEntityId
-						type = EntityEventType.HURT
-						data = 0
-					})
-					val player = event.session.thePlayer
-					repeat(5) {
-						event.session.sendPacket(MovePlayerPacket().apply {
-							runtimeEntityId = player.runtimeEntityId
-							position = Vector3f.from(player.posX, launchY, player.posZ)
-							rotation = Vector3f.from(player.rotationPitch, player.rotationYaw, 0f)
-							mode = MovePlayerPacket.Mode.NORMAL
-						})
-					}
-				}
 				event.session.netSession.inboundPacket(abilityPacket.apply {
 					uniqueEntityId = session.thePlayer.uniqueEntityId
 				})
@@ -142,12 +120,10 @@ class ModuleFly : CheatModule("Fly") {
 
 	inner class Jetpack : Choice("Jetpack") {
 
-		private var pressJumpValue by boolValue("PressJump", true)
-
 		private val handleTick = handle<EventTick> { event ->
 			val session = event.session
 
-			if (pressJumpValue && !session.thePlayer.inputData.contains(PlayerAuthInputData.JUMP_DOWN)) {
+			if (!canFly) {
 				return@handle
 			}
 
