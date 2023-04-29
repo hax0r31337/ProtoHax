@@ -7,6 +7,7 @@ import dev.sora.relay.game.event.*
 import dev.sora.relay.game.inventory.AbstractInventory
 import dev.sora.relay.game.inventory.ContainerInventory
 import dev.sora.relay.game.inventory.PlayerInventory
+import dev.sora.relay.game.utils.Rotation
 import dev.sora.relay.game.utils.toVector3iFloor
 import org.cloudburstmc.math.vector.Vector3f
 import org.cloudburstmc.protocol.bedrock.data.AuthoritativeMovementMode
@@ -19,10 +20,13 @@ import org.cloudburstmc.protocol.bedrock.packet.*
 import java.util.*
 import kotlin.math.floor
 
-class EntityPlayerSP(private val session: GameSession, override val eventManager: EventManager) : EntityPlayer(0L, UUID.randomUUID(), ""), Listenable {
+class EntityPlayerSP(private val session: GameSession, override val eventManager: EventManager) : EntityPlayer(0L, 0L, UUID.randomUUID(), ""), Listenable {
 
-    override var entityId: Long = 0L
+    override var runtimeEntityId: Long = 0L
         private set
+	override var uniqueEntityId: Long = 0L
+		private set
+
     override var uuid = UUID.randomUUID()
         private set
     override var username = ""
@@ -34,7 +38,7 @@ class EntityPlayerSP(private val session: GameSession, override val eventManager
     var openContainer: AbstractInventory? = null
         private set
 
-    var silentRotation: Pair<Float, Float>? = null
+    var silentRotation: Rotation? = null
 
     var prevRotationYaw = 0f
     var prevRotationPitch = 0f
@@ -71,7 +75,7 @@ class EntityPlayerSP(private val session: GameSession, override val eventManager
     fun teleport(x: Float, y: Float, z: Float) {
         move(x, y, z)
         session.netSession.inboundPacket(MovePlayerPacket().apply {
-            runtimeEntityId = entityId
+            runtimeEntityId = this@EntityPlayerSP.runtimeEntityId
             position = Vector3f.from(x, y, z)
             rotation = Vector3f.from(rotationPitch, rotationYaw, 0f)
             mode = MovePlayerPacket.Mode.NORMAL
@@ -94,7 +98,9 @@ class EntityPlayerSP(private val session: GameSession, override val eventManager
 		val packet = it.packet
 
 		if (packet is StartGamePacket) {
-			entityId = packet.runtimeEntityId
+			runtimeEntityId = packet.runtimeEntityId
+			uniqueEntityId = packet.uniqueEntityId
+
 			blockBreakServerAuthoritative = packet.isServerAuthoritativeBlockBreaking
 			movementServerAuthoritative = packet.authoritativeMovementMode != AuthoritativeMovementMode.CLIENT
 			movementServerRewind = packet.authoritativeMovementMode == AuthoritativeMovementMode.SERVER_WITH_REWIND
@@ -137,9 +143,9 @@ class EntityPlayerSP(private val session: GameSession, override val eventManager
 			move(packet.position)
 			rotate(packet.rotation)
 
-			if (packet.runtimeEntityId != entityId) {
-				session.chat("runtimeEntityId mismatch, desync occur? (client=${packet.runtimeEntityId}, relay=${entityId})")
-				entityId = packet.runtimeEntityId
+			if (packet.runtimeEntityId != runtimeEntityId) {
+				session.chat("runtimeEntityId mismatch, desync occur? (client=${packet.runtimeEntityId}, relay=${runtimeEntityId})")
+				runtimeEntityId = packet.runtimeEntityId
 			}
 
 			prevOnGround = onGround
@@ -148,7 +154,7 @@ class EntityPlayerSP(private val session: GameSession, override val eventManager
 			session.onTick()
 			tickExists = packet.tick
 			silentRotation?.let {
-				packet.rotation = Vector3f.from(it.first, it.second, packet.rotation.z)
+				packet.rotation = Vector3f.from(it.pitch, it.yaw, packet.rotation.z)
 				silentRotation = null
 			}
 		} else if (packet is PlayerAuthInputPacket) {
@@ -175,7 +181,7 @@ class EntityPlayerSP(private val session: GameSession, override val eventManager
 
 			tickExists = packet.tick
 			silentRotation?.let {
-				packet.rotation = Vector3f.from(it.first, it.second, packet.rotation.z)
+				packet.rotation = Vector3f.from(it.pitch, it.yaw, packet.rotation.z)
 				silentRotation = null
 			}
 		} else if (packet is LoginPacket) {
@@ -207,7 +213,7 @@ class EntityPlayerSP(private val session: GameSession, override val eventManager
     fun swing(swingValue: SwingMode = SwingMode.BOTH, sound: Boolean = false) {
         AnimatePacket().apply {
             action = AnimatePacket.Action.SWING_ARM
-            runtimeEntityId = entityId
+            runtimeEntityId = this@EntityPlayerSP.runtimeEntityId
         }.also {
             // send the packet back to client in order to display the swing animation
             if (swingValue == SwingMode.BOTH || swingValue == SwingMode.SERVERSIDE)
@@ -268,7 +274,7 @@ class EntityPlayerSP(private val session: GameSession, override val eventManager
         session.sendPacket(InventoryTransactionPacket().apply {
             transactionType = InventoryTransactionType.ITEM_USE_ON_ENTITY
             actionType = 1
-            runtimeEntityId = entity.entityId
+            runtimeEntityId = entity.runtimeEntityId
             hotbarSlot = inventory.heldItemSlot
             itemInHand = ItemData.AIR
             playerPosition = vec3Position

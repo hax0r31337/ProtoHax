@@ -15,7 +15,7 @@ class ModuleAntiBlind : CheatModule("AntiBlind") {
 		if (nightVisionValue && session.netSessionInitialized) {
 			session.netSession.inboundPacket(MobEffectPacket().apply {
 				event = MobEffectPacket.Event.REMOVE
-				runtimeEntityId = session.thePlayer.entityId
+				runtimeEntityId = session.thePlayer.runtimeEntityId
 				effectId = Effect.NIGHT_VISION
 			})
 		}
@@ -25,7 +25,7 @@ class ModuleAntiBlind : CheatModule("AntiBlind") {
 		val session = event.session
 		if (session.thePlayer.tickExists % 20 != 0L) return@handle
 		session.netSession.inboundPacket(MobEffectPacket().apply {
-			runtimeEntityId = session.thePlayer.entityId
+			runtimeEntityId = session.thePlayer.runtimeEntityId
 			setEvent(MobEffectPacket.Event.ADD)
 			effectId = Effect.NIGHT_VISION
 			amplifier = 0

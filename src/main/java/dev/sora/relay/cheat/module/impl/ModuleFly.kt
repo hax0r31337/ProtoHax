@@ -48,11 +48,11 @@ class ModuleFly : CheatModule("Fly") {
 		if (packet is UpdateAbilitiesPacket) {
 			event.cancel()
 			event.session.netSession.inboundPacket(abilityPacket.apply {
-				uniqueEntityId = event.session.thePlayer.entityId
+				uniqueEntityId = event.session.thePlayer.uniqueEntityId
 			})
 		} else if (packet is StartGamePacket) {
 			event.session.netSession.inboundPacket(abilityPacket.apply {
-				uniqueEntityId = event.session.thePlayer.entityId
+				uniqueEntityId = event.session.thePlayer.uniqueEntityId
 			})
 		}
 	}
@@ -70,7 +70,7 @@ class ModuleFly : CheatModule("Fly") {
 			if (!canFly) {
 				canFly = true
 				event.session.netSession.inboundPacket(abilityPacket.apply {
-					uniqueEntityId = session.thePlayer.entityId
+					uniqueEntityId = session.thePlayer.uniqueEntityId
 				})
 			}
 		}
@@ -90,7 +90,7 @@ class ModuleFly : CheatModule("Fly") {
 		private val handleTick = handle<EventTick> { event ->
 			val session = event.session
 			session.netSession.inboundPacket(abilityPacket.apply {
-				uniqueEntityId = session.thePlayer.entityId
+				uniqueEntityId = session.thePlayer.uniqueEntityId
 			})
 			if (!canFly) return@handle
 			val player = session.thePlayer
@@ -98,7 +98,7 @@ class ModuleFly : CheatModule("Fly") {
 			val value = speedValue
 			if (mineplexMotionValue) {
 				session.netSession.inboundPacket(SetEntityMotionPacket().apply {
-					runtimeEntityId = session.thePlayer.entityId
+					runtimeEntityId = session.thePlayer.runtimeEntityId
 					motion = Vector3f.from(-sin(yaw) * value, 0f, +cos(yaw) * value)
 				})
 			} else {
@@ -114,14 +114,14 @@ class ModuleFly : CheatModule("Fly") {
 				if (canFly) {
 					launchY = floor(session.thePlayer.posY) - 0.38f
 					event.session.sendPacketToClient(EntityEventPacket().apply {
-						runtimeEntityId = event.session.thePlayer.entityId
+						runtimeEntityId = event.session.thePlayer.runtimeEntityId
 						type = EntityEventType.HURT
 						data = 0
 					})
 					val player = event.session.thePlayer
 					repeat(5) {
 						event.session.sendPacket(MovePlayerPacket().apply {
-							runtimeEntityId = player.entityId
+							runtimeEntityId = player.runtimeEntityId
 							position = Vector3f.from(player.posX, launchY, player.posZ)
 							rotation = Vector3f.from(player.rotationPitch, player.rotationYaw, 0f)
 							mode = MovePlayerPacket.Mode.NORMAL
@@ -129,7 +129,7 @@ class ModuleFly : CheatModule("Fly") {
 					}
 				}
 				event.session.netSession.inboundPacket(abilityPacket.apply {
-					uniqueEntityId = session.thePlayer.entityId
+					uniqueEntityId = session.thePlayer.uniqueEntityId
 				})
 				event.cancel()
 			} else if (packet is PlayerAuthInputPacket && canFly) {
@@ -152,7 +152,7 @@ class ModuleFly : CheatModule("Fly") {
 			}
 
 			session.netSession.inboundPacket(SetEntityMotionPacket().apply {
-				runtimeEntityId = session.thePlayer.entityId
+				runtimeEntityId = session.thePlayer.runtimeEntityId
 
 				val calcYaw: Double = (session.thePlayer.rotationYawHead + 90) * (PI / 180)
 				val calcPitch: Double = (session.thePlayer.rotationPitch) * -(PI / 180)

@@ -117,14 +117,14 @@ class GameSession : MinecraftRelayPacketListener {
 			}
 		}
 
-		return MovePlayerPacket().also {
-			it.runtimeEntityId = thePlayer.entityId
-			thePlayer.rideEntity?.also { ride -> it.ridingRuntimeEntityId = ride; println(ride) }
-			it.mode = mode
-			it.isOnGround = thePlayer.onGround
-			it.tick = packet.tick
-			it.rotation = packet.rotation
-			it.position = packet.position
+		return MovePlayerPacket().apply {
+			runtimeEntityId = thePlayer.runtimeEntityId
+			thePlayer.rideEntity?.also { ride -> ridingRuntimeEntityId = ride; println(ride) }
+			this.mode = mode
+			isOnGround = thePlayer.onGround
+			tick = packet.tick
+			rotation = packet.rotation
+			position = packet.position
 		}
 	}
 

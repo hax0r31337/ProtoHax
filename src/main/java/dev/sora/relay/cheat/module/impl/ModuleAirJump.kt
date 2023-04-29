@@ -20,7 +20,7 @@ class ModuleAirJump : CheatModule("AirJump") {
 				val player = it.session.thePlayer
 				if (!player.onGround && !player.prevOnGround) {
 					it.session.sendPacketToClient(SetEntityMotionPacket().apply {
-						runtimeEntityId = player.entityId
+						runtimeEntityId = player.runtimeEntityId
 						motion = Vector3f.from(player.posX - player.prevPosX, 0.42f, player.posZ - player.prevPosZ)
 					})
 				} else {

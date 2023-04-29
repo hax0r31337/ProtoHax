@@ -9,7 +9,7 @@ import org.cloudburstmc.protocol.bedrock.data.entity.EntityLinkData
 import org.cloudburstmc.protocol.bedrock.packet.*
 import kotlin.math.sqrt
 
-abstract class Entity(open val entityId: Long) {
+abstract class Entity(open val runtimeEntityId: Long, open val uniqueEntityId: Long) {
 
     open var posX = 0f
     open var posY = 0f
@@ -35,7 +35,7 @@ abstract class Entity(open val entityId: Long) {
     open val attributes = mutableMapOf<String, AttributeData>()
     open val metadata = EntityDataMap()
 
-    open val inventory = EntityInventory(entityId)
+    open val inventory = EntityInventory(runtimeEntityId)
 
     val vec3Position: Vector3f
         get() = Vector3f.from(posX, posY, posZ)
@@ -94,11 +94,11 @@ abstract class Entity(open val entityId: Long) {
         = distance(entity.posX, entity.posY, entity.posZ)
 
     open fun onPacket(packet: BedrockPacket) {
-        if (packet is MoveEntityAbsolutePacket && packet.runtimeEntityId == entityId) {
+        if (packet is MoveEntityAbsolutePacket && packet.runtimeEntityId == runtimeEntityId) {
             move(packet.position)
             rotate(packet.rotation)
             tickExists++
-        } else if (packet is MoveEntityDeltaPacket && packet.runtimeEntityId == entityId) {
+        } else if (packet is MoveEntityDeltaPacket && packet.runtimeEntityId == runtimeEntityId) {
             move(posX + if (packet.flags.contains(MoveEntityDeltaPacket.Flag.HAS_X)) packet.x else 0f,
                 posY + if (packet.flags.contains(MoveEntityDeltaPacket.Flag.HAS_Y)) packet.y else 0f,
                 posZ + if (packet.flags.contains(MoveEntityDeltaPacket.Flag.HAS_Z)) packet.z else 0f)
@@ -106,15 +106,15 @@ abstract class Entity(open val entityId: Long) {
                 rotationPitch + if (packet.flags.contains(MoveEntityDeltaPacket.Flag.HAS_PITCH)) packet.pitch else 0f,
                 rotationYawHead + if (packet.flags.contains(MoveEntityDeltaPacket.Flag.HAS_HEAD_YAW)) packet.headYaw else 0f)
             tickExists++
-        } else if (packet is SetEntityDataPacket && packet.runtimeEntityId == entityId) {
+        } else if (packet is SetEntityDataPacket && packet.runtimeEntityId == runtimeEntityId) {
             handleSetData(packet.metadata)
-        } else if (packet is UpdateAttributesPacket && packet.runtimeEntityId == entityId) {
+        } else if (packet is UpdateAttributesPacket && packet.runtimeEntityId == runtimeEntityId) {
             handleSetAttribute(packet.attributes)
         } else if (packet is SetEntityLinkPacket) {
 			when(packet.entityLink.type) {
-				EntityLinkData.Type.RIDER -> if (packet.entityLink.from == entityId) rideEntity = packet.entityLink.to
-				EntityLinkData.Type.REMOVE -> if (packet.entityLink.from == entityId) rideEntity = null
-				EntityLinkData.Type.PASSENGER -> if (packet.entityLink.to == entityId) rideEntity = packet.entityLink.from
+				EntityLinkData.Type.RIDER -> if (packet.entityLink.from == uniqueEntityId) rideEntity = packet.entityLink.to
+				EntityLinkData.Type.REMOVE -> if (packet.entityLink.from == uniqueEntityId) rideEntity = null
+				EntityLinkData.Type.PASSENGER -> if (packet.entityLink.to == uniqueEntityId) rideEntity = packet.entityLink.from
 				else -> {}
 			}
 		} else {
@@ -135,7 +135,11 @@ abstract class Entity(open val entityId: Long) {
     }
 
     open fun reset() {
-//        attributeList.clear()
+        attributes.clear()
         metadata.clear()
     }
+
+	override fun toString(): String {
+		return "Entity(entityId=$runtimeEntityId, uniqueId=$uniqueEntityId, posX=$posX, posY=$posY, posZ=$posZ)"
+	}
 }

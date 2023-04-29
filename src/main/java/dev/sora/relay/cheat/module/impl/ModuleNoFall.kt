@@ -19,7 +19,7 @@ class ModuleNoFall : CheatModule("NoFall") {
 		val handleTick = handle<EventTick> { event ->
 			if (event.session.thePlayer.tickExists % 10 == 0L) {
 				event.session.sendPacket(PlayerActionPacket().apply {
-					runtimeEntityId = event.session.thePlayer.entityId
+					runtimeEntityId = event.session.thePlayer.runtimeEntityId
 					action = PlayerActionType.START_GLIDE
 				})
 			}

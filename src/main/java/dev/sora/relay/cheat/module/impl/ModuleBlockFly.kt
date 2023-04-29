@@ -7,6 +7,7 @@ import dev.sora.relay.game.entity.EntityPlayerSP
 import dev.sora.relay.game.event.EventTick
 import dev.sora.relay.game.registry.isBlock
 import dev.sora.relay.game.utils.AxisAlignedBB
+import dev.sora.relay.game.utils.Rotation
 import dev.sora.relay.game.utils.constants.EnumFacing
 import dev.sora.relay.game.utils.toRotation
 import dev.sora.relay.game.utils.toVector3f
@@ -27,7 +28,7 @@ class ModuleBlockFly : CheatModule("BlockFly") {
 
     private val extendableFacing = arrayOf(EnumFacing.WEST, EnumFacing.EAST, EnumFacing.UP, EnumFacing.SOUTH, EnumFacing.NORTH)
 
-    private var lastRotation: Pair<Float, Float>? = null
+    private var lastRotation: Rotation? = null
 
 	private val handleTick = handle<EventTick> { event ->
 		val session = event.session

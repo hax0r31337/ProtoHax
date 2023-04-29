@@ -187,7 +187,7 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper") {
 				id = 0.toByte()
 				type = ContainerType.INVENTORY
 				blockPosition = event.session.thePlayer.vec3Position.toVector3i()
-				uniqueEntityId = event.session.thePlayer.entityId
+				uniqueEntityId = event.session.thePlayer.uniqueEntityId
 			})
 		}
 	}
@@ -195,7 +195,7 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper") {
     private fun checkFakeOpen(session: GameSession): Boolean {
         if (!hasSimulated && session.thePlayer.openContainer == null && simulateInventoryValue) {
             session.netSession.outboundPacket(InteractPacket().apply {
-                runtimeEntityId = session.thePlayer.entityId
+                runtimeEntityId = session.thePlayer.runtimeEntityId
                 action = InteractPacket.Action.OPEN_INVENTORY
             })
             hasSimulated = true
