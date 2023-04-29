@@ -2,10 +2,12 @@ package dev.sora.relay.cheat.module.impl
 
 import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.cheat.value.NamedChoice
+import dev.sora.relay.game.entity.EntityPlayer
 import dev.sora.relay.game.entity.EntityPlayerSP
 import dev.sora.relay.game.event.EventTick
 import dev.sora.relay.game.registry.isBlock
 import dev.sora.relay.game.utils.AxisAlignedBB
+import dev.sora.relay.game.utils.Rotation
 import dev.sora.relay.game.utils.constants.EnumFacing
 import dev.sora.relay.game.utils.toRotation
 import dev.sora.relay.game.utils.toVector3f
@@ -26,7 +28,7 @@ class ModuleBlockFly : CheatModule("BlockFly") {
 
     private val extendableFacing = arrayOf(EnumFacing.WEST, EnumFacing.EAST, EnumFacing.UP, EnumFacing.SOUTH, EnumFacing.NORTH)
 
-    private var lastRotation: Pair<Float, Float>? = null
+    private var lastRotation: Rotation? = null
 
 	private val handleTick = handle<EventTick> { event ->
 		val session = event.session
@@ -46,7 +48,7 @@ class ModuleBlockFly : CheatModule("BlockFly") {
 		} else {
 			session.blockMapping.airId
 		}
-		val possibilities = searchBlocks(session.thePlayer.posX, session.thePlayer.posY - 1.62,
+		val possibilities = searchBlocks(session.thePlayer.posX, session.thePlayer.posY - EntityPlayer.EYE_HEIGHT,
 			session.thePlayer.posZ, 1, world, airId)
 		val block = possibilities.firstOrNull() ?: return@handle
 		val facing = getFacing(block, world, airId) ?: return@handle
@@ -99,17 +101,17 @@ class ModuleBlockFly : CheatModule("BlockFly") {
         }
     }
 
-    private fun searchBlocks(offsetX: Double, offsetY: Double, offsetZ: Double, range: Int, world: WorldClient, expected: Int): List<Vector3i> {
+    private fun searchBlocks(offsetX: Float, offsetY: Float, offsetZ: Float, range: Int, world: WorldClient, expected: Int): List<Vector3i> {
         val possibilities = mutableListOf<Vector3i>()
-        val rangeSq = 4.5 * 4.5
+        val rangeSq = 4.5f * 4.5f
         val blockNear = mutableListOf<EnumFacing>()
-        val bb = AxisAlignedBB(offsetX - .3, offsetY - 1, offsetZ - .3, offsetX + .3, offsetY + .8, offsetZ + .3)
+        val bb = AxisAlignedBB(offsetX - .3f, offsetY - 1f, offsetZ - .3f, offsetX + .3f, offsetY + .8f, offsetZ + .3f)
 
         for (x in -range..range) {
             for (z in -range..range) {
-                val pos = Vector3i.from(offsetX + x, offsetY - 0.625, offsetZ + z)
+                val pos = Vector3i.from(offsetX + x.toDouble(), offsetY - 0.625, offsetZ + z.toDouble())
                 if (world.getBlockIdAt(pos) != expected) continue
-                else if (pos.distanceSquared(offsetX, offsetY + 1.62, offsetZ) > rangeSq) continue
+                else if (pos.distanceSquared(offsetX.toDouble(), offsetY + EntityPlayer.EYE_HEIGHT.toDouble(), offsetZ.toDouble()) > rangeSq) continue
                 EnumFacing.values().forEach {
                     val offset = pos.add(it.unitVector)
                     if (world.getBlockIdAt(offset) != expected/*
@@ -125,7 +127,7 @@ class ModuleBlockFly : CheatModule("BlockFly") {
         }
 
         return possibilities
-            .sortedBy { it.distanceSquared(offsetX, offsetY-1, offsetZ) }
+            .sortedBy { it.distanceSquared(offsetX.toDouble(), offsetY-1.0, offsetZ.toDouble()) }
     }
 
     private fun getFacing(block: Vector3i, world: WorldClient, expected: Int): EnumFacing? {

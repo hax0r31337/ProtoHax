@@ -5,34 +5,37 @@ import org.cloudburstmc.math.vector.Vector2f
 import org.cloudburstmc.math.vector.Vector3f
 import org.cloudburstmc.protocol.bedrock.data.AttributeData
 import org.cloudburstmc.protocol.bedrock.data.entity.EntityDataMap
+import org.cloudburstmc.protocol.bedrock.data.entity.EntityLinkData
 import org.cloudburstmc.protocol.bedrock.packet.*
 import kotlin.math.sqrt
 
-abstract class Entity(open val entityId: Long) {
+abstract class Entity(open val runtimeEntityId: Long, open val uniqueEntityId: Long) {
 
-    open var posX = 0.0
-    open var posY = 0.0
-    open var posZ = 0.0
+    open var posX = 0f
+    open var posY = 0f
+    open var posZ = 0f
 
-    open var prevPosX = 0.0
-    open var prevPosY = 0.0
-    open var prevPosZ = 0.0
+    open var prevPosX = 0f
+    open var prevPosY = 0f
+    open var prevPosZ = 0f
 
     open var rotationYaw = 0f
     open var rotationPitch = 0f
     open var rotationYawHead = 0f
 
-    open var motionX = 0.0
-    open var motionY = 0.0
-    open var motionZ = 0.0
+    open var motionX = 0f
+    open var motionY = 0f
+    open var motionZ = 0f
 
     open var tickExists = 0L
         protected set
 
+	var rideEntity: Long? = null
+
     open val attributes = mutableMapOf<String, AttributeData>()
     open val metadata = EntityDataMap()
 
-    open val inventory = EntityInventory(entityId)
+    open val inventory = EntityInventory(runtimeEntityId)
 
     val vec3Position: Vector3f
         get() = Vector3f.from(posX, posY, posZ)
@@ -40,7 +43,7 @@ abstract class Entity(open val entityId: Long) {
     val vec3Rotation: Vector3f
         get() = Vector3f.from(rotationPitch, rotationYaw, rotationYawHead)
 
-    open fun move(x: Double, y: Double, z: Double) {
+    open fun move(x: Float, y: Float, z: Float) {
         this.prevPosX = this.posX
         this.prevPosY = this.posY
         this.prevPosZ = this.posZ
@@ -53,7 +56,7 @@ abstract class Entity(open val entityId: Long) {
     }
 
     open fun move(position: Vector3f) {
-        move(position.x.toDouble(), position.y.toDouble(), position.z.toDouble())
+        move(position.x, position.y, position.z)
     }
 
     open fun rotate(yaw: Float, pitch: Float) {
@@ -74,7 +77,7 @@ abstract class Entity(open val entityId: Long) {
         rotate(rotation.y, rotation.x, rotation.z)
     }
 
-    fun distanceSq(x: Double, y: Double, z: Double): Double {
+    fun distanceSq(x: Float, y: Float, z: Float): Float {
         val dx = posX - x
         val dy = posY - y
         val dz = posZ - z
@@ -84,18 +87,18 @@ abstract class Entity(open val entityId: Long) {
     fun distanceSq(entity: Entity)
             = distanceSq(entity.posX, entity.posY, entity.posZ)
 
-    fun distance(x: Double, y: Double, z: Double)
+    fun distance(x: Float, y: Float, z: Float)
         = sqrt(distanceSq(x, y, z))
 
     fun distance(entity: Entity)
         = distance(entity.posX, entity.posY, entity.posZ)
 
     open fun onPacket(packet: BedrockPacket) {
-        if (packet is MoveEntityAbsolutePacket && packet.runtimeEntityId == entityId) {
+        if (packet is MoveEntityAbsolutePacket && packet.runtimeEntityId == runtimeEntityId) {
             move(packet.position)
             rotate(packet.rotation)
             tickExists++
-        } else if (packet is MoveEntityDeltaPacket && packet.runtimeEntityId == entityId) {
+        } else if (packet is MoveEntityDeltaPacket && packet.runtimeEntityId == runtimeEntityId) {
             move(posX + if (packet.flags.contains(MoveEntityDeltaPacket.Flag.HAS_X)) packet.x else 0f,
                 posY + if (packet.flags.contains(MoveEntityDeltaPacket.Flag.HAS_Y)) packet.y else 0f,
                 posZ + if (packet.flags.contains(MoveEntityDeltaPacket.Flag.HAS_Z)) packet.z else 0f)
@@ -103,11 +106,18 @@ abstract class Entity(open val entityId: Long) {
                 rotationPitch + if (packet.flags.contains(MoveEntityDeltaPacket.Flag.HAS_PITCH)) packet.pitch else 0f,
                 rotationYawHead + if (packet.flags.contains(MoveEntityDeltaPacket.Flag.HAS_HEAD_YAW)) packet.headYaw else 0f)
             tickExists++
-        } else if (packet is SetEntityDataPacket && packet.runtimeEntityId == entityId) {
+        } else if (packet is SetEntityDataPacket && packet.runtimeEntityId == runtimeEntityId) {
             handleSetData(packet.metadata)
-        } else if (packet is UpdateAttributesPacket && packet.runtimeEntityId == entityId) {
+        } else if (packet is UpdateAttributesPacket && packet.runtimeEntityId == runtimeEntityId) {
             handleSetAttribute(packet.attributes)
-        } else {
+        } else if (packet is SetEntityLinkPacket) {
+			when(packet.entityLink.type) {
+				EntityLinkData.Type.RIDER -> if (packet.entityLink.from == uniqueEntityId) rideEntity = packet.entityLink.to
+				EntityLinkData.Type.REMOVE -> if (packet.entityLink.from == uniqueEntityId) rideEntity = null
+				EntityLinkData.Type.PASSENGER -> if (packet.entityLink.to == uniqueEntityId) rideEntity = packet.entityLink.from
+				else -> {}
+			}
+		} else {
             inventory.handlePacket(packet)
         }
     }
@@ -125,7 +135,11 @@ abstract class Entity(open val entityId: Long) {
     }
 
     open fun reset() {
-//        attributeList.clear()
+        attributes.clear()
         metadata.clear()
     }
+
+	override fun toString(): String {
+		return "Entity(entityId=$runtimeEntityId, uniqueId=$uniqueEntityId, posX=$posX, posY=$posY, posZ=$posZ)"
+	}
 }

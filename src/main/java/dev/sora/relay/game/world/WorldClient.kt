@@ -30,25 +30,25 @@ class WorldClient(session: GameSession, eventManager: EventManager) : WorldwideB
 			playerList.clear()
 			dimension = packet.dimensionId
 		} else if (packet is AddEntityPacket) {
-			entityMap[packet.runtimeEntityId] = EntityUnknown(packet.runtimeEntityId, packet.identifier).apply {
+			entityMap[packet.runtimeEntityId] = EntityUnknown(packet.runtimeEntityId, packet.uniqueEntityId, packet.identifier).apply {
 				move(packet.position)
 				rotate(packet.rotation)
 				handleSetData(packet.metadata)
 				handleSetAttribute(packet.attributes)
 			}
 		} else if (packet is AddItemEntityPacket) {
-			entityMap[packet.runtimeEntityId] = EntityItem(packet.runtimeEntityId).apply {
+			entityMap[packet.runtimeEntityId] = EntityItem(packet.runtimeEntityId, packet.uniqueEntityId).apply {
 				move(packet.position)
 				handleSetData(packet.metadata)
 			}
 		} else if (packet is AddPlayerPacket) {
-			entityMap[packet.runtimeEntityId] = EntityPlayer(packet.runtimeEntityId, packet.uuid, packet.username).apply {
-				move(packet.position.add(0f, 1.62f, 0f))
+			entityMap[packet.runtimeEntityId] = EntityPlayer(packet.runtimeEntityId, packet.uniqueEntityId, packet.uuid, packet.username).apply {
+				move(packet.position.add(0f, EntityPlayer.EYE_HEIGHT, 0f))
 				rotate(packet.rotation)
 				handleSetData(packet.metadata)
 			}
 		} else if (packet is RemoveEntityPacket) {
-			entityMap.remove(packet.uniqueEntityId)
+			entityMap.keys.removeIf { it == packet.uniqueEntityId }
 		} else if (packet is TakeItemEntityPacket) {
 			entityMap.remove(packet.itemRuntimeEntityId)
 		} else if (packet is PlayerListPacket) {

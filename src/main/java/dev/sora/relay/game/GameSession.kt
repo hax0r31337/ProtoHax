@@ -10,9 +10,7 @@ import dev.sora.relay.game.world.WorldClient
 import dev.sora.relay.session.MinecraftRelayPacketListener
 import dev.sora.relay.session.MinecraftRelaySession
 import dev.sora.relay.utils.logInfo
-import org.cloudburstmc.protocol.bedrock.packet.BedrockPacket
-import org.cloudburstmc.protocol.bedrock.packet.LoginPacket
-import org.cloudburstmc.protocol.bedrock.packet.TextPacket
+import org.cloudburstmc.protocol.bedrock.packet.*
 
 class GameSession : MinecraftRelayPacketListener {
 
@@ -29,7 +27,6 @@ class GameSession : MinecraftRelayPacketListener {
         private set
     var legacyBlockMapping = LegacyBlockMapping(emptyMap())
         private set
-
 
     val netSessionInitialized: Boolean
         get() = this::netSession.isInitialized
@@ -63,7 +60,10 @@ class GameSession : MinecraftRelayPacketListener {
             }
             blockMapping = blockDefinitions
             legacyBlockMapping = LegacyBlockMapping.Provider.craftMapping(packet.protocolVersion)
-        }
+        } else if (!thePlayer.movementServerAuthoritative && packet is PlayerAuthInputPacket) {
+			convertAuthInput(packet)?.also { netSession.outboundPacket(it) }
+			return false
+		}
 
         return true
     }
@@ -105,6 +105,27 @@ class GameSession : MinecraftRelayPacketListener {
 			xuid = ""
 			sourceName = ""
 		})
+	}
+
+	private fun convertAuthInput(packet: PlayerAuthInputPacket): MovePlayerPacket? {
+		var mode = MovePlayerPacket.Mode.NORMAL
+		if (packet.position.x == thePlayer.prevPosX && packet.position.y == thePlayer.prevPosY && packet.position.z == thePlayer.prevPosZ) {
+			if (packet.rotation.x == thePlayer.prevRotationPitch && packet.rotation.y == thePlayer.prevRotationYaw) {
+				return null
+			} else {
+				mode = MovePlayerPacket.Mode.HEAD_ROTATION
+			}
+		}
+
+		return MovePlayerPacket().apply {
+			runtimeEntityId = thePlayer.runtimeEntityId
+			thePlayer.rideEntity?.also { ride -> ridingRuntimeEntityId = ride; println(ride) }
+			this.mode = mode
+			isOnGround = thePlayer.onGround
+			tick = packet.tick
+			rotation = packet.rotation
+			position = packet.position
+		}
 	}
 
     companion object {
