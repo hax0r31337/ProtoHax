@@ -1,6 +1,7 @@
 package dev.sora.relay.game.event
 
 import dev.sora.relay.game.GameSession
+import dev.sora.relay.game.entity.Entity
 import dev.sora.relay.game.inventory.AbstractInventory
 import dev.sora.relay.game.world.chunk.Chunk
 import org.cloudburstmc.protocol.bedrock.packet.BedrockPacket
@@ -44,3 +45,7 @@ class EventContainerClose(session: GameSession, val container: AbstractInventory
 class EventChunkLoad(session: GameSession, val chunk: Chunk) : GameEvent(session, "chunk_load")
 
 class EventDimensionChange(session: GameSession, val dimension: Int) : GameEvent(session, "dimension_change")
+
+class EventEntitySpawn(session: GameSession, val entity: Entity) : GameEvent(session, "entity_spawn")
+
+class EventEntityDespawn(session: GameSession, val entity: Entity) : GameEvent(session, "entity_despawn")

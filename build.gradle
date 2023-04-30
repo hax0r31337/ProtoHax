@@ -4,7 +4,7 @@ plugins {
     id 'maven-publish'
 }
 
-group = 'dev.sora.relay'
+group = 'dev.sora.relay.netease'
 version = '1.3.0'
 
 repositories {
@@ -21,7 +21,7 @@ configurations {
 }
 
 dependencies {
-    embed('org.cloudburstmc.protocol:bedrock-connection:3.0.0.Beta1-SNAPSHOT') {
+    embed('dev.sora.protocol.netease:bedrock-connection:3.0.0.Beta1-SNAPSHOT') {
         exclude group: 'com.nukkitx', module: 'natives'
     }
 

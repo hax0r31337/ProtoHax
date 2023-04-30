@@ -5,10 +5,7 @@ import dev.sora.relay.game.entity.Entity
 import dev.sora.relay.game.entity.EntityItem
 import dev.sora.relay.game.entity.EntityPlayer
 import dev.sora.relay.game.entity.EntityUnknown
-import dev.sora.relay.game.event.EventDisconnect
-import dev.sora.relay.game.event.EventManager
-import dev.sora.relay.game.event.EventPacketInbound
-import dev.sora.relay.game.event.handle
+import dev.sora.relay.game.event.*
 import org.cloudburstmc.protocol.bedrock.packet.*
 import java.util.*
 
@@ -35,20 +32,30 @@ class WorldClient(session: GameSession, eventManager: EventManager) : WorldwideB
 				rotate(packet.rotation)
 				handleSetData(packet.metadata)
 				handleSetAttribute(packet.attributes)
+			}.also {
+				session.eventManager.emit(EventEntitySpawn(session, it))
 			}
 		} else if (packet is AddItemEntityPacket) {
 			entityMap[packet.runtimeEntityId] = EntityItem(packet.runtimeEntityId, packet.uniqueEntityId).apply {
 				move(packet.position)
 				handleSetData(packet.metadata)
+			}.also {
+				session.eventManager.emit(EventEntitySpawn(session, it))
 			}
 		} else if (packet is AddPlayerPacket) {
 			entityMap[packet.runtimeEntityId] = EntityPlayer(packet.runtimeEntityId, packet.uniqueEntityId, packet.uuid, packet.username).apply {
 				move(packet.position.add(0f, EntityPlayer.EYE_HEIGHT, 0f))
 				rotate(packet.rotation)
 				handleSetData(packet.metadata)
+			}.also {
+				session.eventManager.emit(EventEntitySpawn(session, it))
 			}
 		} else if (packet is RemoveEntityPacket) {
-			entityMap.keys.removeIf { it == packet.uniqueEntityId }
+			entityMap.keys.removeIf { (it == packet.uniqueEntityId).also { flag ->
+				if (flag) {
+					session.eventManager.emit(EventEntityDespawn(session, entityMap[it]!!))
+				}
+			} }
 		} else if (packet is TakeItemEntityPacket) {
 			entityMap.remove(packet.itemRuntimeEntityId)
 		} else if (packet is PlayerListPacket) {
