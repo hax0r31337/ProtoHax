@@ -1,6 +1,5 @@
 plugins {
     id 'org.jetbrains.kotlin.jvm' version '1.8.20'
-    id 'com.github.johnrengelman.shadow' version '7.1.2'
     id 'maven-publish'
 }
 
@@ -8,43 +7,24 @@ group = 'dev.sora.relay'
 version = '1.3.0'
 
 repositories {
-    mavenLocal()
+//    mavenLocal()
     mavenCentral()
     maven { url = 'https://repo.opencollab.dev/maven-releases/' }
     maven { url = 'https://repo.opencollab.dev/maven-snapshots/' }
     maven { url = 'https://mccheatz.github.io/maven_repo/' }
 }
 
-configurations {
-    embed
-    implementation.extendsFrom(embed)
-}
-
 dependencies {
-    embed('org.cloudburstmc.protocol:bedrock-connection:3.0.0.Beta1-SNAPSHOT') {
+    implementation('org.cloudburstmc.protocol:bedrock-connection:3.0.0.Beta1-SNAPSHOT') {
         exclude group: 'com.nukkitx', module: 'natives'
     }
 
-    embed 'com.google.code.gson:gson:2.10.1'
-    embed 'coelho.msftauth:minecraft-msftauth:2.1.4'
-    embed 'io.github._0x9fff00.leveldb:leveldb:0.10'
-    embed 'com.squareup.okhttp3:okhttp:4.11.0'
+    implementation 'com.google.code.gson:gson:2.10.1'
+    implementation'coelho.msftauth:minecraft-msftauth:2.1.4'
+    implementation 'io.github._0x9fff00.leveldb:leveldb:0.10'
+    implementation 'com.squareup.okhttp3:okhttp:4.11.0'
 }
 
 kotlin {
     jvmToolchain(11)
-}
-
-shadowJar {
-    archiveClassifier.set('')
-    configurations = [project.configurations.embed]
-    duplicatesStrategy DuplicatesStrategy.EXCLUDE
-}
-
-publishing {
-    publications {
-        shadow(MavenPublication) { publication ->
-            project.shadow.component(publication)
-        }
-    }
 }

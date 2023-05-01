@@ -11,6 +11,7 @@ import dev.sora.relay.utils.HttpUtils
 import dev.sora.relay.utils.base64Decode
 import dev.sora.relay.utils.logError
 import dev.sora.relay.utils.logInfo
+import okhttp3.FormBody
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -80,7 +81,45 @@ class RelayListenerMicrosoftLogin(val accessToken: String, val deviceInfo: Devic
     }
 
     data class DeviceInfo(val appId: String, val deviceType: String,
-                     val allowDirectTitleTokenFetch: Boolean = false)
+                     val allowDirectTitleTokenFetch: Boolean = false) {
+
+		/**
+		 * @param token refresh token or authorization code
+		 * @return Pair<AccessToken, RefreshToken>
+		 */
+		fun refreshToken(token: String): Pair<String, String> {
+			val form = FormBody.Builder()
+			form.add("client_id", appId)
+			form.add("redirect_uri", "https://login.live.com/oauth20_desktop.srf")
+			// if the last part of the token was uuid, it must be authorization code
+			if (try { UUID.fromString(token.substring(token.indexOf('.')+1)); true } catch (t: Throwable) { false }) {
+				form.add("grant_type", "authorization_code")
+				form.add("code", token)
+			} else {
+				form.add("scope", "service::user.auth.xboxlive.com::MBI_SSL")
+				form.add("grant_type", "refresh_token")
+				form.add("refresh_token", token)
+			}
+			val request = Request.Builder()
+				.url("https://login.live.com/oauth20_token.srf")
+				.header("Content-Type", "application/x-www-form-urlencoded")
+				.post(form.build())
+				.build()
+			val response = HttpUtils.client.newCall(request).execute()
+
+			assert(response.code == 200) { "Http code ${response.code}" }
+
+			val body = JsonParser.parseReader(response.body!!.charStream()).asJsonObject
+			if (!body.has("access_token") || !body.has("refresh_token")) {
+				if (body.has("error")) {
+					throw RuntimeException("error occur whilst refreshing token: " + body.get("error").asString)
+				} else {
+					throw RuntimeException("error occur whilst refreshing token")
+				}
+			}
+			return body.get("access_token").asString to body.get("refresh_token").asString
+		}
+	}
 
     companion object {
         val DEVICE_ANDROID = DeviceInfo("0000000048183522", "Android", false)
