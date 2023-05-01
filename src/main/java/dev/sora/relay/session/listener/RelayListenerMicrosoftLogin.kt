@@ -92,7 +92,7 @@ class RelayListenerMicrosoftLogin(val accessToken: String, val deviceInfo: Devic
 			form.add("client_id", appId)
 			form.add("redirect_uri", "https://login.live.com/oauth20_desktop.srf")
 			// if the last part of the token was uuid, it must be authorization code
-			if (try { UUID.fromString(token.substring(token.indexOf('.')+1)); true } catch (t: Throwable) { false }) {
+			if (try { UUID.fromString(token.substring(token.lastIndexOf('.')+1)); true } catch (t: Throwable) { false }) {
 				form.add("grant_type", "authorization_code")
 				form.add("code", token)
 			} else {
