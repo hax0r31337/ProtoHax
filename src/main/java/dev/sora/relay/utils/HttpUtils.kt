@@ -1,43 +1,34 @@
 package dev.sora.relay.utils
 
-import java.io.DataOutputStream
-import java.net.HttpURLConnection
-import java.net.URL
+import okhttp3.OkHttpClient
+import java.net.InetSocketAddress
+import java.net.Proxy
 
 object HttpUtils {
-    private const val DEFAULT_AGENT = "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.99 Safari/537.36"
+    private const val DEFAULT_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36 Edg/114.0.1788.0"
 
-    fun make(url: String, method: String, data: String = "", header: Map<String, String> = emptyMap(), agent: String = DEFAULT_AGENT): HttpURLConnection {
-        val httpConnection = URL(url).openConnection() as HttpURLConnection
+	val client = OkHttpClient.Builder()
+		.proxy(getSystemProxyConfig())
+		.addNetworkInterceptor { chain ->
+			chain.proceed(chain.request()
+				.newBuilder()
+				.header("User-Agent", DEFAULT_AGENT)
+				.build())
+		}
+		.build()
 
-        httpConnection.requestMethod = method
-        httpConnection.connectTimeout = 2000
-        httpConnection.readTimeout = 10000
+	/**
+	 * @return http proxy from JVM Options, [Proxy.NO_PROXY] if JVM Option not set
+	 */
+	private fun getSystemProxyConfig(): Proxy {
+		val proxyHost = System.getProperty("http.proxyHost") ?: return Proxy.NO_PROXY
+		val proxyPort = System.getProperty("http.proxyPort") ?: return Proxy.NO_PROXY
 
-        httpConnection.setRequestProperty("User-Agent", agent)
-        header.forEach { (key, value) -> httpConnection.setRequestProperty(key, value) }
-
-        httpConnection.instanceFollowRedirects = true
-        httpConnection.doOutput = true
-
-        if (data.isNotEmpty()) {
-            val dataOutputStream = DataOutputStream(httpConnection.outputStream)
-            dataOutputStream.writeBytes(data)
-            dataOutputStream.flush()
-        }
-
-        httpConnection.connect()
-
-        return httpConnection
-    }
-
-    fun request(url: String, method: String, data: String = "", header: Map<String, String> = emptyMap(), agent: String = DEFAULT_AGENT): String {
-        val connection = make(url, method, data, header, agent)
-
-        return connection.inputStream.reader().readText()
-    }
-
-    fun get(url: String, header: Map<String, String> = emptyMap()) = request(url, "GET", header = header)
-
-    fun post(url: String, data: String, header: Map<String, String> = emptyMap()) = request(url, "POST", data, header)
+		return try {
+			Proxy(Proxy.Type.HTTP, InetSocketAddress(proxyHost, proxyPort.toInt()))
+		} catch (t: Throwable) {
+			t.printStackTrace()
+			Proxy.NO_PROXY
+		}
+	}
 }

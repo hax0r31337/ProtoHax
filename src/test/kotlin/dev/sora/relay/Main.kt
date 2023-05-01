@@ -15,6 +15,8 @@ import dev.sora.relay.utils.HttpUtils
 import dev.sora.relay.utils.logInfo
 import dev.sora.relay.utils.logWarn
 import io.netty.util.internal.logging.InternalLoggerFactory
+import okhttp3.FormBody
+import okhttp3.Request
 import java.io.File
 import java.net.InetSocketAddress
 import java.util.*
@@ -80,16 +82,28 @@ fun main(args: Array<String>) {
 
 private fun getMSAccessToken(appId: String): String {
     val token = tokenFile.readText(Charsets.UTF_8)
+	val form = FormBody.Builder()
+	form.add("client_id", appId)
+	form.add("redirect_uri", "https://login.live.com/oauth20_desktop.srf")
 	// if the last part of the token was uuid, it must be authorization code
-    val body = JsonParser.parseReader(if (try { UUID.fromString(token.substring(token.indexOf('.')+1)); true } catch (t: Throwable) { false }) {
-        HttpUtils.make("https://login.live.com/oauth20_token.srf", "POST",
-            "client_id=$appId&redirect_uri=https://login.live.com/oauth20_desktop.srf&grant_type=authorization_code&code=$token",
-            mapOf("Content-Type" to "application/x-www-form-urlencoded"))
-    } else {
-            HttpUtils.make("https://login.live.com/oauth20_token.srf", "POST",
-                "client_id=$appId&scope=service::user.auth.xboxlive.com::MBI_SSL&grant_type=refresh_token&redirect_uri=https://login.live.com/oauth20_desktop.srf&refresh_token=$token",
-                mapOf("Content-Type" to "application/x-www-form-urlencoded"))
-    }.inputStream.reader(Charsets.UTF_8)).asJsonObject
+	if (try { UUID.fromString(token.substring(token.indexOf('.')+1)); true } catch (t: Throwable) { false }) {
+		form.add("grant_type", "authorization_code")
+		form.add("code", token)
+	} else {
+		form.add("scope", "service::user.auth.xboxlive.com::MBI_SSL")
+		form.add("grant_type", "refresh_token")
+		form.add("refresh_token", token)
+	}
+	val request = Request.Builder()
+		.url("https://login.live.com/oauth20_token.srf")
+		.header("Content-Type", "application/x-www-form-urlencoded")
+		.post(form.build())
+		.build()
+	val response = HttpUtils.client.newCall(request).execute()
+
+	assert(response.code == 200) { "Http code ${response.code}" }
+
+	val body = JsonParser.parseReader(response.body!!.charStream()).asJsonObject
     tokenFile.writeText(body.get("refresh_token").asString)
     return body.get("access_token").asString
 }

@@ -11,10 +11,13 @@ import dev.sora.relay.utils.HttpUtils
 import dev.sora.relay.utils.base64Decode
 import dev.sora.relay.utils.logError
 import dev.sora.relay.utils.logInfo
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
 import org.cloudburstmc.protocol.bedrock.packet.BedrockPacket
 import org.cloudburstmc.protocol.bedrock.packet.DisconnectPacket
 import org.cloudburstmc.protocol.bedrock.packet.LoginPacket
-import java.io.InputStreamReader
+import java.io.Reader
 import java.security.KeyPair
 import java.security.PublicKey
 import java.time.Instant
@@ -84,37 +87,40 @@ class RelayListenerMicrosoftLogin(val accessToken: String, val deviceInfo: Devic
         val DEVICE_NINTENDO = DeviceInfo("00000000441cc96b", "Nintendo", true)
         val devices = arrayOf(DEVICE_ANDROID, DEVICE_NINTENDO).associateBy { it.deviceType }
 
-        fun fetchIdentityToken(accessToken: String, deviceInfo: DeviceInfo): String {
-            val deviceKey = XboxDeviceKey() // this key used to sign the post content
+		/**
+		 * this key used to sign the post content
+		 */
+		val deviceKey = XboxDeviceKey()
 
+        fun fetchIdentityToken(accessToken: String, deviceInfo: DeviceInfo): String {
             var userToken: XboxToken? = null
             val userRequestThread = thread {
                 userToken = XboxUserAuthRequest(
                     "http://auth.xboxlive.com", "JWT", "RPS",
                     "user.auth.xboxlive.com", "t=$accessToken"
-                ).request()
+                ).request(HttpUtils.client)
             }
             val deviceToken = XboxDeviceAuthRequest(
                 "http://auth.xboxlive.com", "JWT", deviceInfo.deviceType,
                 "0.0.0.0", deviceKey
-            ).request()
+            ).request(HttpUtils.client)
             val titleToken = if (deviceInfo.allowDirectTitleTokenFetch) {
                 XboxTitleAuthRequest(
                     "http://auth.xboxlive.com", "JWT", "RPS",
                     "user.auth.xboxlive.com", "t=$accessToken", deviceToken.token, deviceKey
-                ).request()
+                ).request(HttpUtils.client)
             } else {
                 val device = XboxDevice(deviceKey, deviceToken)
                 val sisuRequest = XboxSISUAuthenticateRequest(
                     deviceInfo.appId, device, "service::user.auth.xboxlive.com::MBI_SSL",
                     XboxSISUAuthenticateRequest.Query("phone"),
                     "ms-xal-${deviceInfo.appId}://auth", "RETAIL"
-                ).request()
+                ).request(HttpUtils.client)
                 val sisuToken = try {
                     XboxSISUAuthorizeRequest(
                         "t=$accessToken", deviceInfo.appId, device, "RETAIL",
                         sisuRequest.sessionId, "user.auth.xboxlive.com", "http://xboxlive.com"
-                    ).request()
+                    ).request(HttpUtils.client)
                 } catch (e: IllegalStateException) {
 //                    val did = deviceToken.displayClaims["xdi"]!!.asJsonObject.get("did").asString
 //                    val sign = deviceKey.sign("https://sisu.xboxlive.com/proxy", null, "POST", "sessionid=${sisuRequest.sessionId}".toByteArray()).replace("+", "%2B").replace("=","%3D")
@@ -134,24 +140,27 @@ class RelayListenerMicrosoftLogin(val accessToken: String, val deviceInfo: Devic
                 listOf(userToken),
                 titleToken,
                 XboxDevice(deviceKey, deviceToken)
-            ).request()
+            ).request(HttpUtils.client)
 
             return xstsToken.toIdentityToken()
         }
 
-        fun fetchRawChain(identityToken: String, publicKey: PublicKey): InputStreamReader {
+        fun fetchRawChain(identityToken: String, publicKey: PublicKey): Reader {
             // then, we can request the chain
             val data = JsonObject().apply {
                 addProperty("identityPublicKey", Base64.getEncoder().withoutPadding().encodeToString(publicKey.encoded))
             }
-            val connection = HttpUtils.make("https://multiplayer.minecraft.net/authentication", "POST", AbstractConfigManager.DEFAULT_GSON.toJson(data),
-                mapOf("Content-Type" to "application/json", "Authorization" to identityToken,
-                    "User-Agent" to "MCPE/UWP", "Client-Version" to "1.19.50"))
+			val request = Request.Builder()
+				.url("https://multiplayer.minecraft.net/authentication")
+				.post(AbstractConfigManager.DEFAULT_GSON.toJson(data).toRequestBody("application/json".toMediaType()))
+				.header("Client-Version", "1.19.50")
+				.header("Authorization", identityToken)
+				.build()
+			val response = HttpUtils.client.newCall(request).execute()
 
-            return connection.inputStream.reader().let {
-                val txt = it.readText()
-                txt.toByteArray().inputStream().reader()
-            }
+			assert(response.code == 200) { "Http code ${response.code}" }
+
+			return response.body!!.charStream()
         }
 
         fun fetchChain(identityToken: String, keyPair: KeyPair): List<SignedJWT> {

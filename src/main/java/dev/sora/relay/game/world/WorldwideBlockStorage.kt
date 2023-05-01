@@ -24,6 +24,14 @@ abstract class WorldwideBlockStorage(protected val session: GameSession, overrid
 		chunks.clear()
 	}
 
+	private val handlePacketOutbound = handle<EventPacketOutbound> { event ->
+		val packet = event.packet
+
+		if (packet is SubChunkRequestPacket) {
+			println(packet)
+		}
+	}
+
 	private val handlePacketInbound = handle<EventPacketInbound> { event ->
 		val packet = event.packet
 
