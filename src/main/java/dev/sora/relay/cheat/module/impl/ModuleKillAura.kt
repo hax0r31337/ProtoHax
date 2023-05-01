@@ -37,20 +37,21 @@ class ModuleKillAura : CheatModule("KillAura") {
 			it.distanceSq(session.thePlayer) < range && with(moduleTargets) { it.isTarget() } }
 		if (entityList.isEmpty()) return@handle
 
-		val aimTarget = if (Math.random() <= failRateValue || (cpsValue < 20 && !clickTimer.canClick())) {
-			session.thePlayer.swing(swingValue, failSoundValue)
-			selectEntity(session, entityList)
-		} else {
-			when(attackModeValue) {
-				AttackMode.MULTI -> {
-					entityList.forEach { session.thePlayer.attackEntity(it, swingValue, swingSoundValue) }
-					selectEntity(session, entityList)
-				}
-				AttackMode.SINGLE -> {
-					selectEntity(session, entityList).also {
-						session.thePlayer.attackEntity(it, swingValue, swingSoundValue)
+		val aimTarget = selectEntity(session, entityList)
+
+		if (cpsValue >= 20 || clickTimer.canClick()) {
+			if (Math.random() <= failRateValue) {
+				session.thePlayer.swing(swingValue, failSoundValue)
+			} else {
+				when(attackModeValue) {
+					AttackMode.MULTI -> {
+						entityList.forEach { session.thePlayer.attackEntity(it, swingValue, swingSoundValue) }
+					}
+					AttackMode.SINGLE -> {
+						session.thePlayer.attackEntity(aimTarget, swingValue, swingSoundValue)
 					}
 				}
+				clickTimer.update(cpsValue, cpsValue + 1)
 			}
 		}
 
@@ -60,8 +61,6 @@ class ModuleKillAura : CheatModule("KillAura") {
 			}
 			RotationMode.NONE -> {}
 		}
-
-		clickTimer.update(cpsValue, cpsValue + 1)
 	}
 
 	private fun selectEntity(session: GameSession, entityList: List<Entity>): Entity {
