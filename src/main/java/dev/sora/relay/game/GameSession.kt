@@ -18,6 +18,7 @@ import org.cloudburstmc.protocol.bedrock.data.PlayerBlockActionData
 import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData
 import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.InventoryTransactionType
 import org.cloudburstmc.protocol.bedrock.packet.*
+import kotlin.concurrent.thread
 
 class GameSession : MinecraftRelayPacketListener {
 
@@ -66,7 +67,15 @@ class GameSession : MinecraftRelayPacketListener {
             netSession.client?.let {
                 it.peer.codecHelper.itemDefinitions = itemDefinitions
                 it.peer.codecHelper.blockDefinitions = blockDefinitions
-            }
+            } ?: thread {
+				while (netSession.client == null) {
+					Thread.sleep(10L) // wait client connect
+				}
+				netSession.client!!.peer.codecHelper.also {
+					it.itemDefinitions = itemDefinitions
+					it.blockDefinitions = blockDefinitions
+				}
+			}
             blockMapping = blockDefinitions
             legacyBlockMapping = LegacyBlockMapping.Provider.craftMapping(packet.protocolVersion)
         } else if (!thePlayer.movementServerAuthoritative && packet is PlayerAuthInputPacket) {
