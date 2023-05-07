@@ -24,7 +24,7 @@ class ModuleFly : CheatModule("Fly") {
 
     private var launchY = 0f
 	private val canFly: Boolean
-		get() = !(pressJumpValue && !session.thePlayer.inputData.contains(PlayerAuthInputData.JUMP_DOWN))
+		get() = !pressJumpValue || session.thePlayer.inputData.contains(PlayerAuthInputData.JUMP_DOWN)
 
     private val abilityPacket = UpdateAbilitiesPacket().apply {
         playerPermission = PlayerPermission.OPERATOR

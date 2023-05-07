@@ -27,6 +27,10 @@ class LevelDBWorld(val folder: File) {
 	}
 
 	fun saveSubChunk(x: Int, z: Int, dimension: Int, y: Int, subChunk: ChunkSection, useRuntime: Boolean) {
+//		if (!subChunk.populated) {
+//			return
+//		}
+
 		val key = LevelDBChunkKey.SUB_CHUNK_DATA.getKey(x, z, dimension, y)
 
 		val buf = ByteBufAllocator.DEFAULT.ioBuffer()

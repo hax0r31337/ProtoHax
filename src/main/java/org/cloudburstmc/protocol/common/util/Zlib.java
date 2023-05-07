@@ -6,9 +6,9 @@ import io.netty.buffer.CompositeByteBuf;
 import io.netty.util.concurrent.FastThreadLocal;
 
 import java.nio.ByteBuffer;
+import java.util.zip.DataFormatException;
 import java.util.zip.Deflater;
 import java.util.zip.Inflater;
-import java.util.zip.DataFormatException;
 
 /**
  * as we do not want to use com.nukkitx.natives,

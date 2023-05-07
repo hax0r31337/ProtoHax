@@ -6,7 +6,6 @@ import dev.sora.relay.game.management.BlobCacheManager
 import dev.sora.relay.game.registry.BlockMapping
 import dev.sora.relay.game.registry.ItemMapping
 import dev.sora.relay.game.registry.LegacyBlockMapping
-import dev.sora.relay.game.utils.constants.EnumFacing
 import dev.sora.relay.game.world.WorldClient
 import dev.sora.relay.session.MinecraftRelayPacketListener
 import dev.sora.relay.session.MinecraftRelaySession
@@ -14,7 +13,6 @@ import dev.sora.relay.utils.logInfo
 import org.cloudburstmc.math.vector.Vector3f
 import org.cloudburstmc.math.vector.Vector3i
 import org.cloudburstmc.protocol.bedrock.data.PlayerActionType
-import org.cloudburstmc.protocol.bedrock.data.PlayerBlockActionData
 import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData
 import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.InventoryTransactionType
 import org.cloudburstmc.protocol.bedrock.packet.*

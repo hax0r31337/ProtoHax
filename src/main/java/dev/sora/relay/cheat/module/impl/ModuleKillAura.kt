@@ -22,6 +22,7 @@ class ModuleKillAura : CheatModule("KillAura") {
     private var swingValue by listValue("Swing", EntityPlayerSP.SwingMode.values(), EntityPlayerSP.SwingMode.BOTH)
 	private var priorityModeValue by listValue("PriorityMode", PriorityMode.values(), PriorityMode.DISTANCE)
 	private var reversePriorityValue by boolValue("ReversePriority", false)
+	private var mouseoverValue by boolValue("Mouseover", false)
     private var swingSoundValue by boolValue("SwingSound", true)
     private var failRateValue by floatValue("FailRate", 0f, 0f..1f)
     private var failSoundValue by boolValue("FailSound", true)
@@ -45,10 +46,10 @@ class ModuleKillAura : CheatModule("KillAura") {
 			} else {
 				when(attackModeValue) {
 					AttackMode.MULTI -> {
-						entityList.forEach { session.thePlayer.attackEntity(it, swingValue, swingSoundValue) }
+						entityList.forEach { session.thePlayer.attackEntity(it, swingValue, swingSoundValue, mouseoverValue) }
 					}
 					AttackMode.SINGLE -> {
-						session.thePlayer.attackEntity(aimTarget, swingValue, swingSoundValue)
+						session.thePlayer.attackEntity(aimTarget, swingValue, swingSoundValue, mouseoverValue)
 					}
 				}
 				clickTimer.update(cpsValue, cpsValue + 1)

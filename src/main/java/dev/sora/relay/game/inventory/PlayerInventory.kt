@@ -2,7 +2,6 @@ package dev.sora.relay.game.inventory
 
 import dev.sora.relay.game.GameSession
 import dev.sora.relay.game.entity.EntityPlayerSP
-import dev.sora.relay.utils.logInfo
 import org.cloudburstmc.protocol.bedrock.data.PlayerAuthInputData
 import org.cloudburstmc.protocol.bedrock.data.inventory.ContainerId
 import org.cloudburstmc.protocol.bedrock.data.inventory.ContainerSlotType

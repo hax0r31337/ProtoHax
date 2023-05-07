@@ -4,14 +4,12 @@ import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.cheat.value.Choice
 import dev.sora.relay.game.entity.EntityPlayer
 import dev.sora.relay.game.event.EventEntityDespawn
-import dev.sora.relay.game.event.EventPacketInbound
 import dev.sora.relay.game.event.EventPacketOutbound
 import dev.sora.relay.game.event.EventTick
 import dev.sora.relay.utils.getRandomString
 import dev.sora.relay.utils.timing.TheTimer
 import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.InventoryTransactionType
 import org.cloudburstmc.protocol.bedrock.packet.InventoryTransactionPacket
-import org.cloudburstmc.protocol.bedrock.packet.RemoveEntityPacket
 import org.cloudburstmc.protocol.bedrock.packet.TextPacket
 import kotlin.random.Random
 

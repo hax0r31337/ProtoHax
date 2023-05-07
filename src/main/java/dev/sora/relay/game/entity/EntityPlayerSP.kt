@@ -13,7 +13,6 @@ import org.cloudburstmc.math.vector.Vector3f
 import org.cloudburstmc.protocol.bedrock.data.AuthoritativeMovementMode
 import org.cloudburstmc.protocol.bedrock.data.PlayerAuthInputData
 import org.cloudburstmc.protocol.bedrock.data.SoundEvent
-import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData
 import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.InventoryTransactionType
 import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.ItemUseTransaction
 import org.cloudburstmc.protocol.bedrock.packet.*
@@ -261,7 +260,19 @@ class EntityPlayerSP(private val session: GameSession, override val eventManager
         }
     }
 
-    fun attackEntity(entity: Entity, swingValue: SwingMode = SwingMode.BOTH, sound: Boolean = false) {
+    fun attackEntity(entity: Entity, swingValue: SwingMode = SwingMode.BOTH, sound: Boolean = false, mouseover: Boolean = false) {
+		val interactPacket = if (mouseover) InteractPacket().apply {
+			action = InteractPacket.Action.MOUSEOVER
+			runtimeEntityId = runtimeEntityId
+			mousePosition = entity.vec3Position.add((Math.random() * 0.6) - 0.3,
+				(Math.random() * 1.8) + (if (entity is EntityPlayer) -EYE_HEIGHT else 0f),
+				(Math.random() * 0.6) - 0.3)
+		} else null
+
+		interactPacket?.let {
+			session.sendPacket(it)
+		}
+
         swing(swingValue)
 
         if (sound) {
@@ -281,7 +292,7 @@ class EntityPlayerSP(private val session: GameSession, override val eventManager
             actionType = 1
             runtimeEntityId = entity.runtimeEntityId
             hotbarSlot = inventory.heldItemSlot
-            itemInHand = ItemData.AIR
+            itemInHand = inventory.hand
             playerPosition = vec3Position
             clickPosition = Vector3f.ZERO
         })
