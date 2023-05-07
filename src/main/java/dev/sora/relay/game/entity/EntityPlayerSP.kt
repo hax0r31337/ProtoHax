@@ -292,7 +292,10 @@ class EntityPlayerSP(private val session: GameSession, override val eventManager
             actionType = 1
             runtimeEntityId = entity.runtimeEntityId
             hotbarSlot = inventory.heldItemSlot
-            itemInHand = inventory.hand
+            itemInHand = inventory.hand.toBuilder()
+				.usingNetId(false)
+				.netId(0)
+				.build()
             playerPosition = vec3Position
             clickPosition = Vector3f.ZERO
         })

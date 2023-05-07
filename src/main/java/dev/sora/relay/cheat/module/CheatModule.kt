@@ -28,8 +28,14 @@ abstract class CheatModule(val name: String,
 
             if (state) {
                 onEnable()
+				this.values.forEach {
+					if (it is ChoiceValue) it.active()
+				}
             } else {
                 onDisable()
+				this.values.forEach {
+					if (it is ChoiceValue) it.inactive()
+				}
             }
         }
 
@@ -37,17 +43,9 @@ abstract class CheatModule(val name: String,
 	lateinit var session: GameSession
 	lateinit var moduleManager: ModuleManager
 
-    open fun onEnable() {
-		this.values.forEach {
-			if (it is ChoiceValue) it.active()
-		}
-	}
+    open fun onEnable() {}
 
-    open fun onDisable() {
-		this.values.forEach {
-			if (it is ChoiceValue) it.inactive()
-		}
-	}
+    open fun onDisable() {}
 
     open fun toggle() {
         this.state = !this.state

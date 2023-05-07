@@ -13,6 +13,7 @@ import io.netty.channel.ServerChannel
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.nio.NioDatagramChannel
 import org.cloudburstmc.netty.channel.raknet.RakChannelFactory
+import org.cloudburstmc.netty.channel.raknet.RakReliability
 import org.cloudburstmc.netty.channel.raknet.config.RakChannelOption
 import org.cloudburstmc.protocol.bedrock.BedrockClientSession
 import org.cloudburstmc.protocol.bedrock.BedrockPeer
@@ -87,7 +88,7 @@ open class MinecraftRelay(private val listener: MinecraftRelayListener,
 					override fun postInitChannel(channel: Channel) {
 						super.postInitChannel(channel)
 						// use custom reliability settings
-//						injectFrameIdCodec(channel, CustomFrameIdCodec(reliability = RakReliability.RELIABLE))
+						injectFrameIdCodec(channel, CustomFrameIdCodec(reliability = RakReliability.RELIABLE))
 					}
 
                     override fun initSession(session: BedrockClientSession) {}
