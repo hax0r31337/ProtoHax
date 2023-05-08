@@ -3,6 +3,7 @@ package dev.sora.relay
 import dev.sora.relay.game.GameSession
 import dev.sora.relay.session.CustomFrameIdCodec
 import dev.sora.relay.session.MinecraftRelaySession
+import dev.sora.relay.session.option.RelayAsyncOption
 import dev.sora.relay.utils.logInfo
 import io.netty.bootstrap.Bootstrap
 import io.netty.bootstrap.ServerBootstrap
@@ -37,7 +38,10 @@ open class MinecraftRelay(private val listener: MinecraftRelayListener,
 	val isRunning: Boolean
 		get() = channelFuture != null
 
-	// options
+	/**
+	 * processes packets in a multi-threaded manner, improving performance but causing packet disorder as a side effect
+	 */
+	var optionAsync = RelayAsyncOption.ENABLED
 
 	/**
 	 * affects latency
@@ -76,7 +80,7 @@ open class MinecraftRelay(private val listener: MinecraftRelayListener,
     inner class BedrockRelayInitializer : BedrockServerInitializer() {
 
         override fun createSession0(peer: BedrockPeer, subClientId: Int): BedrockServerSession {
-            val session = MinecraftRelaySession(peer, subClientId)
+            val session = MinecraftRelaySession(peer, subClientId, optionAsync)
 			logInfo("client connected")
 
             // establish connection to actual server
