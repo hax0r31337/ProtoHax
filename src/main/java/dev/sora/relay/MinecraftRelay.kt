@@ -37,6 +37,13 @@ open class MinecraftRelay(private val listener: MinecraftRelayListener,
 	val isRunning: Boolean
 		get() = channelFuture != null
 
+	// options
+
+	/**
+	 * affects latency
+	 */
+	var optionReliability = RakReliability.RELIABLE
+
 	open fun channelFactory(): ChannelFactory<out ServerChannel> {
 		return RakChannelFactory.server(NioDatagramChannel::class.java)
 	}
@@ -88,7 +95,7 @@ open class MinecraftRelay(private val listener: MinecraftRelayListener,
 					override fun postInitChannel(channel: Channel) {
 						super.postInitChannel(channel)
 						// use custom reliability settings
-						injectFrameIdCodec(channel, CustomFrameIdCodec(reliability = RakReliability.RELIABLE))
+						injectFrameIdCodec(channel, CustomFrameIdCodec(reliability = optionReliability))
 					}
 
                     override fun initSession(session: BedrockClientSession) {}
