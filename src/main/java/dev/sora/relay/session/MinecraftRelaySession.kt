@@ -12,7 +12,7 @@ import org.cloudburstmc.protocol.bedrock.codec.BedrockCodec
 import org.cloudburstmc.protocol.bedrock.netty.BedrockPacketWrapper
 import org.cloudburstmc.protocol.bedrock.packet.BedrockPacket
 
-class MinecraftRelaySession(peer: BedrockPeer, subClientId: Int, asyncOption: RelayAsyncOption) : BedrockServerSession(peer, subClientId) {
+class MinecraftRelaySession(peer: BedrockPeer, subClientId: Int, val asyncOption: RelayAsyncOption) : BedrockServerSession(peer, subClientId) {
 
     var client: MinecraftRelayClientSession? = null
         set(value) {
@@ -30,6 +30,12 @@ class MinecraftRelaySession(peer: BedrockPeer, subClientId: Int, asyncOption: Re
     val listeners = mutableListOf<MinecraftRelayPacketListener>()
 
 	val scope = asyncOption.createScope()
+
+	/**
+	 * server can be sensitive to server-bound packets,
+	 * we'll process them on a single thread coroutine scope keep its packet order
+	 */
+	private val singleScope = RelayAsyncOption.DISABLED.createScope()
 
     init {
         packetHandler = SessionCloseHandler {
@@ -51,7 +57,7 @@ class MinecraftRelaySession(peer: BedrockPeer, subClientId: Int, asyncOption: Re
 		val packet = wrapper.packet
 		ReferenceCountUtil.retain(packet)
 
-		scope.launch {
+		singleScope.launch {
 			listeners.forEach { l ->
 				try {
 					if (!l.onPacketOutbound(packet)) {
