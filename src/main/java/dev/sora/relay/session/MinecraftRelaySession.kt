@@ -29,7 +29,7 @@ class MinecraftRelaySession(peer: BedrockPeer, subClientId: Int, asyncOption: Re
     private val queuedPackets = mutableListOf<BedrockPacket>()
     val listeners = mutableListOf<MinecraftRelayPacketListener>()
 
-	private val scope = asyncOption.createScope()
+	val scope = asyncOption.createScope()
 
     init {
         packetHandler = SessionCloseHandler {
