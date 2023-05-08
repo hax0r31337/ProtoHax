@@ -1,12 +1,13 @@
 package dev.sora.relay.game.inventory
 
+import dev.sora.relay.game.entity.Entity
 import org.cloudburstmc.protocol.bedrock.data.inventory.ContainerId
 import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData
 import org.cloudburstmc.protocol.bedrock.packet.BedrockPacket
 import org.cloudburstmc.protocol.bedrock.packet.MobArmorEquipmentPacket
 import org.cloudburstmc.protocol.bedrock.packet.MobEquipmentPacket
 
-open class EntityInventory(val entityId: Long) : AbstractInventory(0) {
+open class EntityInventory(val entity: Entity) : AbstractInventory(0) {
 
     override val capacity: Int
         get() = 6
@@ -32,13 +33,13 @@ open class EntityInventory(val entityId: Long) : AbstractInventory(0) {
         set(value) { content[5] = value }
 
     open fun handlePacket(packet: BedrockPacket) {
-        if (packet is MobEquipmentPacket && packet.runtimeEntityId == entityId) {
+        if (packet is MobEquipmentPacket && packet.runtimeEntityId == entity.runtimeEntityId) {
             if (packet.containerId == 0) {
                 hand = packet.item
             } else if (packet.containerId == ContainerId.OFFHAND) {
                 offhand = packet.item
             }
-        } else if (packet is MobArmorEquipmentPacket && packet.runtimeEntityId == entityId) {
+        } else if (packet is MobArmorEquipmentPacket && packet.runtimeEntityId == entity.runtimeEntityId) {
             helmet = packet.helmet
             chestplate = packet.chestplate
             leggings = packet.leggings

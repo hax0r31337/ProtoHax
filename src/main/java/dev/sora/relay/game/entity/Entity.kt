@@ -12,12 +12,27 @@ import kotlin.math.sqrt
 abstract class Entity(open val runtimeEntityId: Long, open val uniqueEntityId: Long) {
 
     open var posX = 0f
+		set(value) {
+			prevPosX = field
+			field = value
+		}
     open var posY = 0f
+		set(value) {
+			prevPosY = field
+			field = value
+		}
     open var posZ = 0f
+		set(value) {
+			prevPosZ = field
+			field = value
+		}
 
     open var prevPosX = 0f
+		protected set
     open var prevPosY = 0f
+		protected set
     open var prevPosZ = 0f
+		protected set
 
     open var rotationYaw = 0f
     open var rotationPitch = 0f
@@ -35,7 +50,7 @@ abstract class Entity(open val runtimeEntityId: Long, open val uniqueEntityId: L
     open val attributes = mutableMapOf<String, AttributeData>()
     open val metadata = EntityDataMap()
 
-    open val inventory = EntityInventory(runtimeEntityId)
+    open val inventory = EntityInventory(this)
 
     val vec3Position: Vector3f
         get() = Vector3f.from(posX, posY, posZ)
@@ -44,9 +59,6 @@ abstract class Entity(open val runtimeEntityId: Long, open val uniqueEntityId: L
         get() = Vector3f.from(rotationPitch, rotationYaw, rotationYawHead)
 
     open fun move(x: Float, y: Float, z: Float) {
-        this.prevPosX = this.posX
-        this.prevPosY = this.posY
-        this.prevPosZ = this.posZ
         this.posX = x
         this.posY = y
         this.posZ = z

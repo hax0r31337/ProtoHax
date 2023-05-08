@@ -16,7 +16,7 @@ import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.InventoryTra
 import org.cloudburstmc.protocol.bedrock.packet.*
 import java.util.*
 
-class PlayerInventory(private val player: EntityPlayerSP) : EntityInventory(0L) {
+class PlayerInventory(private val player: EntityPlayerSP) : EntityInventory(player) {
 
     var heldItemSlot = 0
         private set
@@ -84,14 +84,14 @@ class PlayerInventory(private val player: EntityPlayerSP) : EntityInventory(0L) 
 
     private fun processItemStackPacket(packet: ItemStackRequestPacket) {
         packet.requests.forEach {
-            it.actions.filterIsInstance<PlaceAction>().forEach { action ->
+            it.actions.filterIsInstance<PlaceAction>().forEach FE@ { action ->
                 val openContainer = player.openContainer
                 val srcItem: Pair<ItemData, (ItemData) -> Unit> = if (action.source.container == ContainerSlotType.LEVEL_ENTITY && openContainer is ContainerInventory) {
                     openContainer.content[action.source.slot] to {
                         openContainer.content[action.source.slot] = it
                     }
                 } else {
-                    val slot = action.source.slot + (getOffsetByContainerType(action.source.container) ?: return@forEach)
+                    val slot = action.source.slot + (getOffsetByContainerType(action.source.container) ?: return@FE)
                     content[slot] to {
                         content[slot] = it
                     }
@@ -101,7 +101,7 @@ class PlayerInventory(private val player: EntityPlayerSP) : EntityInventory(0L) 
                         openContainer.content[action.destination.slot] = it
                     }
                 } else {
-                    val slot = action.destination.slot + (getOffsetByContainerType(action.destination.container) ?: return@forEach)
+                    val slot = action.destination.slot + (getOffsetByContainerType(action.destination.container) ?: return@FE)
                     content[slot] to {
                         content[slot] = it
                     }

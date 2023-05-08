@@ -39,7 +39,7 @@ class ModuleSpammer : CheatModule("Spammer") {
 
 		private val spamTimer = TheTimer()
 
-		private val handleTick = handle<EventTick> { event ->
+		private val handleTick = handle<EventTick> {
 			if (spamTimer.hasTimePassed(delayValue)) {
 				sendMessage(emptyMap())
 				spamTimer.reset()

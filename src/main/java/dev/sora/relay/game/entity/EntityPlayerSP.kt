@@ -49,7 +49,12 @@ class EntityPlayerSP(private val session: GameSession, override val eventManager
         }
 
 	var onGround = false
+		set(value) {
+			prevOnGround = field
+			field = value
+		}
 	var prevOnGround = false
+		private set
 
     // new introduced "server authoritative" mode
     var blockBreakServerAuthoritative = false
@@ -152,7 +157,6 @@ class EntityPlayerSP(private val session: GameSession, override val eventManager
 				runtimeEntityId = packet.runtimeEntityId
 			}
 
-			prevOnGround = onGround
 			onGround = packet.isOnGround
 
 			session.onTick()
@@ -165,7 +169,6 @@ class EntityPlayerSP(private val session: GameSession, override val eventManager
 			move(packet.position)
 			rotate(packet.rotation)
 
-			prevOnGround = onGround
 			val playerMinY = floor((posY - EYE_HEIGHT) * 1000) / 1000
 			onGround = if (playerMinY % 0.125f == 0f) {
 				packet.position.add(0f, -EYE_HEIGHT, 0f).toVector3iFloor()

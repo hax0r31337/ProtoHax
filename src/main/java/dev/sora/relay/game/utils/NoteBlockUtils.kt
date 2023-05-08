@@ -1,6 +1,7 @@
 package dev.sora.relay.game.utils
 
-import java.io.DataInputStream
+import io.netty.buffer.ByteBuf
+import io.netty.buffer.Unpooled
 import java.io.InputStream
 import kotlin.math.floor
 
@@ -23,55 +24,55 @@ object NoteBlockUtils {
         }
 
         fun readNbs(inputIn: InputStream) {
-            val dataInputStream = DataInputStream(inputIn)
-            var length = readShort(dataInputStream)
+			val buf = Unpooled.wrappedBuffer(inputIn.readBytes())
+            var length = buf.readShortLE()
             var firstcustominstrument = 10 // Backward compatibility - most of songs with old structure are from 1.12
             var nbsversion = 0
             if (length.toInt() == 0) {
-                nbsversion = dataInputStream.readByte().toInt()
-                firstcustominstrument = dataInputStream.readByte().toInt()
+                nbsversion = buf.readUnsignedByte().toInt()
+                firstcustominstrument = buf.readUnsignedByte().toInt()
                 if (nbsversion >= 3) {
-                    length = readShort(dataInputStream)
+                    length = buf.readShortLE()
                 }
             }
-            readShort(dataInputStream)
-            readString(dataInputStream)
-            readString(dataInputStream)
-            readString(dataInputStream) // original author
-            readString(dataInputStream)
-            val speed = readShort(dataInputStream) / 100f
-            dataInputStream.readBoolean() // auto-save
-            dataInputStream.readByte() // auto-save duration
-            dataInputStream.readByte() // x/4ths, time signature
-            readInt(dataInputStream) // minutes spent on project
-            readInt(dataInputStream) // left clicks (why?)
-            readInt(dataInputStream) // right clicks (why?)
-            readInt(dataInputStream) // blocks added
-            readInt(dataInputStream) // blocks removed
-            readString(dataInputStream) // .mid/.schematic file name
+            buf.readShortLE()
+			buf.readString()
+			buf.readString()
+			buf.readString() // original author
+			buf.readString()
+            val speed = buf.readShortLE() / 100f
+            buf.readBoolean() // auto-save
+            buf.readByte() // auto-save duration
+            buf.readByte() // x/4ths, time signature
+            buf.readIntLE() // minutes spent on project
+            buf.readIntLE() // left clicks (why?)
+            buf.readIntLE() // right clicks (why?)
+            buf.readIntLE() // blocks added
+            buf.readIntLE() // blocks removed
+            buf.readString() // .mid/.schematic file name
             if (nbsversion >= 4) {
-                dataInputStream.readByte() // loop on/off
-                dataInputStream.readByte() // max loop count
-                readShort(dataInputStream) // loop start tick
+                buf.readByte() // loop on/off
+                buf.readByte() // max loop count
+                buf.readShortLE() // loop start tick
             }
             var tick: Short = -1
             while (true) {
-                val jumpTicks = readShort(dataInputStream) // jumps till next tick
+                val jumpTicks = buf.readShortLE() // jumps till next tick
                 if (jumpTicks.toInt() == 0) {
                     break
                 }
                 tick = (tick + jumpTicks).toShort()
                 while (true) {
-                    val jumpLayers = readShort(dataInputStream) // jumps till next layer
+                    val jumpLayers = buf.readShortLE() // jumps till next layer
                     if (jumpLayers.toInt() == 0) {
                         break
                     }
-                    val instrument: Byte = dataInputStream.readByte()
-                    val key: Byte = (dataInputStream.readByte() - 33).toByte()
+                    val instrument = buf.readUnsignedByte()
+                    val key = (buf.readUnsignedByte() - 33).toByte()
                     if (nbsversion >= 4) {
-                        dataInputStream.readByte() // note block velocity
-                        dataInputStream.readByte() // note block panning
-                        readShort(dataInputStream) // note block pitch
+                        buf.readByte() // note block velocity
+                        buf.readByte() // note block panning
+                        buf.readShortLE() // note block pitch
                     }
                     val realTick = floor(tick * 20f / speed).toInt()
                     (ticks[realTick] ?: mutableListOf<Note>().also { ticks[realTick] = it })
@@ -102,25 +103,11 @@ object NoteBlockUtils {
         ELECTRIC_PIANO;
     }
 
-    private fun readShort(dataInputStream: DataInputStream): Short {
-        val byte1 = dataInputStream.readUnsignedByte()
-        val byte2 = dataInputStream.readUnsignedByte()
-        return (byte1 + (byte2 shl 8)).toShort()
-    }
-
-    private fun readInt(dataInputStream: DataInputStream): Int {
-        val byte1 = dataInputStream.readUnsignedByte()
-        val byte2 = dataInputStream.readUnsignedByte()
-        val byte3 = dataInputStream.readUnsignedByte()
-        val byte4 = dataInputStream.readUnsignedByte()
-        return byte1 + (byte2 shl 8) + (byte3 shl 16) + (byte4 shl 24)
-    }
-
-    private fun readString(dataInputStream: DataInputStream): String {
-        var length = readInt(dataInputStream)
+    private fun ByteBuf.readString(): String {
+        var length = readIntLE()
         val builder = StringBuilder(length)
         while (length > 0) {
-            var c = Char(dataInputStream.readByte().toUShort())
+            var c = Char(readByte().toUShort())
             if (c == 0x0D.toChar()) {
                 c = ' '
             }
