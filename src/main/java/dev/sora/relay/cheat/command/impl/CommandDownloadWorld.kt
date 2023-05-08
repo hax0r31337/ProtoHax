@@ -6,6 +6,7 @@ import dev.sora.relay.game.event.*
 import dev.sora.relay.game.world.chunk.Chunk
 import dev.sora.relay.game.world.leveldb.LevelDBLevelData
 import dev.sora.relay.game.world.leveldb.LevelDBWorld
+import kotlinx.coroutines.launch
 import org.cloudburstmc.protocol.bedrock.packet.TextPacket
 import java.io.File
 import java.time.ZonedDateTime
@@ -77,7 +78,9 @@ class CommandDownloadWorld(override val eventManager: EventManager, private val 
 			}
 			"save" -> {
 				session.chat("Saving...")
-				saveWorld(session)
+				session.scope.launch {
+					saveWorld(session)
+				}
 			}
 			"cancel" -> {
 				handleEvents = false

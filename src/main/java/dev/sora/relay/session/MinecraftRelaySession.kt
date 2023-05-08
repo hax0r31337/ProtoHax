@@ -1,10 +1,12 @@
 package dev.sora.relay.session
 
-import dev.sora.relay.session.option.RelayAsyncOption
 import dev.sora.relay.utils.logError
 import dev.sora.relay.utils.logInfo
 import io.netty.util.ReferenceCountUtil
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.newSingleThreadContext
 import org.cloudburstmc.protocol.bedrock.BedrockClientSession
 import org.cloudburstmc.protocol.bedrock.BedrockPeer
 import org.cloudburstmc.protocol.bedrock.BedrockServerSession
@@ -12,7 +14,7 @@ import org.cloudburstmc.protocol.bedrock.codec.BedrockCodec
 import org.cloudburstmc.protocol.bedrock.netty.BedrockPacketWrapper
 import org.cloudburstmc.protocol.bedrock.packet.BedrockPacket
 
-class MinecraftRelaySession(peer: BedrockPeer, subClientId: Int, val asyncOption: RelayAsyncOption) : BedrockServerSession(peer, subClientId) {
+class MinecraftRelaySession(peer: BedrockPeer, subClientId: Int) : BedrockServerSession(peer, subClientId) {
 
     var client: MinecraftRelayClientSession? = null
         set(value) {
@@ -29,13 +31,7 @@ class MinecraftRelaySession(peer: BedrockPeer, subClientId: Int, val asyncOption
     private val queuedPackets = mutableListOf<BedrockPacket>()
     val listeners = mutableListOf<MinecraftRelayPacketListener>()
 
-	val scope = asyncOption.createScope()
-
-	/**
-	 * server can be sensitive to server-bound packets,
-	 * we'll process them on a single thread coroutine scope keep its packet order
-	 */
-	private val singleScope = RelayAsyncOption.DISABLED.createScope()
+	private val scope = CoroutineScope(newSingleThreadContext("RakRelay") + SupervisorJob())
 
     init {
         packetHandler = SessionCloseHandler {
@@ -57,7 +53,7 @@ class MinecraftRelaySession(peer: BedrockPeer, subClientId: Int, val asyncOption
 		val packet = wrapper.packet
 		ReferenceCountUtil.retain(packet)
 
-		singleScope.launch {
+		scope.launch {
 			listeners.forEach { l ->
 				try {
 					if (!l.onPacketOutbound(packet)) {
@@ -90,6 +86,8 @@ class MinecraftRelaySession(peer: BedrockPeer, subClientId: Int, val asyncOption
 	}
 
     inner class MinecraftRelayClientSession(peer: BedrockPeer, subClientId: Int) : BedrockClientSession(peer, subClientId) {
+
+		private val scope = CoroutineScope(newSingleThreadContext("RakRelay") + SupervisorJob())
 
         init {
             packetHandler = SessionCloseHandler {
