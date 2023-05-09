@@ -8,6 +8,8 @@ import org.cloudburstmc.protocol.bedrock.packet.SetEntityMotionPacket
 
 class ModuleAirJump : CheatModule("AirJump") {
 
+	private var speedMultiplierValue by floatValue("SpeedMultiplier", 1f, 0.5f..3f)
+
 	private var jumpPressed = false
 
 	override fun onDisable() {
@@ -21,7 +23,7 @@ class ModuleAirJump : CheatModule("AirJump") {
 				if (!player.onGround && !player.prevOnGround) {
 					it.session.netSession.inboundPacket(SetEntityMotionPacket().apply {
 						runtimeEntityId = player.runtimeEntityId
-						motion = Vector3f.from(player.posX - player.prevPosX, 0.42f, player.posZ - player.prevPosZ)
+						motion = Vector3f.from((player.posX - player.prevPosX) * speedMultiplierValue, 0.42f, (player.posZ - player.prevPosZ) * speedMultiplierValue)
 					})
 				}
 			}
