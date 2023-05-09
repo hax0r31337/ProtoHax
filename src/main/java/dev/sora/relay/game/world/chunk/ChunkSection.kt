@@ -74,11 +74,11 @@ class ChunkSection(private val blockMapping: BlockMapping, private val legacyBlo
 		// version
 		buf.writeByte(8)
 
-		if (!populated) {
-			// no layer available because of this chunk hasen't got populated yet
-			buf.writeByte(0)
-			return
-		}
+//		if (!populated) {
+//			// no layer available because of this chunk hasen't got populated yet
+//			buf.writeByte(0)
+//			return
+//		}
 
 		// we only support one layer currently
 		buf.writeByte(1)

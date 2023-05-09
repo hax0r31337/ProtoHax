@@ -31,7 +31,7 @@ class MinecraftRelaySession(peer: BedrockPeer, subClientId: Int) : BedrockServer
     private val queuedPackets = mutableListOf<BedrockPacket>()
     val listeners = mutableListOf<MinecraftRelayPacketListener>()
 
-	private val scope = CoroutineScope(newSingleThreadContext("RakRelay") + SupervisorJob())
+	private val scope = CoroutineScope(newSingleThreadContext("RakRelay-Server") + SupervisorJob())
 
     init {
         packetHandler = SessionCloseHandler {
@@ -87,7 +87,7 @@ class MinecraftRelaySession(peer: BedrockPeer, subClientId: Int) : BedrockServer
 
     inner class MinecraftRelayClientSession(peer: BedrockPeer, subClientId: Int) : BedrockClientSession(peer, subClientId) {
 
-		private val scope = CoroutineScope(newSingleThreadContext("RakRelay") + SupervisorJob())
+		private val scope = CoroutineScope(newSingleThreadContext("RakRelay-Client") + SupervisorJob())
 
         init {
             packetHandler = SessionCloseHandler {
