@@ -118,8 +118,8 @@ class RelayListenerXboxLogin(val accessToken: String, val deviceInfo: XboxDevice
 				).request(HttpUtils.client)
 				if (sisuToken.status != 200) {
 					val did = deviceToken.displayClaims["xdi"]!!.asJsonObject.get("did").asString
-					val sign = deviceKey.sign("/proxy?sessionid=${sisuRequest.sessionId}", null, "POST", null)
-					val url = sisuToken.webPage + "?action=signup" +
+					val sign = deviceKey.sign("/proxy?sessionid=${sisuRequest.sessionId}", null, "POST", null).replace("+", "%2B").replace("=", "%3D")
+					val url = sisuToken.webPage.split("#")[0] +
 						"&did=0x$did&redirect=${deviceInfo.xalRedirect}" +
 						"&sid=${sisuRequest.sessionId}&sig=${sign}&state=${sisuQuery.state}"
 					throw XboxGamerTagException(url)
