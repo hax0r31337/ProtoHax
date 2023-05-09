@@ -1,4 +1,4 @@
-package dev.sora.relay.session.listener
+package dev.sora.relay.session.listener.xbox
 
 import coelho.msftauth.api.xbox.*
 import com.google.gson.JsonObject
@@ -7,11 +7,11 @@ import com.nimbusds.jose.Payload
 import com.nimbusds.jwt.SignedJWT
 import dev.sora.relay.cheat.config.AbstractConfigManager
 import dev.sora.relay.session.MinecraftRelaySession
+import dev.sora.relay.session.listener.RelayListenerEncryptedSession
 import dev.sora.relay.utils.HttpUtils
 import dev.sora.relay.utils.base64Decode
 import dev.sora.relay.utils.logError
 import dev.sora.relay.utils.logInfo
-import okhttp3.FormBody
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -26,9 +26,9 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
 
-class RelayListenerMicrosoftLogin(val accessToken: String, val deviceInfo: DeviceInfo) : RelayListenerEncryptedSession() {
+class RelayListenerXboxLogin(val accessToken: String, val deviceInfo: XboxDeviceInfo) : RelayListenerEncryptedSession() {
 
-    constructor(accessToken: String, deviceInfo: DeviceInfo, session: MinecraftRelaySession) : this(accessToken, deviceInfo) {
+    constructor(accessToken: String, deviceInfo: XboxDeviceInfo, session: MinecraftRelaySession) : this(accessToken, deviceInfo) {
         this.session = session
     }
 
@@ -80,58 +80,15 @@ class RelayListenerMicrosoftLogin(val accessToken: String, val deviceInfo: Devic
         return true
     }
 
-    data class DeviceInfo(val appId: String, val deviceType: String,
-                     val allowDirectTitleTokenFetch: Boolean = false) {
-
-		/**
-		 * @param token refresh token or authorization code
-		 * @return Pair<AccessToken, RefreshToken>
-		 */
-		fun refreshToken(token: String): Pair<String, String> {
-			val form = FormBody.Builder()
-			form.add("client_id", appId)
-			form.add("redirect_uri", "https://login.live.com/oauth20_desktop.srf")
-			// if the last part of the token was uuid, it must be authorization code
-			if (try { UUID.fromString(token.substring(token.lastIndexOf('.')+1)); true } catch (t: Throwable) { false }) {
-				form.add("grant_type", "authorization_code")
-				form.add("code", token)
-			} else {
-				form.add("scope", "service::user.auth.xboxlive.com::MBI_SSL")
-				form.add("grant_type", "refresh_token")
-				form.add("refresh_token", token)
-			}
-			val request = Request.Builder()
-				.url("https://login.live.com/oauth20_token.srf")
-				.header("Content-Type", "application/x-www-form-urlencoded")
-				.post(form.build())
-				.build()
-			val response = HttpUtils.client.newCall(request).execute()
-
-			assert(response.code == 200) { "Http code ${response.code}" }
-
-			val body = JsonParser.parseReader(response.body!!.charStream()).asJsonObject
-			if (!body.has("access_token") || !body.has("refresh_token")) {
-				if (body.has("error")) {
-					throw RuntimeException("error occur whilst refreshing token: " + body.get("error").asString)
-				} else {
-					throw RuntimeException("error occur whilst refreshing token")
-				}
-			}
-			return body.get("access_token").asString to body.get("refresh_token").asString
-		}
-	}
 
     companion object {
-        val DEVICE_ANDROID = DeviceInfo("0000000048183522", "Android", false)
-        val DEVICE_NINTENDO = DeviceInfo("00000000441cc96b", "Nintendo", true)
-        val devices = arrayOf(DEVICE_ANDROID, DEVICE_NINTENDO).associateBy { it.deviceType }
 
 		/**
 		 * this key used to sign the post content
 		 */
 		val deviceKey = XboxDeviceKey()
 
-        fun fetchIdentityToken(accessToken: String, deviceInfo: DeviceInfo): String {
+        fun fetchIdentityToken(accessToken: String, deviceInfo: XboxDeviceInfo): String {
             var userToken: XboxToken? = null
             val userRequestThread = thread {
                 userToken = XboxUserAuthRequest(
@@ -150,23 +107,23 @@ class RelayListenerMicrosoftLogin(val accessToken: String, val deviceInfo: Devic
                 ).request(HttpUtils.client)
             } else {
                 val device = XboxDevice(deviceKey, deviceToken)
+				val sisuQuery = XboxSISUAuthenticateRequest.Query("phone")
                 val sisuRequest = XboxSISUAuthenticateRequest(
                     deviceInfo.appId, device, "service::user.auth.xboxlive.com::MBI_SSL",
-                    XboxSISUAuthenticateRequest.Query("phone"),
-                    "ms-xal-${deviceInfo.appId}://auth", "RETAIL"
+                    sisuQuery, deviceInfo.xalRedirect, "RETAIL"
                 ).request(HttpUtils.client)
-                val sisuToken = try {
-                    XboxSISUAuthorizeRequest(
-                        "t=$accessToken", deviceInfo.appId, device, "RETAIL",
-                        sisuRequest.sessionId, "user.auth.xboxlive.com", "http://xboxlive.com"
-                    ).request(HttpUtils.client)
-                } catch (e: IllegalStateException) {
-//                    val did = deviceToken.displayClaims["xdi"]!!.asJsonObject.get("did").asString
-//                    val sign = deviceKey.sign("https://sisu.xboxlive.com/proxy", null, "POST", "sessionid=${sisuRequest.sessionId}".toByteArray()).replace("+", "%2B").replace("=","%3D")
-//                    println("https://sisu.xboxlive.com/client/v28/0000000048183522/view/index.html?action=signup&redirect=ms-xal-0000000048183522://auth" +
-//                            "&&did=$did&&sid=${sisuRequest.sessionId}&sig=${sign}")
-                    throw RuntimeException("Have you registered a Xbox GamerTag?", e)
-                }
+                val sisuToken = XboxSISUAuthorizeRequest(
+					"t=$accessToken", deviceInfo.appId, device, "RETAIL",
+					sisuRequest.sessionId, "user.auth.xboxlive.com", "http://xboxlive.com"
+				).request(HttpUtils.client)
+				if (sisuToken.status != 200) {
+					val did = deviceToken.displayClaims["xdi"]!!.asJsonObject.get("did").asString
+					val sign = deviceKey.sign("/proxy?sessionid=${sisuRequest.sessionId}", null, "POST", null)
+					val url = sisuToken.webPage + "?action=signup" +
+						"&did=0x$did&redirect=${deviceInfo.xalRedirect}" +
+						"&sid=${sisuRequest.sessionId}&sig=${sign}&state=${sisuQuery.state}"
+					throw XboxGamerTagException(url)
+				}
                 sisuToken.titleToken
             }
             if (userRequestThread.isAlive)

@@ -8,8 +8,9 @@ import dev.sora.relay.game.GameSession
 import dev.sora.relay.session.MinecraftRelaySession
 import dev.sora.relay.session.listener.RelayListenerAutoCodec
 import dev.sora.relay.session.listener.RelayListenerEncryptedSession
-import dev.sora.relay.session.listener.RelayListenerMicrosoftLogin
+import dev.sora.relay.session.listener.xbox.RelayListenerXboxLogin
 import dev.sora.relay.session.listener.RelayListenerNetworkSettings
+import dev.sora.relay.session.listener.xbox.XboxDeviceInfo
 import dev.sora.relay.utils.logInfo
 import dev.sora.relay.utils.logWarn
 import io.netty.util.internal.logging.InternalLoggerFactory
@@ -28,10 +29,10 @@ fun main(args: Array<String>) {
     val dst = InetSocketAddress("127.0.0.1", 19136)
 	var loginThread: Thread? = null
     val sessionEncryptor = if(tokenFile.exists() && !args.contains("--offline")) {
-		val deviceInfo = RelayListenerMicrosoftLogin.DEVICE_NINTENDO
+		val deviceInfo = XboxDeviceInfo.DEVICE_ANDROID
 		val (accessToken, refreshToken) = deviceInfo.refreshToken(tokenFile.readText())
 		tokenFile.writeText(refreshToken)
-		RelayListenerMicrosoftLogin(accessToken, deviceInfo).also {
+		RelayListenerXboxLogin(accessToken, deviceInfo).also {
 			loginThread = thread {
 				it.forceFetchChain()
 				println("chain ok")
