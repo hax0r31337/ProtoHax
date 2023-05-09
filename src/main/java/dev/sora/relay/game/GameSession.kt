@@ -10,13 +10,17 @@ import dev.sora.relay.game.world.WorldClient
 import dev.sora.relay.session.MinecraftRelayPacketListener
 import dev.sora.relay.session.MinecraftRelaySession
 import dev.sora.relay.utils.logInfo
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.launch
 import org.cloudburstmc.math.vector.Vector3f
 import org.cloudburstmc.math.vector.Vector3i
 import org.cloudburstmc.protocol.bedrock.data.PlayerActionType
 import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData
 import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.InventoryTransactionType
 import org.cloudburstmc.protocol.bedrock.packet.*
-import kotlin.concurrent.thread
+import java.util.concurrent.Executors
 
 class GameSession : MinecraftRelayPacketListener {
 
@@ -38,6 +42,8 @@ class GameSession : MinecraftRelayPacketListener {
         get() = this::netSession.isInitialized
 
 	private var lastStopBreak = false
+
+	val scope = CoroutineScope(Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()).asCoroutineDispatcher() + SupervisorJob())
 
     override fun onPacketInbound(packet: BedrockPacket): Boolean {
         val event = EventPacketInbound(this, packet)
@@ -65,7 +71,7 @@ class GameSession : MinecraftRelayPacketListener {
             netSession.client?.let {
                 it.peer.codecHelper.itemDefinitions = itemDefinitions
                 it.peer.codecHelper.blockDefinitions = blockDefinitions
-            } ?: thread {
+            } ?: scope.launch {
 				while (netSession.client == null) {
 					Thread.sleep(10L) // wait client connect
 				}

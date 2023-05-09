@@ -6,6 +6,8 @@ import dev.sora.relay.game.registry.BlockDefinition
 import dev.sora.relay.game.utils.constants.Dimension
 import dev.sora.relay.game.world.chunk.Chunk
 import dev.sora.relay.utils.logError
+import io.netty.buffer.ByteBuf
+import kotlinx.coroutines.launch
 import org.cloudburstmc.math.vector.Vector3i
 import org.cloudburstmc.protocol.bedrock.data.SubChunkRequestResult
 import org.cloudburstmc.protocol.bedrock.packet.*
@@ -33,24 +35,21 @@ abstract class WorldwideBlockStorage(protected val session: GameSession, overrid
 				dimension == Dimension.OVERWORLD && (!session.netSessionInitialized || session.netSession.codec.protocolVersion >= 440),
 				session.blockMapping, session.legacyBlockMapping)
 			if (!packet.isCachingEnabled && !packet.isRequestSubChunks) {
-				val readerIndex = packet.data.readerIndex()
-				try {
-					chunk.read(packet.data, packet.subChunksLength)
-				} catch (t: Throwable) {
-					logError("exception thrown whilst read chunk", t)
+				val buf = packet.data.retainedDuplicate()
+				session.scope.launch {
+					try {
+						chunk.read(buf, packet.subChunksLength)
+					} catch (t: Throwable) {
+						logError("exception thrown whilst read chunk", t)
+					} finally {
+					    buf.release()
+					}
 				}
-				packet.data.readerIndex(readerIndex)
 			} else if (packet.isCachingEnabled && !packet.isRequestSubChunks) {
 				packet.blobIds.forEachIndexed { index, blobId ->
 					if (index >= packet.subChunksLength) return@forEachIndexed
 					session.cacheManager.registerCacheCallback(blobId) {
-						val readerIndex = it.readerIndex()
-						try {
-							chunk.readSubChunk(index, it)
-						} catch (t: Throwable) {
-							logError("exception thrown whilst read subchunk", t)
-						}
-						it.readerIndex(readerIndex)
+						readSubChunk(chunk, it, index)
 					}
 				}
 			} // we handle SubChunkPackets for isCachingEnabled && isRequestSubChunks cases
@@ -73,23 +72,24 @@ abstract class WorldwideBlockStorage(protected val session: GameSession, overrid
 				if (it.data.readableBytes() == 0) {
 					// cached chunk
 					session.cacheManager.registerCacheCallback(it.blobId) {
-						val readerIndex = it.readerIndex()
-						try {
-							chunk.readSubChunk(position.y, it)
-						} catch (t: Throwable) {
-							logError("exception thrown whilst read subchunk", t)
-						}
-						it.readerIndex(readerIndex)
+						readSubChunk(chunk, it, position.y)
 					}
 				} else {
-					val readerIndex = it.data.readerIndex()
-					try {
-						chunk.readSubChunk(position.y, it.data)
-					} catch (t: Throwable) {
-						logError("exception thrown whilst read subchunk", t)
-					}
-					it.data.readerIndex(readerIndex)
+					readSubChunk(chunk, it.data, position.y)
 				}
+			}
+		}
+	}
+
+	private fun readSubChunk(chunk: Chunk, data: ByteBuf, posY: Int) {
+		val buf = data.retainedDuplicate()
+		session.scope.launch {
+			try {
+				chunk.readSubChunk(posY, buf)
+			} catch (t: Throwable) {
+				logError("exception thrown whilst read subchunk", t)
+			} finally {
+			    buf.release()
 			}
 		}
 	}

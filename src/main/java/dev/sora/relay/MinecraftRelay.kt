@@ -37,8 +37,6 @@ open class MinecraftRelay(private val listener: MinecraftRelayListener,
 	val isRunning: Boolean
 		get() = channelFuture != null
 
-	// options
-
 	/**
 	 * affects latency
 	 */
