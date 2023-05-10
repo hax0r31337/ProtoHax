@@ -7,7 +7,7 @@ class LevelDBPlayerAbilities {
     var canAttackPlayers = true
     var canBuild = true
     var canFly = false
-    var canInstaBuild = false // TODO: what exactly is this? How does it differ from canBuild?
+    var canInstaBuild = false
     var canMine = true
     var canOpenContainers = true
     var canTeleport = false
@@ -16,9 +16,9 @@ class LevelDBPlayerAbilities {
     var isFlying = false
     var isInvulnerable = false
     var isOp = false
-    var isLightning = false // TODO: what is this?
+    var isLightning = false
     var permissionsLevel = 0
-    var playerPermissionsLevel = 0 // TODO: what is this and isn't it the same as permissionLevel?
+    var playerPermissionsLevel = 0
     var walkSpeed = 0.1f
 
 	fun toNbtMap(): NbtMap {

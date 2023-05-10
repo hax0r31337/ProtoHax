@@ -8,10 +8,12 @@ import org.cloudburstmc.protocol.bedrock.packet.LevelSoundEventPacket
 
 class ModuleBGM : CheatModule("BGM") {
 
-    private val song = NoteBlockUtils.Song().apply {
-        readNbs(ModuleBGM::class.java.getResourceAsStream("/assets/music.nbs"))
-        computeMaxTicks()
-    }
+    private val song by lazy {
+		NoteBlockUtils.Song().apply {
+			readNbs(ModuleBGM::class.java.getResourceAsStream("/assets/music.nbs"))
+			computeMaxTicks()
+		}
+	}
     private var ticks = 0
 
     override fun onEnable() {

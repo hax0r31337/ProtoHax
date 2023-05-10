@@ -7,20 +7,26 @@ import dev.sora.relay.game.event.Handler
 
 class ChoiceValue(name: String, values: Array<Choice>, value: Choice) : ListValue<Choice>(name, values, value) {
 
+	private var isActive = false
+
 	init {
 	    listen { newValue ->
-			values.forEach {
-				it.isActive = newValue == it
+			if (isActive) {
+				values.forEach {
+					it.isActive = newValue == it
+				}
 			}
 			newValue
 		}
 	}
 
 	fun active() {
+		isActive = true
 		value.isActive = true
 	}
 
 	fun inactive() {
+		isActive = false
 		value.isActive = false
 	}
 }

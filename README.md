@@ -44,12 +44,6 @@ To use ProtoHax on a specific platform, you will need to use the platform-specif
 ## Setting up a Workspace
 ProtoHax uses Gradle and Maven, please make sure that it is installed properly
 
-### Dependency
-We used some local dependencies, sorry for inconvenience.
-1. Clone the repository used as dependency `git clone https://github.com/mccheatz/Protocol.git`
-2. CD into the local repository.
-3. Run `mvn install` in order to publish the artifact to local maven repository
-
 ### Main
 1. Clone the repository using `git clone --recurse-submodules https://github.com/hax0r31337/ProtoHax.git`. 
 2. CD into the local repository.

@@ -80,5 +80,7 @@ fun ItemData.isBlock(): Boolean {
     return (blockDefinition?.runtimeId ?: 0) != 0
 }
 
+private val airDefinition = ItemDefinition(0, "minecraft:air", emptyArray())
+
 val ItemData.itemDefinition: ItemDefinition
-    get() = this.definition as ItemDefinition
+    get() = this.definition as? ItemDefinition ?: airDefinition

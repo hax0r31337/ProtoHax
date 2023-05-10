@@ -2,12 +2,10 @@ package dev.sora.relay.game.world.leveldb
 
 import org.cloudburstmc.math.vector.Vector3i
 import org.cloudburstmc.nbt.NBTOutputStream
-import org.cloudburstmc.nbt.NbtList
 import org.cloudburstmc.nbt.NbtMap
 import org.cloudburstmc.nbt.NbtType
 import org.cloudburstmc.nbt.util.stream.LittleEndianDataOutputStream
 import java.io.ByteArrayOutputStream
-import java.io.DataOutputStream
 
 class LevelDBLevelData(var protocol: Int, var inventoryVersion: String) {
     // world specific
@@ -16,7 +14,7 @@ class LevelDBLevelData(var protocol: Int, var inventoryVersion: String) {
     var hasBeenLoadedInCreative = false
     var hasLockedResourcePack = false
     var hasLockedBehaviorPack = false
-    var experiments = NbtMap.EMPTY // TODO: Implement actual experiments object once you figure out experiments
+    var experiments = NbtMap.EMPTY
     var isForcedGamemode = false
     var isImmutable = false
     var isConfirmedPlatformLockedContent = false

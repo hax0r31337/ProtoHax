@@ -10,9 +10,17 @@ import dev.sora.relay.game.world.WorldClient
 import dev.sora.relay.session.MinecraftRelayPacketListener
 import dev.sora.relay.session.MinecraftRelaySession
 import dev.sora.relay.utils.logInfo
-import org.cloudburstmc.protocol.bedrock.packet.BedrockPacket
-import org.cloudburstmc.protocol.bedrock.packet.LoginPacket
-import org.cloudburstmc.protocol.bedrock.packet.TextPacket
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.launch
+import org.cloudburstmc.math.vector.Vector3f
+import org.cloudburstmc.math.vector.Vector3i
+import org.cloudburstmc.protocol.bedrock.data.PlayerActionType
+import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData
+import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.InventoryTransactionType
+import org.cloudburstmc.protocol.bedrock.packet.*
+import java.util.concurrent.Executors
 
 class GameSession : MinecraftRelayPacketListener {
 
@@ -30,9 +38,12 @@ class GameSession : MinecraftRelayPacketListener {
     var legacyBlockMapping = LegacyBlockMapping(emptyMap())
         private set
 
-
     val netSessionInitialized: Boolean
         get() = this::netSession.isInitialized
+
+	private var lastStopBreak = false
+
+	val scope = CoroutineScope(Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()).asCoroutineDispatcher() + SupervisorJob())
 
     override fun onPacketInbound(packet: BedrockPacket): Boolean {
         val event = EventPacketInbound(this, packet)
@@ -60,10 +71,21 @@ class GameSession : MinecraftRelayPacketListener {
             netSession.client?.let {
                 it.peer.codecHelper.itemDefinitions = itemDefinitions
                 it.peer.codecHelper.blockDefinitions = blockDefinitions
-            }
+            } ?: scope.launch {
+				while (netSession.client == null) {
+					Thread.sleep(10L) // wait client connect
+				}
+				netSession.client!!.peer.codecHelper.also {
+					it.itemDefinitions = itemDefinitions
+					it.blockDefinitions = blockDefinitions
+				}
+			}
             blockMapping = blockDefinitions
             legacyBlockMapping = LegacyBlockMapping.Provider.craftMapping(packet.protocolVersion)
-        }
+        } else if (!thePlayer.movementServerAuthoritative && packet is PlayerAuthInputPacket) {
+			convertAuthInput(packet)?.also { netSession.outboundPacket(it) }
+			return false
+		}
 
         return true
     }
@@ -107,7 +129,52 @@ class GameSession : MinecraftRelayPacketListener {
 		})
 	}
 
+	private fun convertAuthInput(packet: PlayerAuthInputPacket): MovePlayerPacket? {
+		packet.playerActions.forEach { action ->
+			netSession.outboundPacket(PlayerActionPacket().apply {
+				runtimeEntityId = thePlayer.runtimeEntityId
+				this.action = action.action
+				blockPosition = action.blockPosition ?: Vector3i.ZERO
+				resultPosition = Vector3i.ZERO
+				face = action.face
+			})
+			if (action.action == PlayerActionType.STOP_BREAK) {
+				lastStopBreak = true
+			} else if (lastStopBreak && action.action == PlayerActionType.CONTINUE_BREAK) {
+				netSession.outboundPacket(InventoryTransactionPacket().apply {
+					transactionType = InventoryTransactionType.ITEM_USE
+					actionType = 2
+					blockPosition = action.blockPosition
+					blockFace = action.face
+					itemInHand = ItemData.AIR
+					playerPosition = thePlayer.vec3Position
+					clickPosition = Vector3f.ZERO
+					blockDefinition = blockMapping.getDefinition(0)
+				})
+			}
+		}
+
+		var mode = MovePlayerPacket.Mode.NORMAL
+		if (packet.position.x == thePlayer.prevPosX && packet.position.y == thePlayer.prevPosY && packet.position.z == thePlayer.prevPosZ) {
+			if (packet.rotation.x == thePlayer.prevRotationPitch && packet.rotation.y == thePlayer.prevRotationYaw) {
+				return null
+			} else {
+				mode = MovePlayerPacket.Mode.HEAD_ROTATION
+			}
+		}
+
+		return MovePlayerPacket().apply {
+			runtimeEntityId = thePlayer.runtimeEntityId
+			thePlayer.rideEntity?.also { ride -> ridingRuntimeEntityId = ride; println(ride) }
+			this.mode = mode
+			isOnGround = thePlayer.onGround
+			tick = packet.tick
+			rotation = packet.rotation
+			position = packet.position
+		}
+	}
+
     companion object {
-        const val RECOMMENDED_VERSION = "1.19.50.02"
+        const val RECOMMENDED_VERSION = "1.19.73.02"
     }
 }

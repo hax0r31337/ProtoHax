@@ -13,7 +13,7 @@ class ModuleFastBreak : CheatModule("FastBreak") {
 		if (event.session.thePlayer.tickExists % 20 != 0L) return@handle
 		event.session.netSession.inboundPacket(MobEffectPacket().apply {
 			setEvent(MobEffectPacket.Event.ADD)
-			runtimeEntityId = event.session.thePlayer.entityId
+			runtimeEntityId = event.session.thePlayer.runtimeEntityId
 			effectId = Effect.HASTE
 			amplifier = amplifierValue - 1
 			isParticles = false
@@ -24,7 +24,7 @@ class ModuleFastBreak : CheatModule("FastBreak") {
     override fun onDisable() {
         if (!session.netSessionInitialized) return
         session.netSession.inboundPacket(MobEffectPacket().apply {
-            runtimeEntityId = session.thePlayer.entityId
+            runtimeEntityId = session.thePlayer.runtimeEntityId
             event = MobEffectPacket.Event.REMOVE
             effectId = Effect.HASTE
         })

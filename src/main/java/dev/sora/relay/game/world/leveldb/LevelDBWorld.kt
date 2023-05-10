@@ -26,27 +26,11 @@ class LevelDBWorld(val folder: File) {
 		db.put(key, byteArrayOf(version))
 	}
 
-	/**
-	 * TODO: block entities are not supported
-	 */
-	fun saveChunkBlockEntities(x: Int, z: Int, dimension: Int) {
-		val key = LevelDBChunkKey.BLOCK_ENTITIES.getKey(x, z, dimension)
-
-		// put empty data
-		db.put(key, ByteArray(0))
-	}
-
-	/**
-	 * TODO: implement
-	 */
-	fun saveChunkEntities(x: Int, z: Int, dimension: Int) {
-		val key = LevelDBChunkKey.BLOCK_ENTITIES.getKey(x, z, dimension)
-
-		// put empty data
-		db.put(key, ByteArray(0))
-	}
-
 	fun saveSubChunk(x: Int, z: Int, dimension: Int, y: Int, subChunk: ChunkSection, useRuntime: Boolean) {
+//		if (!subChunk.populated) {
+//			return
+//		}
+
 		val key = LevelDBChunkKey.SUB_CHUNK_DATA.getKey(x, z, dimension, y)
 
 		val buf = ByteBufAllocator.DEFAULT.ioBuffer()
@@ -62,9 +46,6 @@ class LevelDBWorld(val folder: File) {
 
 	fun saveChunk(chunk: Chunk, dimension: Int) {
 		saveChunkVersion(chunk.x, chunk.z, dimension)
-		// TODO: save chunk biome data and height map
-//		saveChunkBlockEntities(chunk.x, chunk.z, dimension)
-//		saveChunkEntities(chunk.x, chunk.z, dimension)
 
 		val yOffset = if (chunk.is384World) -4 else 0
 		chunk.sectionStorage.forEachIndexed { i, subChunk ->

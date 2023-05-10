@@ -32,9 +32,12 @@ class ModuleManager(private val session: GameSession) {
         registerModule(ModuleBlink())
         registerModule(ModuleBlockFly())
         registerModule(ModuleInventoryHelper())
+		registerModule(ModuleAirJump())
+		registerModule(ModuleClip())
+		registerModule(ModuleNoHurtCam())
     }
 
-	inline fun <reified T : CheatModule> getModule(klass: Class<T>): T? {
-		return modules.filterIsInstance<T>().firstOrNull()
+	inline fun <reified T : CheatModule> getModule(t: Class<T>): T {
+		return modules.filterIsInstance<T>().first()
 	}
 }

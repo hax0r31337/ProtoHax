@@ -2,9 +2,13 @@ package dev.sora.relay.cheat.module.impl
 
 import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.cheat.value.NamedChoice
-import dev.sora.relay.game.entity.EntityPlayer
+import dev.sora.relay.game.GameSession
+import dev.sora.relay.game.entity.Entity
 import dev.sora.relay.game.entity.EntityPlayerSP
 import dev.sora.relay.game.event.EventTick
+import dev.sora.relay.game.utils.Rotation
+import dev.sora.relay.game.utils.constants.Attribute
+import dev.sora.relay.game.utils.getRotationDifference
 import dev.sora.relay.game.utils.toRotation
 import dev.sora.relay.utils.timing.ClickTimer
 import kotlin.math.pow
@@ -16,6 +20,9 @@ class ModuleKillAura : CheatModule("KillAura") {
     private var attackModeValue by listValue("AttackMode", AttackMode.values(), AttackMode.SINGLE)
     private var rotationModeValue by listValue("RotationMode", RotationMode.values(), RotationMode.LOCK)
     private var swingValue by listValue("Swing", EntityPlayerSP.SwingMode.values(), EntityPlayerSP.SwingMode.BOTH)
+	private var priorityModeValue by listValue("PriorityMode", PriorityMode.values(), PriorityMode.DISTANCE)
+	private var reversePriorityValue by boolValue("ReversePriority", false)
+	private var mouseoverValue by boolValue("Mouseover", false)
     private var swingSoundValue by boolValue("SwingSound", true)
     private var failRateValue by floatValue("FailRate", 0f, 0f..1f)
     private var failSoundValue by boolValue("FailSound", true)
@@ -26,23 +33,26 @@ class ModuleKillAura : CheatModule("KillAura") {
 		val session = event.session
 
 		val range = rangeValue.pow(2)
-		val moduleTargets = moduleManager.getModule(ModuleTargets::class.java) ?: error("no module found as Targets")
+		val moduleTargets = moduleManager.getModule(ModuleTargets::class.java)
 		val entityList = session.theWorld.entityMap.values.filter {
 			it.distanceSq(session.thePlayer) < range && with(moduleTargets) { it.isTarget() } }
 		if (entityList.isEmpty()) return@handle
 
-		val aimTarget = if (Math.random() <= failRateValue || (cpsValue < 20 && !clickTimer.canClick())) {
-			session.thePlayer.swing(swingValue, failSoundValue)
-			entityList.first()
-		} else {
-			when(attackModeValue) {
-				AttackMode.MULTI -> {
-					entityList.forEach { session.thePlayer.attackEntity(it, swingValue, swingSoundValue) }
-					entityList.first()
+		val aimTarget = selectEntity(session, entityList)
+
+		if (cpsValue >= 20 || clickTimer.canClick()) {
+			if (Math.random() <= failRateValue) {
+				session.thePlayer.swing(swingValue, failSoundValue)
+			} else {
+				when(attackModeValue) {
+					AttackMode.MULTI -> {
+						entityList.forEach { session.thePlayer.attackEntity(it, swingValue, swingSoundValue, mouseoverValue) }
+					}
+					AttackMode.SINGLE -> {
+						session.thePlayer.attackEntity(aimTarget, swingValue, swingSoundValue, mouseoverValue)
+					}
 				}
-				AttackMode.SINGLE -> (entityList.minByOrNull { it.distanceSq(event.session.thePlayer) } ?: return@handle).also {
-					session.thePlayer.attackEntity(it, swingValue, swingSoundValue)
-				}
+				clickTimer.update(cpsValue, cpsValue + 1)
 			}
 		}
 
@@ -52,8 +62,18 @@ class ModuleKillAura : CheatModule("KillAura") {
 			}
 			RotationMode.NONE -> {}
 		}
+	}
 
-		clickTimer.update(cpsValue, cpsValue + 1)
+	private fun selectEntity(session: GameSession, entityList: List<Entity>): Entity {
+		return when (priorityModeValue) {
+			PriorityMode.DISTANCE -> entityList.sortedBy { it.distanceSq(session.thePlayer) }
+			PriorityMode.HEALTH -> entityList.sortedBy { it.attributes[Attribute.HEALTH]?.value ?: 0f }
+			PriorityMode.DIRECTION -> {
+				val playerRotation = Rotation(session.thePlayer.rotationYaw, session.thePlayer.rotationPitch)
+				val vec3Position = session.thePlayer.vec3Position
+				entityList.sortedBy { getRotationDifference(playerRotation, toRotation(vec3Position, it.vec3Position)) }
+			}
+		}.let { if (!reversePriorityValue) it.first() else it.last() }
 	}
 
     enum class AttackMode(override val choiceName: String) : NamedChoice {
@@ -65,4 +85,10 @@ class ModuleKillAura : CheatModule("KillAura") {
         LOCK("Lock"),
         NONE("None")
     }
+
+	enum class PriorityMode(override val choiceName: String) : NamedChoice {
+		DISTANCE("Distance"),
+		HEALTH("Health"),
+		DIRECTION("Direction")
+	}
 }

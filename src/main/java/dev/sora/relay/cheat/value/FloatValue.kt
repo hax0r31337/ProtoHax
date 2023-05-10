@@ -9,7 +9,7 @@ import com.google.gson.JsonPrimitive
 open class FloatValue(name: String, value: Float, val range: ClosedFloatingPointRange<Float>) : Value<Float>(name, value) {
 
     fun set(newValue: Number) {
-        value = newValue.toFloat()
+		value = newValue.toFloat()
     }
 
     override fun toJson() = JsonPrimitive(value)

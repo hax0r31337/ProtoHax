@@ -9,6 +9,9 @@ class ChunkSection(private val blockMapping: BlockMapping, private val legacyBlo
     var storage = BlockStorage(blockMapping.airId)
         private set
 
+	var populated = false
+		private set
+
     /**
      * deserialize chunk into blocks
      * credit:
@@ -16,6 +19,8 @@ class ChunkSection(private val blockMapping: BlockMapping, private val legacyBlo
      * https://github.com/DavyCraft648/Barrel/blob/ebd52e4a7b7fa17e2d3f206690e4516088eff71c/src/main/java/org/barrelmc/barrel/network/translator/bedrock/LevelChunkPacket.java
      */
     fun read(buf: ByteBuf) {
+		populated = true
+
         val version = buf.readByte().toInt()
         if (version == 0) {
             // PocketMine-MP still using this format
@@ -68,6 +73,12 @@ class ChunkSection(private val blockMapping: BlockMapping, private val legacyBlo
 	fun write(buf: ByteBuf, useRuntime: Boolean, network: Boolean) {
 		// version
 		buf.writeByte(8)
+
+//		if (!populated) {
+//			// no layer available because of this chunk hasen't got populated yet
+//			buf.writeByte(0)
+//			return
+//		}
 
 		// we only support one layer currently
 		buf.writeByte(1)
