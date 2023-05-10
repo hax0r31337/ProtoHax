@@ -50,7 +50,8 @@ data class XboxDeviceInfo(val appId: String, val deviceType: String,
 	companion object {
 
 		val DEVICE_ANDROID = XboxDeviceInfo("0000000048183522", "Android", false, xalRedirect = "ms-xal-0000000048183522://auth")
+		val DEVICE_IOS = XboxDeviceInfo("000000004c17c01a", "iOS", false, xalRedirect = "ms-xal-000000004c17c01a://auth")
 		val DEVICE_NINTENDO = XboxDeviceInfo("00000000441cc96b", "Nintendo", true)
-		val devices = arrayOf(DEVICE_ANDROID, DEVICE_NINTENDO).associateBy { it.deviceType }
+		val devices = arrayOf(DEVICE_ANDROID, DEVICE_IOS, DEVICE_NINTENDO).associateBy { it.deviceType }
 	}
 }
