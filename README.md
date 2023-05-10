@@ -1,6 +1,6 @@
 # ProtoHax
 
-<img align="right" width="159px" src="https://raw.githubusercontent.com/hax0r31337/ProtoHax/neko-ribbon/icon.png">
+<img align="right" width="159px" src="https://raw.githubusercontent.com/hax0r31337/ProtoHax/stable/icon.png">
 
 ProtoHax is an open-source cheat for Minecraft: Bedrock Edition that works through the network layer.   
 This repository contains the abstract layer of the cheat, and is designed to be platform-agnostic.
