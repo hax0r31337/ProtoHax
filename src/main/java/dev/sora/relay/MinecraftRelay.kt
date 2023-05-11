@@ -40,7 +40,7 @@ open class MinecraftRelay(private val listener: MinecraftRelayListener,
 	/**
 	 * affects latency
 	 */
-	var optionReliability = RakReliability.RELIABLE
+	var optionReliability = RakReliability.RELIABLE_ORDERED
 
 	open fun channelFactory(): ChannelFactory<out ServerChannel> {
 		return RakChannelFactory.server(NioDatagramChannel::class.java)

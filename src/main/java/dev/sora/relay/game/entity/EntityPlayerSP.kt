@@ -59,7 +59,7 @@ class EntityPlayerSP(private val session: GameSession, override val eventManager
     // new introduced "server authoritative" mode
     var blockBreakServerAuthoritative = false
         private set
-    var movementServerAuthoritative = false
+    var movementServerAuthoritative = true
         private set
 	var movementServerRewind = false
 		private set
@@ -148,7 +148,10 @@ class EntityPlayerSP(private val session: GameSession, override val eventManager
 	private val handlePacketOutbound = handle<EventPacketOutbound> { event ->
 		val packet = event.packet
 		// client still sends MovePlayerPacket sometime on if server-auth movement mode
-		if (packet is MovePlayerPacket) {
+		if (packet is LoginPacket) {
+			// disable packet conversion by default
+			movementServerAuthoritative = true
+		} else if (packet is MovePlayerPacket) {
 			move(packet.position)
 			rotate(packet.rotation)
 
