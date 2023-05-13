@@ -10,6 +10,7 @@ import dev.sora.relay.session.listener.RelayListenerAutoCodec
 import dev.sora.relay.session.listener.RelayListenerEncryptedSession
 import dev.sora.relay.session.listener.xbox.RelayListenerXboxLogin
 import dev.sora.relay.session.listener.RelayListenerNetworkSettings
+import dev.sora.relay.session.listener.RelayListenerResourcePackDownloader
 import dev.sora.relay.session.listener.xbox.XboxDeviceInfo
 import dev.sora.relay.utils.logInfo
 import dev.sora.relay.utils.logWarn
@@ -46,6 +47,7 @@ fun main(args: Array<String>) {
         override fun onSessionCreation(session: MinecraftRelaySession): InetSocketAddress {
             session.listeners.add(RelayListenerNetworkSettings(session))
             session.listeners.add(RelayListenerAutoCodec(session))
+//			session.listeners.add(RelayListenerResourcePackDownloader(session, File("./downloaded_resource_packs")))
 			gameSession.netSession = session
             session.listeners.add(gameSession)
 			loginThread?.also {

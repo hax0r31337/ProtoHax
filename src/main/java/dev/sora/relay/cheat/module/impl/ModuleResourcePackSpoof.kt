@@ -89,7 +89,7 @@ class ModuleResourcePackSpoof : CheatModule("ResourcePackSpoof") {
 
     companion object {
 
-        private const val RESOURCE_PACK_CHUNK_SIZE = 8 * 1024
+        const val RESOURCE_PACK_CHUNK_SIZE = 8 * 1024
 
         var resourcePackProvider: IResourcePackProvider = EmptyResourcePackProvider()
     }
@@ -133,7 +133,7 @@ class ModuleResourcePackSpoof : CheatModule("ResourcePackSpoof") {
         }
 
         override fun getPackById(idRaw: String): Pair<ResourcePacksInfoPacket.Entry, ByteArray>? {
-            val id = idRaw.split("_")[0]
+            val id = idRaw.substring(0, idRaw.indexOf('_'))
             files.forEach {
                 if (it.key.packId == id) {
                     return it.key to it.value

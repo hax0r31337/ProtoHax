@@ -5,6 +5,7 @@ import dev.sora.relay.cheat.value.Choice
 import dev.sora.relay.game.event.EventPacketOutbound
 import dev.sora.relay.game.event.EventTick
 import org.cloudburstmc.math.vector.Vector3f
+import org.cloudburstmc.math.vector.Vector3i
 import org.cloudburstmc.protocol.bedrock.data.PlayerActionType
 import org.cloudburstmc.protocol.bedrock.packet.PlayerActionPacket
 import org.cloudburstmc.protocol.bedrock.packet.PlayerAuthInputPacket
@@ -21,6 +22,8 @@ class ModuleNoFall : CheatModule("NoFall") {
 				event.session.sendPacket(PlayerActionPacket().apply {
 					runtimeEntityId = event.session.thePlayer.runtimeEntityId
 					action = PlayerActionType.START_GLIDE
+					blockPosition = Vector3i.ZERO
+					resultPosition = Vector3i.ZERO
 				})
 			}
 		}
