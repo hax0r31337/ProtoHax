@@ -29,7 +29,7 @@ fun main(args: Array<String>) {
     val dst = InetSocketAddress("127.0.0.1", 19136)
 	var loginThread: Thread? = null
     val sessionEncryptor = if(tokenFile.exists() && !args.contains("--offline")) {
-		val deviceInfo = XboxDeviceInfo.DEVICE_ANDROID
+		val deviceInfo = XboxDeviceInfo.DEVICE_NINTENDO
 		val (accessToken, refreshToken) = deviceInfo.refreshToken(tokenFile.readText())
 		tokenFile.writeText(refreshToken)
 		RelayListenerXboxLogin(accessToken, deviceInfo).also {

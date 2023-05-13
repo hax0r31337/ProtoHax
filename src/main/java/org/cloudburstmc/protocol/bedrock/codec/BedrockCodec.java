@@ -14,6 +14,9 @@ import java.util.function.Supplier;
 import static org.cloudburstmc.protocol.common.util.Preconditions.checkArgument;
 import static org.cloudburstmc.protocol.common.util.Preconditions.checkNotNull;
 
+/**
+ * fallback serialization errors into [UnknownPacket] to make sure packets are symmetric
+ */
 public final class BedrockCodec {
     private static final InternalLogger log = InternalLoggerFactory.getInstance(BedrockCodec.class);
     private final int protocolVersion;
@@ -41,7 +44,7 @@ public final class BedrockCodec {
             packet = definition.getFactory().get();
             serializer = (BedrockPacketSerializer) definition.getSerializer();
         }
-        int readIndex = buf.readerIndex();
+        final int readIndex = buf.readerIndex();
         boolean hasFailure = false;
         try {
             serializer.deserialize(buf, helper, packet);
