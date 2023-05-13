@@ -35,7 +35,7 @@ public final class BedrockCodec {
         BedrockPacketDefinition<? extends BedrockPacket> definition = getPacketDefinition(id);
         BedrockPacket packet;
         BedrockPacketSerializer<BedrockPacket> serializer;
-        if (definition == null || id == 200) {
+        if (definition == null) {
             UnknownPacket unknownPacket = new UnknownPacket();
             unknownPacket.setPacketId(id);
             packet = unknownPacket;
