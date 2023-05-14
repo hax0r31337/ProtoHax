@@ -6,11 +6,8 @@ import dev.sora.relay.game.entity.EntityPlayer
 import dev.sora.relay.game.entity.EntityPlayerSP
 import dev.sora.relay.game.event.EventTick
 import dev.sora.relay.game.registry.isBlock
-import dev.sora.relay.game.utils.AxisAlignedBB
-import dev.sora.relay.game.utils.Rotation
+import dev.sora.relay.game.utils.*
 import dev.sora.relay.game.utils.constants.EnumFacing
-import dev.sora.relay.game.utils.toRotation
-import dev.sora.relay.game.utils.toVector3f
 import dev.sora.relay.game.world.WorldClient
 import org.cloudburstmc.math.vector.Vector3f
 import org.cloudburstmc.math.vector.Vector3i
@@ -64,10 +61,7 @@ class ModuleBlockFly : CheatModule("BlockFly") {
 			blockPosition = block.sub(facing.unitVector)
 			blockFace = facing.ordinal
 			hotbarSlot = session.thePlayer.inventory.heldItemSlot
-			itemInHand = session.thePlayer.inventory.hand.toBuilder()
-				.usingNetId(false)
-				.netId(0)
-				.build()
+			itemInHand = session.thePlayer.inventory.hand.removeNetInfo()
 			playerPosition = session.thePlayer.vec3Position
 			clickPosition = Vector3f.from(Math.random(), Math.random(), Math.random())
 			blockDefinition = definition

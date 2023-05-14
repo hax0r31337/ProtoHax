@@ -8,6 +8,7 @@ import dev.sora.relay.game.inventory.AbstractInventory
 import dev.sora.relay.game.inventory.ContainerInventory
 import dev.sora.relay.game.inventory.PlayerInventory
 import dev.sora.relay.game.utils.Rotation
+import dev.sora.relay.game.utils.removeNetInfo
 import dev.sora.relay.game.utils.toVector3iFloor
 import org.cloudburstmc.math.vector.Vector3f
 import org.cloudburstmc.protocol.bedrock.data.AuthoritativeMovementMode
@@ -298,10 +299,7 @@ class EntityPlayerSP(private val session: GameSession, override val eventManager
             actionType = 1
             runtimeEntityId = entity.runtimeEntityId
             hotbarSlot = inventory.heldItemSlot
-            itemInHand = inventory.hand.toBuilder()
-				.usingNetId(false)
-				.netId(0)
-				.build()
+            itemInHand = inventory.hand.removeNetInfo()
             playerPosition = vec3Position
             clickPosition = Vector3f.ZERO
         })

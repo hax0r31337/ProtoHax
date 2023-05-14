@@ -72,6 +72,10 @@ open class ItemDefinition(private val runtimeId: Int, private val identifier: St
             else -> 0
         }
     }
+
+	override fun toString(): String {
+		return identifier
+	}
 }
 
 class UnknownItemDefinition(runtimeId: Int): ItemDefinition(runtimeId, "minecraft:unknown", emptyArray())

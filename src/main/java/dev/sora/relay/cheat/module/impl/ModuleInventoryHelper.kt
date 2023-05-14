@@ -209,9 +209,9 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper") {
         return false
     }
 
-    inner class Sort(val slot: Int, val judge: (ItemData) -> Float) {
+    inner class Sort(val slot: Int, val requiresBestItem: Boolean = false, val judge: (ItemData) -> Float) {
 
-        constructor(slot: Int, judgeTag: String) : this(slot, { item ->
+        constructor(slot: Int, judgeTag: String, requiresBestItem: Boolean = true) : this(slot, requiresBestItem, { item ->
 			val def = item.itemDefinition
             if (def.tags.contains(judgeTag)) {
                 def.getTier().toFloat()
@@ -221,7 +221,10 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper") {
         })
 
         fun sort(inventory: AbstractInventory, session: GameSession): Boolean {
-            val bestSlot = inventory.findBestItem { item ->
+			if (!requiresBestItem && judge(inventory.content[slot]) > 0) {
+				return false
+			}
+            val bestSlot = inventory.findBestItem(slot) { item ->
                 judge(item)
             } ?: return false
             if (bestSlot == slot) return false
