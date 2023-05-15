@@ -29,6 +29,9 @@ open class ItemDefinition(private val runtimeId: Int, private val identifier: St
                 || itemTags.contains(ItemTags.TAG_IS_SHOVEL)
                 || itemTags.contains(ItemTags.TAG_IS_FOOD)
                 || identifier == "minecraft:shield"
+				|| identifier == "minecraft:flint_and_steel"
+				|| identifier == "minecraft:totem_of_undying"
+				|| identifier == "minecraft:end_crystal"
     }
 
     fun hasBetterItem(container: AbstractInventory, excludeSlot: Int = -1, strictMode: Boolean = true): Boolean {

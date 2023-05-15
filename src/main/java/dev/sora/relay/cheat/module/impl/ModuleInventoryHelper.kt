@@ -1,6 +1,7 @@
 package dev.sora.relay.cheat.module.impl
 
 import dev.sora.relay.cheat.module.CheatModule
+import dev.sora.relay.cheat.value.NamedChoice
 import dev.sora.relay.game.GameSession
 import dev.sora.relay.game.entity.EntityPlayerSP
 import dev.sora.relay.game.event.EventPacketInbound
@@ -34,7 +35,7 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper") {
     private var clickMaxCpsValue by intValue("ClickMaxCPS", 4, 1..20)
     private var clickMinCpsValue by intValue("ClickMinCPS", 2, 1..20)
     private var sortArmorValue by boolValue("Armor", true)
-    private var sortTotemValue by boolValue("Totem", true)
+    private var sortOffhandValue by listValue("Offhand", SortOffhandMode.values(), SortOffhandMode.TOTEM)
     private var sortSwordValue by intValue("SortSword", 0, -1..8)
     private var sortPickaxeValue by intValue("SortPickaxe", 5, -1..8)
     private var sortAxeValue by intValue("SortAxe", 6, -1..8)
@@ -48,9 +49,6 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper") {
         Sort(PlayerInventory.SLOT_LEGGINGS, ItemTags.TAG_IS_LEGGINGS),
         Sort(PlayerInventory.SLOT_BOOTS, ItemTags.TAG_IS_BOOTS)
     )
-    private val sortTotem = Sort(PlayerInventory.SLOT_OFFHAND) {
-        if (it.itemDefinition.identifier == "minecraft:totem_of_undying") 1f else 0f
-    }
 
     private val clickTimer = ClickTimer()
     private var sorted = true
@@ -143,8 +141,16 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper") {
         if (sortArmorValue) {
             sorts.addAll(sortArmor)
         }
-        if (sortTotemValue) {
-            sorts.add(sortTotem)
+        if (sortOffhandValue != SortOffhandMode.NONE) {
+			val (totemPriority, shieldPriority) = if (sortOffhandValue == SortOffhandMode.SHIELD) 1f to 2f
+				else 2f to 1f
+
+			sorts.add(Sort(PlayerInventory.SLOT_OFFHAND) {
+				val identifier = it.itemDefinition.identifier
+				if (identifier == "minecraft:totem_of_undying") totemPriority
+				else if (identifier == "minecraft:shield") shieldPriority
+				else 0f
+			})
         }
         if (sortSwordValue != -1) {
             sorts.add(Sort(sortSwordValue, ItemTags.TAG_IS_SWORD))
@@ -234,4 +240,10 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper") {
             return true
         }
     }
+
+	enum class SortOffhandMode(override val choiceName: String) : NamedChoice {
+		SHIELD("Shield"),
+		TOTEM("Totem"),
+		NONE("None")
+	}
 }
