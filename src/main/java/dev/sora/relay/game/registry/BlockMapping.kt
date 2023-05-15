@@ -7,7 +7,8 @@ import org.cloudburstmc.protocol.common.DefinitionRegistry
 import java.io.DataInputStream
 import java.util.zip.GZIPInputStream
 
-class BlockMapping(private val runtimeToGameMap: Map<Int, BlockDefinition>, val airId: Int) : DefinitionRegistry<org.cloudburstmc.protocol.bedrock.data.defintions.BlockDefinition> {
+class BlockMapping(private val runtimeToGameMap: Map<Int, BlockDefinition>, val airId: Int)
+	: DefinitionRegistry<org.cloudburstmc.protocol.bedrock.data.definitions.BlockDefinition> {
 
     private val gameToRuntimeMap = mutableMapOf<String, Int>()
 
@@ -17,11 +18,11 @@ class BlockMapping(private val runtimeToGameMap: Map<Int, BlockDefinition>, val 
         }
     }
 
-    override fun getDefinition(runtimeId: Int): org.cloudburstmc.protocol.bedrock.data.defintions.BlockDefinition {
+    override fun getDefinition(runtimeId: Int): org.cloudburstmc.protocol.bedrock.data.definitions.BlockDefinition {
         return runtimeToGameMap[runtimeId] ?: return UnknownBlockDefinition(runtimeId)
     }
 
-    override fun isRegistered(definition: org.cloudburstmc.protocol.bedrock.data.defintions.BlockDefinition): Boolean {
+    override fun isRegistered(definition: org.cloudburstmc.protocol.bedrock.data.definitions.BlockDefinition): Boolean {
         return definition is UnknownBlockDefinition || getDefinition(definition.runtimeId) == definition
     }
 

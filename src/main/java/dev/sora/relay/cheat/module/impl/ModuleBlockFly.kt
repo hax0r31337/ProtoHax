@@ -6,15 +6,15 @@ import dev.sora.relay.game.entity.EntityPlayer
 import dev.sora.relay.game.entity.EntityPlayerSP
 import dev.sora.relay.game.event.EventTick
 import dev.sora.relay.game.registry.isBlock
-import dev.sora.relay.game.utils.*
+import dev.sora.relay.game.utils.AxisAlignedBB
+import dev.sora.relay.game.utils.Rotation
 import dev.sora.relay.game.utils.constants.EnumFacing
+import dev.sora.relay.game.utils.toRotation
+import dev.sora.relay.game.utils.toVector3f
 import dev.sora.relay.game.world.WorldClient
-import org.cloudburstmc.math.vector.Vector3f
 import org.cloudburstmc.math.vector.Vector3i
 import org.cloudburstmc.protocol.bedrock.data.inventory.ContainerId
-import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.ItemUseTransaction
 import org.cloudburstmc.protocol.bedrock.packet.PlayerHotbarPacket
-import org.cloudburstmc.protocol.bedrock.packet.UpdateBlockPacket
 
 class ModuleBlockFly : CheatModule("BlockFly") {
 
@@ -49,23 +49,7 @@ class ModuleBlockFly : CheatModule("BlockFly") {
 			session.thePlayer.posZ, 1, world, airId)
 		val block = possibilities.firstOrNull() ?: return@handle
 		val facing = getFacing(block, world, airId) ?: return@handle
-
-		val definition = session.thePlayer.inventory.hand.blockDefinition
-		session.netSession.inboundPacket(UpdateBlockPacket().apply {
-			blockPosition = block
-			this.definition = definition
-		})
-		world.setBlockIdAt(block.x, block.y, block.z, definition?.runtimeId ?: 0)
-		session.thePlayer.useItem(ItemUseTransaction().apply {
-			actionType = 0
-			blockPosition = block.sub(facing.unitVector)
-			blockFace = facing.ordinal
-			hotbarSlot = session.thePlayer.inventory.heldItemSlot
-			itemInHand = session.thePlayer.inventory.hand.removeNetInfo()
-			playerPosition = session.thePlayer.vec3Position
-			clickPosition = Vector3f.from(Math.random(), Math.random(), Math.random())
-			blockDefinition = definition
-		})
+		session.thePlayer.placeBlock(block, facing)
 		session.thePlayer.swing(swingValue)
 
 		if (rotationValue) {

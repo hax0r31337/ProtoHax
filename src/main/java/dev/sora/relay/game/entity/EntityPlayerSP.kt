@@ -8,9 +8,11 @@ import dev.sora.relay.game.inventory.AbstractInventory
 import dev.sora.relay.game.inventory.ContainerInventory
 import dev.sora.relay.game.inventory.PlayerInventory
 import dev.sora.relay.game.utils.Rotation
+import dev.sora.relay.game.utils.constants.EnumFacing
 import dev.sora.relay.game.utils.removeNetInfo
 import dev.sora.relay.game.utils.toVector3iFloor
 import org.cloudburstmc.math.vector.Vector3f
+import org.cloudburstmc.math.vector.Vector3i
 import org.cloudburstmc.protocol.bedrock.data.AuthoritativeMovementMode
 import org.cloudburstmc.protocol.bedrock.data.PlayerAuthInputData
 import org.cloudburstmc.protocol.bedrock.data.SoundEvent
@@ -91,6 +93,10 @@ class EntityPlayerSP(private val session: GameSession, override val eventManager
 			}
         })
     }
+
+	fun teleport(vec3: Vector3f) {
+		teleport(vec3.x, vec3.y, vec3.z)
+	}
 
 	override fun reset() {
 		super.reset()
@@ -304,6 +310,25 @@ class EntityPlayerSP(private val session: GameSession, override val eventManager
             clickPosition = Vector3f.ZERO
         })
     }
+
+	fun placeBlock(block: Vector3i, facing: EnumFacing) {
+		val definition = session.thePlayer.inventory.hand.blockDefinition
+		session.netSession.inboundPacket(UpdateBlockPacket().apply {
+			blockPosition = block
+			this.definition = definition
+		})
+		session.theWorld.setBlockIdAt(block.x, block.y, block.z, definition?.runtimeId ?: 0)
+		session.thePlayer.useItem(ItemUseTransaction().apply {
+			actionType = 0
+			blockPosition = block.sub(facing.unitVector)
+			blockFace = facing.ordinal
+			hotbarSlot = session.thePlayer.inventory.heldItemSlot
+			itemInHand = session.thePlayer.inventory.hand.removeNetInfo()
+			playerPosition = session.thePlayer.vec3Position
+			clickPosition = Vector3f.from(Math.random(), Math.random(), Math.random())
+			blockDefinition = definition
+		})
+	}
 
     enum class SwingMode(override val choiceName: String) : NamedChoice {
         CLIENTSIDE("Client"),

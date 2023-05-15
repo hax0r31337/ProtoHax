@@ -5,7 +5,7 @@ import dev.sora.relay.game.utils.constants.ItemTags
 import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData
 
 open class ItemDefinition(private val runtimeId: Int, private val identifier: String, val tags: Array<String>) :
-    org.cloudburstmc.protocol.bedrock.data.defintions.ItemDefinition {
+    org.cloudburstmc.protocol.bedrock.data.definitions.ItemDefinition {
 
     override fun getRuntimeId() = runtimeId
 
