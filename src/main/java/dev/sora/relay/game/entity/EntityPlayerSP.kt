@@ -41,6 +41,8 @@ class EntityPlayerSP(private val session: GameSession, override val eventManager
         private set
 
     var silentRotation: Rotation? = null
+	var lastRotationServerside = Rotation(0f, 0f)
+		private set
 
     var prevRotationYaw = 0f
     var prevRotationPitch = 0f
@@ -175,6 +177,7 @@ class EntityPlayerSP(private val session: GameSession, override val eventManager
 				packet.rotation = Vector3f.from(it.pitch, it.yaw, packet.rotation.z)
 				silentRotation = null
 			}
+			lastRotationServerside = Rotation(packet.rotation.y, packet.rotation.x)
 		} else if (packet is PlayerAuthInputPacket) {
 			move(packet.position)
 			rotate(packet.rotation)
@@ -201,6 +204,7 @@ class EntityPlayerSP(private val session: GameSession, override val eventManager
 				packet.rotation = Vector3f.from(it.pitch, it.yaw, packet.rotation.z)
 				silentRotation = null
 			}
+			lastRotationServerside = Rotation(packet.rotation.y, packet.rotation.x)
 		} else if (packet is LoginPacket) {
 			packet.chain.forEach {
 				val chainBody = JsonParser.parseString(it.payload.toString()).asJsonObject
