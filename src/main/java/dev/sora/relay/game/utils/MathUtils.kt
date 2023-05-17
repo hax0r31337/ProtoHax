@@ -47,5 +47,5 @@ fun Vector3f.toVector3i(): Vector3i {
 }
 
 fun Vector3f.toVector3iFloor(): Vector3i {
-	return Vector3i.from(kotlin.math.floor(x).toInt(), kotlin.math.floor(y).toInt(), kotlin.math.floor(z).toInt())
+	return Vector3i.from(floorX, floorY, floorZ)
 }

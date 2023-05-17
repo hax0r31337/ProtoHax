@@ -190,6 +190,24 @@ class PlayerInventory(private val player: EntityPlayerSP) : EntityInventory(play
         return null
     }
 
+	fun searchForItemInHotbar(condition: (ItemData) -> Boolean): Int? {
+		for (i in 0 until 9) {
+			if (condition(content[i])) {
+				return i
+			}
+		}
+		return null
+	}
+
+	fun searchForItemIndexedInHotbar(condition: (Int, ItemData) -> Boolean): Int? {
+		for (i in 0 until 9) {
+			if (condition(i, content[i])) {
+				return i
+			}
+		}
+		return null
+	}
+
     override var hand: ItemData
         get() = content[heldItemSlot]
         set(value) { content[heldItemSlot] = value }

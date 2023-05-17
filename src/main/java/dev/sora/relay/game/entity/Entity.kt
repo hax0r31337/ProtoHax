@@ -99,11 +99,17 @@ abstract class Entity(open val runtimeEntityId: Long, open val uniqueEntityId: L
     fun distanceSq(entity: Entity)
             = distanceSq(entity.posX, entity.posY, entity.posZ)
 
+	fun distanceSq(vector3f: Vector3f)
+		= distanceSq(vector3f.x, vector3f.y, vector3f.z)
+
     fun distance(x: Float, y: Float, z: Float)
         = sqrt(distanceSq(x, y, z))
 
     fun distance(entity: Entity)
         = distance(entity.posX, entity.posY, entity.posZ)
+
+	fun distance(vector3f: Vector3f)
+		= distance(vector3f.x, vector3f.y, vector3f.z)
 
     open fun onPacket(packet: BedrockPacket) {
         if (packet is MoveEntityAbsolutePacket && packet.runtimeEntityId == runtimeEntityId) {
@@ -111,9 +117,9 @@ abstract class Entity(open val runtimeEntityId: Long, open val uniqueEntityId: L
             rotate(packet.rotation)
             tickExists++
         } else if (packet is MoveEntityDeltaPacket && packet.runtimeEntityId == runtimeEntityId) {
-            move(posX + if (packet.flags.contains(MoveEntityDeltaPacket.Flag.HAS_X)) packet.x else 0f,
-                posY + if (packet.flags.contains(MoveEntityDeltaPacket.Flag.HAS_Y)) packet.y else 0f,
-                posZ + if (packet.flags.contains(MoveEntityDeltaPacket.Flag.HAS_Z)) packet.z else 0f)
+            move(if (packet.flags.contains(MoveEntityDeltaPacket.Flag.HAS_X)) packet.x else posX,
+                if (packet.flags.contains(MoveEntityDeltaPacket.Flag.HAS_Y)) packet.y else posY,
+                if (packet.flags.contains(MoveEntityDeltaPacket.Flag.HAS_Z)) packet.z else posZ)
             rotate(rotationYaw + if (packet.flags.contains(MoveEntityDeltaPacket.Flag.HAS_YAW)) packet.yaw else 0f,
                 rotationPitch + if (packet.flags.contains(MoveEntityDeltaPacket.Flag.HAS_PITCH)) packet.pitch else 0f,
                 rotationYawHead + if (packet.flags.contains(MoveEntityDeltaPacket.Flag.HAS_HEAD_YAW)) packet.headYaw else 0f)

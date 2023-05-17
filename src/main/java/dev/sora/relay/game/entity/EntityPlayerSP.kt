@@ -316,19 +316,19 @@ class EntityPlayerSP(private val session: GameSession, override val eventManager
     }
 
 	fun placeBlock(block: Vector3i, facing: EnumFacing) {
-		val definition = session.thePlayer.inventory.hand.blockDefinition
+		val definition = inventory.hand.blockDefinition
 		session.netSession.inboundPacket(UpdateBlockPacket().apply {
 			blockPosition = block
 			this.definition = definition
 		})
 		session.theWorld.setBlockIdAt(block.x, block.y, block.z, definition?.runtimeId ?: 0)
-		session.thePlayer.useItem(ItemUseTransaction().apply {
+		useItem(ItemUseTransaction().apply {
 			actionType = 0
 			blockPosition = block.sub(facing.unitVector)
 			blockFace = facing.ordinal
-			hotbarSlot = session.thePlayer.inventory.heldItemSlot
-			itemInHand = session.thePlayer.inventory.hand.removeNetInfo()
-			playerPosition = session.thePlayer.vec3Position
+			hotbarSlot = inventory.heldItemSlot
+			itemInHand = inventory.hand.removeNetInfo()
+			playerPosition = vec3Position
 			clickPosition = Vector3f.from(Math.random(), Math.random(), Math.random())
 			blockDefinition = definition
 		})

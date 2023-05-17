@@ -57,7 +57,7 @@ class ModuleSurround : CheatModule("Surround") {
 		if (blockToPlace.isEmpty()) return@handle
 
 		val slot = if (session.thePlayer.inventory.hand.itemDefinition.identifier == "minecraft:obsidian") -1
-			else session.thePlayer.inventory.searchForItem { it.itemDefinition.identifier == "minecraft:obsidian" }
+			else session.thePlayer.inventory.searchForItemInHotbar { it.itemDefinition.identifier == "minecraft:obsidian" }
 		if (slot == null) {
 			session.chat("Disabling due to no obsidian found in hotbar!")
 			state = false

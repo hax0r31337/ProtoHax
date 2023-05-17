@@ -6,8 +6,10 @@ import dev.sora.relay.game.entity.EntityItem
 import dev.sora.relay.game.entity.EntityPlayer
 import dev.sora.relay.game.entity.EntityUnknown
 import dev.sora.relay.game.event.*
+import org.cloudburstmc.math.vector.Vector3f
 import org.cloudburstmc.protocol.bedrock.packet.*
 import java.util.*
+import kotlin.math.pow
 
 class WorldClient(session: GameSession, eventManager: EventManager) : WorldwideBlockStorage(session, eventManager) {
 
@@ -51,11 +53,9 @@ class WorldClient(session: GameSession, eventManager: EventManager) : WorldwideB
 				session.eventManager.emit(EventEntitySpawn(session, it))
 			}
 		} else if (packet is RemoveEntityPacket) {
-			entityMap.keys.removeIf { (it == packet.uniqueEntityId).also { flag ->
-				if (flag) {
-					session.eventManager.emit(EventEntityDespawn(session, entityMap[it]!!))
-				}
-			} }
+			val entityToRemove = entityMap.values.find { it.uniqueEntityId == packet.uniqueEntityId } ?: return@handle
+			entityMap.remove(entityToRemove.runtimeEntityId)
+			session.eventManager.emit(EventEntityDespawn(session, entityToRemove))
 		} else if (packet is TakeItemEntityPacket) {
 			entityMap.remove(packet.itemRuntimeEntityId)
 		} else if (packet is PlayerListPacket) {
@@ -72,6 +72,38 @@ class WorldClient(session: GameSession, eventManager: EventManager) : WorldwideB
 		} else {
 			entityMap.values.forEach { entity ->
 				entity.onPacket(packet)
+			}
+		}
+	}
+
+	fun removeEntity(entity: Entity) {
+		entityMap.remove(entity.runtimeEntityId) ?: return // entity do not exist client-side
+		session.sendPacket(RemoveEntityPacket().apply {
+			uniqueEntityId = entity.uniqueEntityId
+		})
+		session.eventManager.emit(EventEntityDespawn(session, entity))
+	}
+
+	fun simulateExplosionDamage(center: Vector3f, size: Float, extraEntities: List<Entity>, damageCallback: (Entity, Float) -> Unit) {
+		val explosionSearchSizeSq = (size * 2).pow(2)
+
+		entityMap.values.filter { it.distanceSq(center) < explosionSearchSizeSq }.forEach {
+			val distance = it.distance(center) / size
+
+			if (distance <= 1) {
+				val impact = 1 - distance
+				val damage = ((impact * impact + impact) / 2) * 8 * size + 1
+				damageCallback(it, damage)
+			}
+		}
+
+		extraEntities.filter { it.distanceSq(center) < explosionSearchSizeSq }.forEach {
+			val distance = it.distance(center) / size
+
+			if (distance <= 1) {
+				val impact = 1 - distance
+				val damage = ((impact * impact + impact) / 2) * 8 * size + 1
+				damageCallback(it, damage)
 			}
 		}
 	}
