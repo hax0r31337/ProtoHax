@@ -6,6 +6,7 @@ import dev.sora.relay.game.entity.Entity
 import dev.sora.relay.game.entity.EntityPlayer
 import dev.sora.relay.game.entity.EntityPlayerSP
 import dev.sora.relay.game.entity.EntityUnknown
+import dev.sora.relay.game.event.EventEntitySpawn
 import dev.sora.relay.game.event.EventPacketInbound
 import dev.sora.relay.game.event.EventTick
 import dev.sora.relay.game.registry.itemDefinition
@@ -125,6 +126,28 @@ class ModuleCrystalAura : CheatModule("CrystalAura") {
 					})
 				}
 			}
+		}
+	}
+
+	private val handleEntitySpawn = handle<EventEntitySpawn> { event ->
+		val entity = event.entity
+		val session = event.session
+		if (!explodeTimer.hasTimePassed(delayValue) || entity !is EntityUnknown || entity.identifier != "minecraft:ender_crystal" || entity.distance(session.thePlayer) > rangeValue)
+			return@handle
+
+		var selfDamage = 0f
+		var mostDamage = 0f
+		session.theWorld.simulateExplosionDamage(entity.vec3Position, EXPLOSION_SIZE, listOf(session.thePlayer)) { entity1, damage ->
+			if (entity1 == session.thePlayer) {
+				selfDamage = damage
+			} else if (entity1 is EntityPlayer && damage > mostDamage) {
+				mostDamage = damage
+			}
+		}
+
+		if (selfDamage <= mostDamage || suicideValue) {
+			session.explodeCrystal(entity)
+			explodeTimer.reset()
 		}
 	}
 

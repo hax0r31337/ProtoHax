@@ -29,29 +29,29 @@ class WorldClient(session: GameSession, eventManager: EventManager) : WorldwideB
 			playerList.clear()
 			dimension = packet.dimensionId
 		} else if (packet is AddEntityPacket) {
-			entityMap[packet.runtimeEntityId] = EntityUnknown(packet.runtimeEntityId, packet.uniqueEntityId, packet.identifier).apply {
+			val entity = EntityUnknown(packet.runtimeEntityId, packet.uniqueEntityId, packet.identifier).apply {
 				move(packet.position)
 				rotate(packet.rotation)
 				handleSetData(packet.metadata)
 				handleSetAttribute(packet.attributes)
-			}.also {
-				session.eventManager.emit(EventEntitySpawn(session, it))
 			}
+			entityMap[packet.runtimeEntityId] = entity
+			session.eventManager.emit(EventEntitySpawn(session, entity))
 		} else if (packet is AddItemEntityPacket) {
-			entityMap[packet.runtimeEntityId] = EntityItem(packet.runtimeEntityId, packet.uniqueEntityId).apply {
+			val entity = EntityItem(packet.runtimeEntityId, packet.uniqueEntityId).apply {
 				move(packet.position)
 				handleSetData(packet.metadata)
-			}.also {
-				session.eventManager.emit(EventEntitySpawn(session, it))
 			}
+			entityMap[packet.runtimeEntityId] = entity
+			session.eventManager.emit(EventEntitySpawn(session, entity))
 		} else if (packet is AddPlayerPacket) {
-			entityMap[packet.runtimeEntityId] = EntityPlayer(packet.runtimeEntityId, packet.uniqueEntityId, packet.uuid, packet.username).apply {
+			val entity = EntityPlayer(packet.runtimeEntityId, packet.uniqueEntityId, packet.uuid, packet.username).apply {
 				move(packet.position.add(0f, EntityPlayer.EYE_HEIGHT, 0f))
 				rotate(packet.rotation)
 				handleSetData(packet.metadata)
-			}.also {
-				session.eventManager.emit(EventEntitySpawn(session, it))
 			}
+			entityMap[packet.runtimeEntityId] = entity
+			session.eventManager.emit(EventEntitySpawn(session, entity))
 		} else if (packet is RemoveEntityPacket) {
 			val entityToRemove = entityMap.values.find { it.uniqueEntityId == packet.uniqueEntityId } ?: return@handle
 			entityMap.remove(entityToRemove.runtimeEntityId)
