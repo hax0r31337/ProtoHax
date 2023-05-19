@@ -17,6 +17,7 @@ import kotlinx.coroutines.launch
 import org.cloudburstmc.math.vector.Vector3f
 import org.cloudburstmc.math.vector.Vector3i
 import org.cloudburstmc.protocol.bedrock.data.PlayerActionType
+import org.cloudburstmc.protocol.bedrock.data.PlayerAuthInputData
 import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData
 import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.InventoryTransactionType
 import org.cloudburstmc.protocol.bedrock.packet.*
@@ -152,6 +153,71 @@ class GameSession : MinecraftRelayPacketListener {
 					blockDefinition = blockMapping.getDefinition(0)
 				})
 			}
+		}
+
+		if (packet.inputData.contains(PlayerAuthInputData.START_SPRINTING)) {
+			netSession.outboundPacket(PlayerActionPacket().apply {
+				runtimeEntityId = thePlayer.runtimeEntityId
+				action = PlayerActionType.START_SPRINT
+				blockPosition = Vector3i.ZERO
+				resultPosition = Vector3i.ZERO
+			})
+		} else if (packet.inputData.contains(PlayerAuthInputData.STOP_SPRINTING)) {
+			netSession.outboundPacket(PlayerActionPacket().apply {
+				runtimeEntityId = thePlayer.runtimeEntityId
+				action = PlayerActionType.STOP_SPRINT
+				blockPosition = Vector3i.ZERO
+				resultPosition = Vector3i.ZERO
+			})
+		} else if (packet.inputData.contains(PlayerAuthInputData.START_SNEAKING)) {
+			netSession.outboundPacket(PlayerActionPacket().apply {
+				runtimeEntityId = thePlayer.runtimeEntityId
+				action = PlayerActionType.START_SNEAK
+				blockPosition = Vector3i.ZERO
+				resultPosition = Vector3i.ZERO
+			})
+		} else if (packet.inputData.contains(PlayerAuthInputData.STOP_SNEAKING)) {
+			netSession.outboundPacket(PlayerActionPacket().apply {
+				runtimeEntityId = thePlayer.runtimeEntityId
+				action = PlayerActionType.STOP_SNEAK
+				blockPosition = Vector3i.ZERO
+				resultPosition = Vector3i.ZERO
+			})
+		} else if (packet.inputData.contains(PlayerAuthInputData.START_SWIMMING)) {
+			netSession.outboundPacket(PlayerActionPacket().apply {
+				runtimeEntityId = thePlayer.runtimeEntityId
+				action = PlayerActionType.START_SWIMMING
+				blockPosition = Vector3i.ZERO
+				resultPosition = Vector3i.ZERO
+			})
+		} else if (packet.inputData.contains(PlayerAuthInputData.STOP_SWIMMING)) {
+			netSession.outboundPacket(PlayerActionPacket().apply {
+				runtimeEntityId = thePlayer.runtimeEntityId
+				action = PlayerActionType.STOP_SWIMMING
+				blockPosition = Vector3i.ZERO
+				resultPosition = Vector3i.ZERO
+			})
+		} else if (packet.inputData.contains(PlayerAuthInputData.START_GLIDING)) {
+			netSession.outboundPacket(PlayerActionPacket().apply {
+				runtimeEntityId = thePlayer.runtimeEntityId
+				action = PlayerActionType.START_GLIDE
+				blockPosition = Vector3i.ZERO
+				resultPosition = Vector3i.ZERO
+			})
+		} else if (packet.inputData.contains(PlayerAuthInputData.STOP_GLIDING)) {
+			netSession.outboundPacket(PlayerActionPacket().apply {
+				runtimeEntityId = thePlayer.runtimeEntityId
+				action = PlayerActionType.STOP_GLIDE
+				blockPosition = Vector3i.ZERO
+				resultPosition = Vector3i.ZERO
+			})
+		} else if (packet.inputData.contains(PlayerAuthInputData.START_JUMPING)) {
+			netSession.outboundPacket(PlayerActionPacket().apply {
+				runtimeEntityId = thePlayer.runtimeEntityId
+				action = PlayerActionType.JUMP
+				blockPosition = Vector3i.ZERO
+				resultPosition = Vector3i.ZERO
+			})
 		}
 
 		var mode = MovePlayerPacket.Mode.NORMAL
