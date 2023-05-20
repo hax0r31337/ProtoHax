@@ -18,7 +18,6 @@ import dev.sora.relay.utils.timing.TheTimer
 import org.cloudburstmc.math.vector.Vector3f
 import org.cloudburstmc.math.vector.Vector3i
 import org.cloudburstmc.protocol.bedrock.data.LevelEvent
-import org.cloudburstmc.protocol.bedrock.data.LevelEventType
 import org.cloudburstmc.protocol.bedrock.data.inventory.ContainerId
 import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.ItemUseTransaction
 import org.cloudburstmc.protocol.bedrock.packet.LevelEventPacket

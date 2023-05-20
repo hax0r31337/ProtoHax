@@ -130,6 +130,13 @@ class GameSession : MinecraftRelayPacketListener {
 		})
 	}
 
+	private val inputDataConversionMap by lazy { mapOf(
+		PlayerAuthInputData.START_SPRINTING to PlayerActionType.START_SPRINT, PlayerAuthInputData.STOP_SPRINTING to PlayerActionType.STOP_SPRINT,
+		PlayerAuthInputData.START_SNEAKING to PlayerActionType.START_SNEAK, PlayerAuthInputData.STOP_SNEAKING to PlayerActionType.STOP_SNEAK,
+		PlayerAuthInputData.START_SWIMMING to PlayerActionType.START_SWIMMING, PlayerAuthInputData.STOP_SWIMMING to PlayerActionType.STOP_SWIMMING,
+		PlayerAuthInputData.START_GLIDING to PlayerActionType.START_GLIDE, PlayerAuthInputData.STOP_GLIDING to PlayerActionType.STOP_GLIDE,
+		PlayerAuthInputData.START_JUMPING to PlayerActionType.JUMP) }
+
 	private fun convertAuthInput(packet: PlayerAuthInputPacket): MovePlayerPacket? {
 		packet.playerActions.forEach { action ->
 			netSession.outboundPacket(PlayerActionPacket().apply {
@@ -155,69 +162,15 @@ class GameSession : MinecraftRelayPacketListener {
 			}
 		}
 
-		if (packet.inputData.contains(PlayerAuthInputData.START_SPRINTING)) {
-			netSession.outboundPacket(PlayerActionPacket().apply {
-				runtimeEntityId = thePlayer.runtimeEntityId
-				action = PlayerActionType.START_SPRINT
-				blockPosition = Vector3i.ZERO
-				resultPosition = Vector3i.ZERO
-			})
-		} else if (packet.inputData.contains(PlayerAuthInputData.STOP_SPRINTING)) {
-			netSession.outboundPacket(PlayerActionPacket().apply {
-				runtimeEntityId = thePlayer.runtimeEntityId
-				action = PlayerActionType.STOP_SPRINT
-				blockPosition = Vector3i.ZERO
-				resultPosition = Vector3i.ZERO
-			})
-		} else if (packet.inputData.contains(PlayerAuthInputData.START_SNEAKING)) {
-			netSession.outboundPacket(PlayerActionPacket().apply {
-				runtimeEntityId = thePlayer.runtimeEntityId
-				action = PlayerActionType.START_SNEAK
-				blockPosition = Vector3i.ZERO
-				resultPosition = Vector3i.ZERO
-			})
-		} else if (packet.inputData.contains(PlayerAuthInputData.STOP_SNEAKING)) {
-			netSession.outboundPacket(PlayerActionPacket().apply {
-				runtimeEntityId = thePlayer.runtimeEntityId
-				action = PlayerActionType.STOP_SNEAK
-				blockPosition = Vector3i.ZERO
-				resultPosition = Vector3i.ZERO
-			})
-		} else if (packet.inputData.contains(PlayerAuthInputData.START_SWIMMING)) {
-			netSession.outboundPacket(PlayerActionPacket().apply {
-				runtimeEntityId = thePlayer.runtimeEntityId
-				action = PlayerActionType.START_SWIMMING
-				blockPosition = Vector3i.ZERO
-				resultPosition = Vector3i.ZERO
-			})
-		} else if (packet.inputData.contains(PlayerAuthInputData.STOP_SWIMMING)) {
-			netSession.outboundPacket(PlayerActionPacket().apply {
-				runtimeEntityId = thePlayer.runtimeEntityId
-				action = PlayerActionType.STOP_SWIMMING
-				blockPosition = Vector3i.ZERO
-				resultPosition = Vector3i.ZERO
-			})
-		} else if (packet.inputData.contains(PlayerAuthInputData.START_GLIDING)) {
-			netSession.outboundPacket(PlayerActionPacket().apply {
-				runtimeEntityId = thePlayer.runtimeEntityId
-				action = PlayerActionType.START_GLIDE
-				blockPosition = Vector3i.ZERO
-				resultPosition = Vector3i.ZERO
-			})
-		} else if (packet.inputData.contains(PlayerAuthInputData.STOP_GLIDING)) {
-			netSession.outboundPacket(PlayerActionPacket().apply {
-				runtimeEntityId = thePlayer.runtimeEntityId
-				action = PlayerActionType.STOP_GLIDE
-				blockPosition = Vector3i.ZERO
-				resultPosition = Vector3i.ZERO
-			})
-		} else if (packet.inputData.contains(PlayerAuthInputData.START_JUMPING)) {
-			netSession.outboundPacket(PlayerActionPacket().apply {
-				runtimeEntityId = thePlayer.runtimeEntityId
-				action = PlayerActionType.JUMP
-				blockPosition = Vector3i.ZERO
-				resultPosition = Vector3i.ZERO
-			})
+		inputDataConversionMap.forEach { (k, v) ->
+			if (packet.inputData.contains(k)) {
+				netSession.outboundPacket(PlayerActionPacket().apply {
+					runtimeEntityId = thePlayer.runtimeEntityId
+					action = v
+					blockPosition = Vector3i.ZERO
+					resultPosition = Vector3i.ZERO
+				})
+			}
 		}
 
 		var mode = MovePlayerPacket.Mode.NORMAL

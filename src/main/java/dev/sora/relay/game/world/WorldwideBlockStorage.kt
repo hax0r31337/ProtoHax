@@ -6,7 +6,6 @@ import dev.sora.relay.game.registry.BlockDefinition
 import dev.sora.relay.game.utils.constants.Dimension
 import dev.sora.relay.game.world.chunk.Chunk
 import dev.sora.relay.utils.logError
-import io.netty.buffer.ByteBuf
 import kotlinx.coroutines.launch
 import org.cloudburstmc.math.vector.Vector3i
 import org.cloudburstmc.protocol.bedrock.data.SubChunkRequestResult
@@ -49,7 +48,7 @@ abstract class WorldwideBlockStorage(protected val session: GameSession, overrid
 				packet.blobIds.forEachIndexed { index, blobId ->
 					if (index >= packet.subChunksLength) return@forEachIndexed
 					session.cacheManager.registerCacheCallback(blobId) {
-						readSubChunk(chunk, it, index)
+						chunk.readSubChunk(index, it)
 					}
 				}
 			} // we handle SubChunkPackets for isCachingEnabled && isRequestSubChunks cases
@@ -72,24 +71,11 @@ abstract class WorldwideBlockStorage(protected val session: GameSession, overrid
 				if (it.data.readableBytes() == 0) {
 					// cached chunk
 					session.cacheManager.registerCacheCallback(it.blobId) {
-						readSubChunk(chunk, it, position.y)
+						chunk.readSubChunk(position.y, it)
 					}
 				} else {
-					readSubChunk(chunk, it.data, position.y)
+					chunk.readSubChunk(position.y, it.data)
 				}
-			}
-		}
-	}
-
-	private fun readSubChunk(chunk: Chunk, data: ByteBuf, posY: Int) {
-		val buf = data.retainedDuplicate()
-		session.scope.launch {
-			try {
-				chunk.readSubChunk(posY, buf)
-			} catch (t: Throwable) {
-				logError("exception thrown whilst read subchunk", t)
-			} finally {
-			    buf.release()
 			}
 		}
 	}
