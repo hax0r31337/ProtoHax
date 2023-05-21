@@ -74,7 +74,10 @@ abstract class WorldwideBlockStorage(protected val session: GameSession, overrid
 						chunk.readSubChunk(position.y, it)
 					}
 				} else {
-					chunk.readSubChunk(position.y, it.data)
+					val buf = it.data.retainedDuplicate()
+					session.scope.launch {
+						chunk.readSubChunk(position.y, buf)
+					}
 				}
 			}
 		}

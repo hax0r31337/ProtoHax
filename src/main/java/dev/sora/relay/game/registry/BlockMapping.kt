@@ -52,10 +52,6 @@ class BlockMapping(private val runtimeToGameMap: Map<Int, BlockDefinition>, val 
                     airId = runtime
                 }
 
-				if (name.contains("lava")) {
-					println("$name => $runtime")
-				}
-
                 runtimeToBlock[runtime] = BlockDefinition(runtime, name, subtag)
             }
 
