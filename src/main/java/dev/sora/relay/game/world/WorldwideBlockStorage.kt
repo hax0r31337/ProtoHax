@@ -10,6 +10,7 @@ import kotlinx.coroutines.launch
 import org.cloudburstmc.math.vector.Vector3i
 import org.cloudburstmc.protocol.bedrock.data.SubChunkRequestResult
 import org.cloudburstmc.protocol.bedrock.packet.*
+import kotlin.math.floor
 
 abstract class WorldwideBlockStorage(protected val session: GameSession, override val eventManager: EventManager) : Listenable {
 
@@ -21,8 +22,15 @@ abstract class WorldwideBlockStorage(protected val session: GameSession, overrid
 	var viewDistance = -1
 		protected set
 
-	private val handleDisconnect = handle<EventDisconnect> {
+	private fun cleanUp() {
+		chunks.forEach { _, chunk ->
+			session.eventManager.emit(EventChunkUnload(session, chunk))
+		}
 		chunks.clear()
+	}
+
+	private val handleDisconnect = handle<EventDisconnect> {
+		cleanUp()
 	}
 
 	private val handlePacketInbound = handle<EventPacketInbound> { event ->
@@ -30,7 +38,7 @@ abstract class WorldwideBlockStorage(protected val session: GameSession, overrid
 
 		if (packet is LevelChunkPacket) {
 			chunkOutOfRangeCheck()
-			val chunk = Chunk(packet.chunkX, packet.chunkZ,
+			val chunk = Chunk(packet.chunkX, packet.chunkZ, dimension,
 				dimension == Dimension.OVERWORLD && (!session.netSessionInitialized || session.netSession.codec.protocolVersion >= 440),
 				session.blockMapping, session.legacyBlockMapping)
 			if (!packet.isCachingEnabled && !packet.isRequestSubChunks) {
@@ -57,11 +65,8 @@ abstract class WorldwideBlockStorage(protected val session: GameSession, overrid
 		} else if (packet is ChunkRadiusUpdatedPacket) {
 			viewDistance = packet.radius
 			chunkOutOfRangeCheck()
-		} else if (packet is NetworkChunkPublisherUpdatePacket) {
-			viewDistance = packet.radius
-			chunkOutOfRangeCheck()
 		} else if (packet is ChangeDimensionPacket) {
-			chunks.clear()
+			cleanUp()
 			session.eventManager.emit(EventDimensionChange(session, dimension))
 		} else if (packet is UpdateBlockPacket && packet.dataLayer == 0) {
 			setBlockIdAt(packet.blockPosition.x, packet.blockPosition.y, packet.blockPosition.z, packet.definition.runtimeId)
@@ -87,14 +92,17 @@ abstract class WorldwideBlockStorage(protected val session: GameSession, overrid
 	}
 
 	protected fun chunkOutOfRangeCheck() {
-		// TODO: fix
-
-//         if (viewDistance < 0) return
-//         val playerChunkX = floor(session.thePlayer.posX).toInt() shr 4
-//         val playerChunkZ = floor(session.thePlayer.posZ).toInt() shr 4
-//         chunks.entries.removeIf { (_, chunk) ->
-//             !chunk.isInRadius(playerChunkX, playerChunkZ, viewDistance+1)
-//         }
+		if (viewDistance <= 0) return
+		val playerChunkX = floor(session.thePlayer.posX).toInt() shr 4
+		val playerChunkZ = floor(session.thePlayer.posZ).toInt() shr 4
+		chunks.entries.removeIf { (_, chunk) ->
+			val bl = !chunk.isInRadius(playerChunkX, playerChunkZ, viewDistance+1)
+			if (bl) {
+				val event = EventChunkUnload(session, chunk)
+				session.eventManager.emit(event)
+			}
+			bl
+		}
 	}
 
 	fun getBlockIdAt(x: Int, y: Int, z: Int): Int {

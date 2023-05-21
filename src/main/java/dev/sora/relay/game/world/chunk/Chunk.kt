@@ -5,7 +5,7 @@ import dev.sora.relay.game.registry.LegacyBlockMapping
 import io.netty.buffer.ByteBuf
 import kotlin.math.abs
 
-class Chunk(val x: Int, val z: Int, val is384World: Boolean,
+class Chunk(val x: Int, val z: Int, val dimension: Int, val is384World: Boolean,
             private val blockMapping: BlockMapping, private val legacyBlockMapping: LegacyBlockMapping) {
 
     val hash: Long
