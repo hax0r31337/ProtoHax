@@ -5,6 +5,7 @@ import org.cloudburstmc.math.vector.Vector2f
 import org.cloudburstmc.math.vector.Vector3f
 import org.cloudburstmc.protocol.bedrock.data.AttributeData
 import org.cloudburstmc.protocol.bedrock.data.entity.EntityDataMap
+import org.cloudburstmc.protocol.bedrock.data.entity.EntityFlag
 import org.cloudburstmc.protocol.bedrock.data.entity.EntityLinkData
 import org.cloudburstmc.protocol.bedrock.packet.*
 import kotlin.math.sqrt
@@ -57,6 +58,15 @@ abstract class Entity(open val runtimeEntityId: Long, open val uniqueEntityId: L
 
     val vec3Rotation: Vector3f
         get() = Vector3f.from(rotationPitch, rotationYaw, rotationYawHead)
+
+	open val isSneaking: Boolean
+		get() = metadata.flags.contains(EntityFlag.SNEAKING)
+	open val isSprinting: Boolean
+		get() = metadata.flags.contains(EntityFlag.SPRINTING)
+	open val isSwimming: Boolean
+		get() = metadata.flags.contains(EntityFlag.SWIMMING)
+	open val isGliding: Boolean
+		get() = metadata.flags.contains(EntityFlag.GLIDING)
 
     open fun move(x: Float, y: Float, z: Float) {
         this.posX = x

@@ -14,6 +14,7 @@ import dev.sora.relay.game.utils.toVector3iFloor
 import org.cloudburstmc.math.vector.Vector3f
 import org.cloudburstmc.math.vector.Vector3i
 import org.cloudburstmc.protocol.bedrock.data.AuthoritativeMovementMode
+import org.cloudburstmc.protocol.bedrock.data.PlayerActionType
 import org.cloudburstmc.protocol.bedrock.data.PlayerAuthInputData
 import org.cloudburstmc.protocol.bedrock.data.SoundEvent
 import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.InventoryTransactionType
@@ -60,6 +61,11 @@ class EntityPlayerSP(private val session: GameSession, override val eventManager
 		}
 	var prevOnGround = false
 		private set
+
+	override var isSneaking = false
+	override var isSprinting = false
+	override var isSwimming = false
+	override var isGliding = false
 
     // new introduced "server authoritative" mode
     var blockBreakServerAuthoritative = false
@@ -191,6 +197,19 @@ class EntityPlayerSP(private val session: GameSession, override val eventManager
 
 			inputData.clear()
 			inputData.addAll(packet.inputData)
+			inputData.forEach { action ->
+				when(action) {
+					PlayerAuthInputData.START_SNEAKING -> isSneaking = true
+					PlayerAuthInputData.STOP_SNEAKING -> isSneaking = false
+					PlayerAuthInputData.START_SPRINTING -> isSprinting = true
+					PlayerAuthInputData.STOP_SPRINTING -> isSprinting = false
+					PlayerAuthInputData.START_SWIMMING -> isSwimming = true
+					PlayerAuthInputData.STOP_SWIMMING -> isSwimming = false
+					PlayerAuthInputData.START_GLIDING -> isGliding = true
+					PlayerAuthInputData.STOP_GLIDING -> isGliding = false
+					else -> {}
+				}
+			}
 
 			session.onTick()
 
@@ -222,6 +241,18 @@ class EntityPlayerSP(private val session: GameSession, override val eventManager
 		} else if (skipSwings > 0 && packet is AnimatePacket && packet.action == AnimatePacket.Action.SWING_ARM) {
 			skipSwings--
 			event.cancel()
+		} else if (packet is PlayerActionPacket) {
+			when(packet.action) {
+				PlayerActionType.START_SNEAK -> isSneaking = true
+				PlayerActionType.STOP_SNEAK -> isSneaking = false
+				PlayerActionType.START_SPRINT -> isSprinting = true
+				PlayerActionType.STOP_SPRINT -> isSprinting = false
+				PlayerActionType.START_SWIMMING -> isSwimming = true
+				PlayerActionType.STOP_SWIMMING -> isSwimming = false
+				PlayerActionType.START_GLIDE -> isGliding = true
+				PlayerActionType.STOP_GLIDE -> isGliding = false
+				else -> {}
+			}
 		}
 		inventory.handleClientPacket(packet)
 		openContainer?.also {

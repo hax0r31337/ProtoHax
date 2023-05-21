@@ -27,7 +27,7 @@ import kotlin.math.pow
 
 class ModuleCrystalAura : CheatModule("CrystalAura") {
 
-	private var rangeValue by floatValue("Range", 7f, 3f..10f)
+	private var rangeValue by floatValue("Range", 5f, 3f..10f)
 	private var suicideValue by boolValue("Suicide", false)
 	private var placeValue by boolValue("Place", true)
 	private var delayValue by intValue("Delay", 400, 100..1000)

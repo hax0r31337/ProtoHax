@@ -31,7 +31,7 @@ class ModuleSurround : CheatModule("Surround") {
 	private val onTick = handle<EventTick> { event ->
 		val session = event.session
 
-		if (onSneakValue && !session.thePlayer.inputData.contains(PlayerAuthInputData.SNEAKING)) {
+		if (onSneakValue && !session.thePlayer.isSneaking) {
 			holePosition = null
 			return@handle
 		}

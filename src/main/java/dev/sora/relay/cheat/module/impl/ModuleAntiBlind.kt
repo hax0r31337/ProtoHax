@@ -4,7 +4,10 @@ import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.game.event.EventPacketInbound
 import dev.sora.relay.game.event.EventTick
 import dev.sora.relay.game.utils.constants.Effect
+import org.cloudburstmc.protocol.bedrock.data.entity.EntityDataMap
 import org.cloudburstmc.protocol.bedrock.data.entity.EntityFlag
+import org.cloudburstmc.protocol.bedrock.packet.AddEntityPacket
+import org.cloudburstmc.protocol.bedrock.packet.AddPlayerPacket
 import org.cloudburstmc.protocol.bedrock.packet.MobEffectPacket
 import org.cloudburstmc.protocol.bedrock.packet.SetEntityDataPacket
 
@@ -13,6 +16,7 @@ class ModuleAntiBlind : CheatModule("AntiBlind") {
     private var nightVisionValue by boolValue("NightVision", true)
 	private var removeFireValue by boolValue("RemoveFire", false)
     private var removeBadEffectsValue by boolValue("RemoveBadEffects", true)
+	private var removeInvisibleValue by boolValue("RemoveInvisible", true)
 
 	override fun onDisable() {
 		if (nightVisionValue && session.netSessionInitialized) {
@@ -43,10 +47,28 @@ class ModuleAntiBlind : CheatModule("AntiBlind") {
 			if (packet.effectId == Effect.NAUSEA || packet.effectId == Effect.BLINDNESS || packet.effectId == Effect.DARKNESS) {
 				event.cancel()
 			}
-		} else if (removeFireValue && packet is SetEntityDataPacket && packet.runtimeEntityId == event.session.thePlayer.runtimeEntityId) {
-			if (packet.metadata.flags.contains(EntityFlag.ON_FIRE)) {
-				packet.metadata.setFlag(EntityFlag.ON_FIRE, false)
+		} else if (packet is SetEntityDataPacket) {
+			if (packet.runtimeEntityId == event.session.thePlayer.runtimeEntityId) {
+				if (removeFireValue && packet.metadata.flags.contains(EntityFlag.ON_FIRE)) {
+					packet.metadata.setFlag(EntityFlag.ON_FIRE, false)
+				}
+			} else {
+				if (removeInvisibleValue) {
+					processInvisibleEntityData(packet.metadata)
+				}
 			}
+		} else if (removeInvisibleValue && packet is AddEntityPacket) {
+			processInvisibleEntityData(packet.metadata)
+		} else if (removeInvisibleValue && packet is AddPlayerPacket) {
+			processInvisibleEntityData(packet.metadata)
+		}
+	}
+
+	private fun processInvisibleEntityData(metadata: EntityDataMap?) {
+		metadata?.flags ?: return
+
+		if (metadata.flags.contains(EntityFlag.INVISIBLE)) {
+			metadata.setFlag(EntityFlag.INVISIBLE, false)
 		}
 	}
 }
