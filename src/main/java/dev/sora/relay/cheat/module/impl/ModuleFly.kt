@@ -5,6 +5,7 @@ import dev.sora.relay.cheat.value.Choice
 import dev.sora.relay.game.event.EventPacketInbound
 import dev.sora.relay.game.event.EventPacketOutbound
 import dev.sora.relay.game.event.EventTick
+import dev.sora.relay.game.utils.constants.Effect
 import org.cloudburstmc.math.vector.Vector3f
 import org.cloudburstmc.protocol.bedrock.data.Ability
 import org.cloudburstmc.protocol.bedrock.data.AbilityLayer
@@ -18,7 +19,7 @@ import kotlin.math.sin
 
 class ModuleFly : CheatModule("Fly") {
 
-    private var modeValue by choiceValue("Mode", arrayOf(Vanilla(), Mineplex(), Jetpack()), "Vanilla")
+    private var modeValue by choiceValue("Mode", arrayOf(Vanilla("Vanilla"), Mineplex(), Jetpack(), Glide()), "Vanilla")
     private var speedValue by floatValue("Speed", 1.5f, 0.1f..5f)
 	private var pressJumpValue by boolValue("PressJump", true)
 
@@ -42,28 +43,7 @@ class ModuleFly : CheatModule("Fly") {
         launchY = session.thePlayer.posY
     }
 
-	private val handlePacketInbound = handle<EventPacketInbound> { event ->
-		val packet = event.packet
-		if (packet is UpdateAbilitiesPacket) {
-			event.cancel()
-			event.session.netSession.inboundPacket(abilityPacket.apply {
-				uniqueEntityId = event.session.thePlayer.uniqueEntityId
-			})
-		} else if (packet is StartGamePacket) {
-			event.session.netSession.inboundPacket(abilityPacket.apply {
-				uniqueEntityId = event.session.thePlayer.uniqueEntityId
-			})
-		}
-	}
-
-	private val handlePacketOutbound = handle<EventPacketOutbound> { event ->
-		val packet = event.packet
-		if (packet is RequestAbilityPacket && packet.ability == Ability.FLYING) {
-			event.cancel()
-		}
-	}
-
-	inner class Vanilla : Choice("Vanilla") {
+	open inner class Vanilla(choiceName: String) : Choice(choiceName) {
 
 		private val handleTick = handle<EventTick> { event ->
 			if (event.session.thePlayer.tickExists % 10 == 0L) {
@@ -72,9 +52,30 @@ class ModuleFly : CheatModule("Fly") {
 				})
 			}
 		}
+
+		private val handlePacketInbound = handle<EventPacketInbound> { event ->
+			val packet = event.packet
+			if (packet is UpdateAbilitiesPacket) {
+				event.cancel()
+				event.session.netSession.inboundPacket(abilityPacket.apply {
+					uniqueEntityId = event.session.thePlayer.uniqueEntityId
+				})
+			} else if (packet is StartGamePacket) {
+				event.session.netSession.inboundPacket(abilityPacket.apply {
+					uniqueEntityId = event.session.thePlayer.uniqueEntityId
+				})
+			}
+		}
+
+		private val handlePacketOutbound = handle<EventPacketOutbound> { event ->
+			val packet = event.packet
+			if (packet is RequestAbilityPacket && packet.ability == Ability.FLYING) {
+				event.cancel()
+			}
+		}
 	}
 
-	inner class Mineplex : Choice("Mineplex") {
+	inner class Mineplex : Vanilla("Mineplex") {
 
 		private var mineplexMotionValue by boolValue("MineplexMotion", false)
 
@@ -138,6 +139,32 @@ class ModuleFly : CheatModule("Fly") {
 					sin(calcPitch) * speedValue,
 					sin(calcYaw) * cos(calcPitch) * speedValue
 				)
+			})
+		}
+	}
+
+	inner class Glide : Choice("Glide") {
+
+		override fun onDisable() {
+			if (session.netSessionInitialized) {
+				session.netSession.inboundPacket(MobEffectPacket().apply {
+					event = MobEffectPacket.Event.REMOVE
+					runtimeEntityId = session.thePlayer.runtimeEntityId
+					effectId = Effect.SLOW_FALLING
+				})
+			}
+		}
+
+		private val handleTick = handle<EventTick> { event ->
+			val session = event.session
+			if (session.thePlayer.tickExists % 20 != 0L) return@handle
+			session.netSession.inboundPacket(MobEffectPacket().apply {
+				runtimeEntityId = session.thePlayer.runtimeEntityId
+				setEvent(MobEffectPacket.Event.ADD)
+				effectId = Effect.SLOW_FALLING
+				amplifier = 0
+				isParticles = false
+				duration = 360000
 			})
 		}
 	}

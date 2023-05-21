@@ -57,6 +57,9 @@ abstract class WorldwideBlockStorage(protected val session: GameSession, overrid
 		} else if (packet is ChunkRadiusUpdatedPacket) {
 			viewDistance = packet.radius
 			chunkOutOfRangeCheck()
+		} else if (packet is NetworkChunkPublisherUpdatePacket) {
+			viewDistance = packet.radius
+			chunkOutOfRangeCheck()
 		} else if (packet is ChangeDimensionPacket) {
 			chunks.clear()
 			session.eventManager.emit(EventDimensionChange(session, dimension))
