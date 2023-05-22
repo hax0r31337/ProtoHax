@@ -10,10 +10,7 @@ import dev.sora.relay.game.world.WorldClient
 import dev.sora.relay.session.MinecraftRelayPacketListener
 import dev.sora.relay.session.MinecraftRelaySession
 import dev.sora.relay.utils.logInfo
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.asCoroutineDispatcher
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import org.cloudburstmc.math.vector.Vector3f
 import org.cloudburstmc.math.vector.Vector3i
 import org.cloudburstmc.protocol.bedrock.data.PlayerActionType
@@ -22,6 +19,7 @@ import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData
 import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.InventoryTransactionType
 import org.cloudburstmc.protocol.bedrock.packet.*
 import java.util.concurrent.Executors
+import kotlin.concurrent.thread
 
 class GameSession : MinecraftRelayPacketListener {
 
@@ -64,25 +62,29 @@ class GameSession : MinecraftRelayPacketListener {
         }
 
         if (packet is LoginPacket) {
-            val protocolVersion = packet.protocolVersion
-            val itemDefinitions = ItemMapping.Provider.craftMapping(protocolVersion)
-            val blockDefinitions = BlockMapping.Provider.craftMapping(protocolVersion)
-            netSession.peer.codecHelper.itemDefinitions = itemDefinitions
-            netSession.peer.codecHelper.blockDefinitions = blockDefinitions
-            netSession.client?.let {
-                it.peer.codecHelper.itemDefinitions = itemDefinitions
-                it.peer.codecHelper.blockDefinitions = blockDefinitions
-            } ?: scope.launch {
-				while (netSession.client == null) {
-					Thread.sleep(10L) // wait client connect
-				}
-				netSession.client!!.peer.codecHelper.also {
-					it.itemDefinitions = itemDefinitions
-					it.blockDefinitions = blockDefinitions
-				}
+			val protocolVersion = packet.protocolVersion
+
+			while (netSession.client == null) {
+				Thread.sleep(10L) // wait client connect
 			}
-            blockMapping = blockDefinitions
-            legacyBlockMapping = lazy { LegacyBlockMapping.Provider.craftMapping(protocolVersion) }
+
+			val blockTask = thread {
+				val blockDefinitions = BlockMapping.Provider.craftMapping(protocolVersion)
+				netSession.peer.codecHelper.blockDefinitions = blockDefinitions
+				netSession.client!!.peer.codecHelper.blockDefinitions = blockDefinitions
+
+				blockMapping = blockDefinitions
+			}
+
+			val itemDefinitions = ItemMapping.Provider.craftMapping(protocolVersion)
+			netSession.peer.codecHelper.itemDefinitions = itemDefinitions
+			netSession.client!!.peer.codecHelper.itemDefinitions = itemDefinitions
+
+			legacyBlockMapping = lazy { LegacyBlockMapping.Provider.craftMapping(protocolVersion) }
+
+			if (blockTask.isAlive) {
+				blockTask.join()
+			}
         } else if (!thePlayer.movementServerAuthoritative && packet is PlayerAuthInputPacket) {
 			convertAuthInput(packet)?.also { netSession.outboundPacket(it) }
 			return false
