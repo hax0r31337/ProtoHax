@@ -76,6 +76,8 @@ class EntityPlayerSP(private val session: GameSession, override val eventManager
 		private set
     var inventoriesServerAuthoritative = false
         private set
+	var soundServerAuthoritative = false
+		private set
 
 	val inputData = mutableListOf<PlayerAuthInputData>()
     private val pendingItemInteraction = LinkedList<ItemUseTransaction>()
@@ -129,6 +131,7 @@ class EntityPlayerSP(private val session: GameSession, override val eventManager
 			movementServerAuthoritative = packet.authoritativeMovementMode != AuthoritativeMovementMode.CLIENT
 			movementServerRewind = packet.authoritativeMovementMode == AuthoritativeMovementMode.SERVER_WITH_REWIND
 			inventoriesServerAuthoritative = packet.isInventoriesServerAuthoritative
+			soundServerAuthoritative = packet.networkPermissions.isServerAuthSounds
 
 			// override movement authoritative mode
 			if (!movementServerAuthoritative) {
@@ -166,6 +169,7 @@ class EntityPlayerSP(private val session: GameSession, override val eventManager
 		if (packet is LoginPacket) {
 			// disable packet conversion by default
 			movementServerAuthoritative = true
+			soundServerAuthoritative = false
 		} else if (packet is MovePlayerPacket) {
 			move(packet.position)
 			rotate(packet.rotation)
@@ -275,7 +279,7 @@ class EntityPlayerSP(private val session: GameSession, override val eventManager
                 skipSwings++
             }
         }
-        if (sound) {
+        if (sound && !soundServerAuthoritative) {
             // this sound will be send to server if no object interacted
             session.sendPacket(LevelSoundEventPacket().apply {
                 this.sound = SoundEvent.ATTACK_NODAMAGE
@@ -323,7 +327,7 @@ class EntityPlayerSP(private val session: GameSession, override val eventManager
 
         swing(swingValue)
 
-        if (sound) {
+        if (sound && !soundServerAuthoritative) {
             session.sendPacket(LevelSoundEventPacket().apply {
                 this.sound = SoundEvent.ATTACK_STRONG
                 position = vec3Position
