@@ -36,7 +36,7 @@ class GameSession : MinecraftRelayPacketListener {
 
     var blockMapping = BlockMapping(emptyMap(), 0)
         private set
-    var legacyBlockMapping = LegacyBlockMapping(emptyMap())
+    var legacyBlockMapping: Lazy<LegacyBlockMapping> = lazy { LegacyBlockMapping(emptyMap()) }
         private set
 
     val netSessionInitialized: Boolean
@@ -82,7 +82,7 @@ class GameSession : MinecraftRelayPacketListener {
 				}
 			}
             blockMapping = blockDefinitions
-            legacyBlockMapping = LegacyBlockMapping.Provider.craftMapping(packet.protocolVersion)
+            legacyBlockMapping = lazy { LegacyBlockMapping.Provider.craftMapping(protocolVersion) }
         } else if (!thePlayer.movementServerAuthoritative && packet is PlayerAuthInputPacket) {
 			convertAuthInput(packet)?.also { netSession.outboundPacket(it) }
 			return false

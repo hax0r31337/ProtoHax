@@ -6,7 +6,7 @@ import io.netty.buffer.ByteBuf
 import kotlin.math.abs
 
 class Chunk(val x: Int, val z: Int, val dimension: Int, val is384World: Boolean,
-            private val blockMapping: BlockMapping, private val legacyBlockMapping: LegacyBlockMapping) {
+            private val blockMapping: BlockMapping, private val legacyBlockMapping: Lazy<LegacyBlockMapping>) {
 
     val hash: Long
         get() = hash(x, z)

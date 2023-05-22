@@ -132,10 +132,10 @@ class ModuleResourcePackSpoof : CheatModule("ResourcePackSpoof") {
             return files.keys
         }
 
-        override fun getPackById(idRaw: String): Pair<ResourcePacksInfoPacket.Entry, ByteArray>? {
-            val id = idRaw.substring(0, idRaw.indexOf('_'))
+        override fun getPackById(id: String): Pair<ResourcePacksInfoPacket.Entry, ByteArray>? {
+            val subId = id.substring(0, id.indexOf('_'))
             files.forEach {
-                if (it.key.packId == id) {
+                if (it.key.packId == subId) {
                     return it.key to it.value
                 }
             }

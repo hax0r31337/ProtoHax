@@ -109,8 +109,8 @@ class PlayerInventory(private val player: EntityPlayerSP) : EntityInventory(play
                 dstItem.second(srcItem.first)
                 srcItem.second(dstItem.first)
             }
-            it.actions.filterIsInstance<DropAction>().forEach { action ->
-                val slot = action.source.slot + (getOffsetByContainerType(action.source.container) ?: return@forEach)
+            it.actions.filterIsInstance<DropAction>().forEach FE@ { action ->
+                val slot = action.source.slot + (getOffsetByContainerType(action.source.container) ?: return@FE)
                 val item = content[slot]
                 if (item.count == 1) {
                     content[slot] = ItemData.AIR

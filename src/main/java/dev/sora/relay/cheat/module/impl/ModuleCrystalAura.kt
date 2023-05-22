@@ -38,50 +38,15 @@ class ModuleCrystalAura : CheatModule("CrystalAura") {
 	private val explodeTimer = TheTimer()
 	private val placeTimer = TheTimer()
 
-	private val onTick = handle<EventTick> { event ->
+	private val onTickExplode = handle<EventTick>({ explodeTimer.hasTimePassed(delayValue) }) { event ->
 		val session = event.session
 
-		// search for existing crystals first
-		if (explodeTimer.hasTimePassed(delayValue)) {
-			val rangeSq = rangeValue.pow(2)
-			val crystal = session.theWorld.entityMap.values
-				.filter { it is EntityUnknown && it.identifier == "minecraft:ender_crystal" && it.distanceSq(session.thePlayer) < rangeSq }.map {
-					var selfDamage = 0f
-					var mostDamage = 0f
-					session.theWorld.simulateExplosionDamage(it.vec3Position, EXPLOSION_SIZE, listOf(session.thePlayer)) { entity, damage ->
-						if (entity == session.thePlayer) {
-							selfDamage = damage
-						} else if (entity is EntityPlayer && damage > mostDamage) {
-							mostDamage = damage
-						}
-					}
-
-					if (selfDamage > mostDamage && !suicideValue) {
-						mostDamage = -1f
-					}
-
-					CrystalDamage(it, mostDamage, selfDamage)
-			}.maxByOrNull { it.mostDamage }
-
-			if (crystal != null && crystal.mostDamage != -1f) {
-				session.explodeCrystal(crystal.target as Entity)
-				explodeTimer.reset()
-			}
-		}
-
-		if (placeValue && placeTimer.hasTimePassed(delayValue)) {
-			val slot = if (session.thePlayer.inventory.hand.itemDefinition.identifier == "minecraft:end_crystal") -1
-				else session.thePlayer.inventory.searchForItemInHotbar { it.itemDefinition.identifier == "minecraft:end_crystal" }
-			if (slot == null) {
-				return@handle
-			}
-
-			val bases = searchPlaceBase(session, floor(rangeValue).toInt())
-			// simulate damage to decide best damage point
-			val bestPlace = bases.map {
+		val rangeSq = rangeValue.pow(2)
+		val crystal = session.theWorld.entityMap.values
+			.filter { it is EntityUnknown && it.identifier == "minecraft:ender_crystal" && it.distanceSq(session.thePlayer) < rangeSq }.map {
 				var selfDamage = 0f
 				var mostDamage = 0f
-				session.theWorld.simulateExplosionDamage(it.add(0, 2, 0).toVector3f(), EXPLOSION_SIZE, listOf(session.thePlayer)) { entity, damage ->
+				session.theWorld.simulateExplosionDamage(it.vec3Position, EXPLOSION_SIZE, listOf(session.thePlayer)) { entity, damage ->
 					if (entity == session.thePlayer) {
 						selfDamage = damage
 					} else if (entity is EntityPlayer && damage > mostDamage) {
@@ -95,35 +60,67 @@ class ModuleCrystalAura : CheatModule("CrystalAura") {
 
 				CrystalDamage(it, mostDamage, selfDamage)
 			}.maxByOrNull { it.mostDamage }
-			if (bestPlace != null && bestPlace.mostDamage != -1f) {
-				val originalSlot = if (slot != -1) {
-					session.sendPacket(PlayerHotbarPacket().apply {
-						selectedHotbarSlot = slot
-						isSelectHotbarSlot = true
-						containerId = ContainerId.INVENTORY
-					})
-					session.thePlayer.inventory.heldItemSlot
-				} else -1
 
-				session.thePlayer.useItem(ItemUseTransaction().apply {
-					actionType = 0
-					blockPosition = bestPlace.target as Vector3i
-					blockFace = EnumFacing.UP.ordinal
-					hotbarSlot = session.thePlayer.inventory.heldItemSlot
-					itemInHand = session.thePlayer.inventory.hand.removeNetInfo()
-					playerPosition = session.thePlayer.vec3Position
-					clickPosition = Vector3f.from(Math.random(), Math.random(), Math.random())
-					blockDefinition = session.thePlayer.inventory.hand.blockDefinition
-				})
-				placeTimer.reset()
+		if (crystal != null && crystal.mostDamage != -1f) {
+			session.explodeCrystal(crystal.target as Entity)
+			explodeTimer.reset()
+		}
+	}
 
-				if (slot != -1) {
-					session.sendPacket(PlayerHotbarPacket().apply {
-						selectedHotbarSlot = originalSlot
-						isSelectHotbarSlot = true
-						containerId = ContainerId.INVENTORY
-					})
+	private val onTickPlace = handle<EventTick>({ placeValue && placeTimer.hasTimePassed(delayValue) }) { event ->
+		val slot = if (session.thePlayer.inventory.hand.itemDefinition.identifier == "minecraft:end_crystal") -1
+		else session.thePlayer.inventory.searchForItemInHotbar { it.itemDefinition.identifier == "minecraft:end_crystal" }
+		if (slot == null) {
+			return@handle
+		}
+
+		val bases = searchPlaceBase(session, floor(rangeValue).toInt())
+		// simulate damage to decide best damage point
+		val bestPlace = bases.map {
+			var selfDamage = 0f
+			var mostDamage = 0f
+			session.theWorld.simulateExplosionDamage(it.add(0, 2, 0).toVector3f(), EXPLOSION_SIZE, listOf(session.thePlayer)) { entity, damage ->
+				if (entity == session.thePlayer) {
+					selfDamage = damage
+				} else if (entity is EntityPlayer && damage > mostDamage) {
+					mostDamage = damage
 				}
+			}
+
+			if (selfDamage > mostDamage && !suicideValue) {
+				mostDamage = -1f
+			}
+
+			CrystalDamage(it, mostDamage, selfDamage)
+		}.maxByOrNull { it.mostDamage }
+		if (bestPlace != null && bestPlace.mostDamage != -1f) {
+			val originalSlot = if (slot != -1) {
+				session.sendPacket(PlayerHotbarPacket().apply {
+					selectedHotbarSlot = slot
+					isSelectHotbarSlot = true
+					containerId = ContainerId.INVENTORY
+				})
+				session.thePlayer.inventory.heldItemSlot
+			} else -1
+
+			session.thePlayer.useItem(ItemUseTransaction().apply {
+				actionType = 0
+				blockPosition = bestPlace.target as Vector3i
+				blockFace = EnumFacing.UP.ordinal
+				hotbarSlot = session.thePlayer.inventory.heldItemSlot
+				itemInHand = session.thePlayer.inventory.hand.removeNetInfo()
+				playerPosition = session.thePlayer.vec3Position
+				clickPosition = Vector3f.from(Math.random(), Math.random(), Math.random())
+				blockDefinition = session.thePlayer.inventory.hand.blockDefinition
+			})
+			placeTimer.reset()
+
+			if (slot != -1) {
+				session.sendPacket(PlayerHotbarPacket().apply {
+					selectedHotbarSlot = originalSlot
+					isSelectHotbarSlot = true
+					containerId = ContainerId.INVENTORY
+				})
 			}
 		}
 	}

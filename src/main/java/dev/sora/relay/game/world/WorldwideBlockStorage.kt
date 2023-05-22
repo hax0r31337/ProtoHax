@@ -125,9 +125,9 @@ abstract class WorldwideBlockStorage(protected val session: GameSession, overrid
 		chunk.setBlockAt(x and 0x0f, y, z and 0x0f, id)
 	}
 
-	fun setBlockAt(x: Int, y: Int, z: Int, name: String) {
-		setBlockIdAt(x, y, z, session.blockMapping.getRuntimeByIdentifier(name))
-	}
+//	fun setBlockAt(x: Int, y: Int, z: Int, name: String) {
+//		setBlockIdAt(x, y, z, session.blockMapping.getRuntimeByIdentifier(name))
+//	}
 
 	fun setBlockAt(x: Int, y: Int, z: Int, block: BlockDefinition) {
 		setBlockIdAt(x, y, z, block.runtimeId)

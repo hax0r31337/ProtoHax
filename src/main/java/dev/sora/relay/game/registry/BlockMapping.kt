@@ -10,15 +10,15 @@ import java.util.zip.GZIPInputStream
 class BlockMapping(private val runtimeToGameMap: Map<Int, BlockDefinition>, val airId: Int)
 	: DefinitionRegistry<org.cloudburstmc.protocol.bedrock.data.definitions.BlockDefinition> {
 
-    private val gameToRuntimeMap = mutableMapOf<String, Int>()
+    private val gameToRuntimeMap = mutableMapOf<BlockDefinition, Int>()
 
     init {
         runtimeToGameMap.forEach { (k, v) ->
-            gameToRuntimeMap[v.identifier] = k
+            gameToRuntimeMap[v] = k
         }
     }
 
-    override fun getDefinition(runtimeId: Int): org.cloudburstmc.protocol.bedrock.data.definitions.BlockDefinition {
+    override fun getDefinition(runtimeId: Int): BlockDefinition {
         return runtimeToGameMap[runtimeId] ?: return UnknownBlockDefinition(runtimeId)
     }
 
@@ -27,14 +27,19 @@ class BlockMapping(private val runtimeToGameMap: Map<Int, BlockDefinition>, val 
     }
 
     fun getRuntimeByIdentifier(identifier: String): Int {
-        return gameToRuntimeMap[identifier] ?: 0
+        return gameToRuntimeMap.keys.find { it.identifier == identifier }?.runtimeId ?: 0
     }
+
+	fun getRuntimeByDefinition(definition: BlockDefinition): Int {
+		return gameToRuntimeMap[definition] ?: 0.also { println("no block found $definition") }
+	}
 
     object Provider : MappingProvider<BlockMapping>() {
 
         override val resourcePath: String
             get() = "/assets/mcpedata/blocks"
 
+		@Suppress("unchecked_cast")
         override fun readMapping(version: Short): BlockMapping {
             if (!availableVersions.contains(version)) error("Version not available: $version")
 
@@ -45,36 +50,16 @@ class BlockMapping(private val runtimeToGameMap: Map<Int, BlockDefinition>, val 
             var airId = 0
 
             tag.forEach { subtag ->
-                val name = getBlockNameFromNbt(subtag)
                 val runtime = subtag.getInt("runtimeId")
-
+				val name = subtag.getString("name")
                 if (name == "minecraft:air") {
                     airId = runtime
                 }
 
-                runtimeToBlock[runtime] = BlockDefinition(runtime, name, subtag)
+                runtimeToBlock[runtime] = BlockDefinition(runtime, name, subtag.getCompound("states") ?: NbtMap.EMPTY)
             }
 
             return BlockMapping(runtimeToBlock, airId)
-        }
-
-        fun getBlockNameFromNbt(nbt: NbtMap): String {
-            val sb = StringBuilder()
-            sb.append(nbt.getString("name"))
-            val stateMap = (nbt.getCompound("states") ?: NbtMap.builder().build())
-                .map { it }.sortedBy { it.key }
-            if(stateMap.isNotEmpty()) {
-                sb.append("[")
-                stateMap.forEach { (key, value) ->
-                    sb.append(key)
-                    sb.append("=")
-                    sb.append(value)
-                    sb.append(",")
-                }
-                sb.delete(sb.length - 1, sb.length)
-                sb.append("]")
-            }
-            return sb.toString()
         }
     }
 }

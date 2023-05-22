@@ -51,12 +51,40 @@ abstract class CheatModule(val name: String,
         this.state = !this.state
     }
 
+	@Suppress("unchecked_cast")
 	protected inline fun <reified T : GameEvent> handle(noinline handler: Handler<T>) {
-		handlers.add(EventHook(T::class.java, handler, this::state) as EventHook<in GameEvent>)
+		handlers.add(EventHook(T::class.java, handler) { this.state } as EventHook<in GameEvent>)
 	}
 
+	@Suppress("unchecked_cast")
 	protected inline fun <reified T : GameEvent> handle(crossinline condition: () -> Boolean, noinline handler: Handler<T>) {
 		handlers.add(EventHook(T::class.java, handler) { this.state && condition() } as EventHook<in GameEvent>)
+	}
+
+	@Suppress("unchecked_cast")
+	protected inline fun <reified T : GameEvent> handleEvent(crossinline condition: (T) -> Boolean, noinline handler: Handler<T>) {
+		handlers.add(EventHook(T::class.java, handler) { this.state && condition(it) } as EventHook<in GameEvent>)
+	}
+
+	@Suppress("unchecked_cast")
+	protected inline fun <reified T : GameEvent> handleOneTime(crossinline condition: (T) -> Boolean, noinline handler: Handler<T>) {
+		var trigger = false
+		handlers.add(EventHook(T::class.java, handler) {
+			val fulfill = condition(it)
+			if (this.state) {
+				if (fulfill && !trigger) {
+					trigger = true
+					true
+				} else {
+					if (!fulfill) {
+						trigger = false
+					}
+					false
+				}
+			} else {
+				trigger = false
+				false
+			}  } as EventHook<in GameEvent>)
 	}
 
 	fun register(eventManager: EventManager) {

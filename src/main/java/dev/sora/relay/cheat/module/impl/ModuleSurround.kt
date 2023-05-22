@@ -9,7 +9,6 @@ import dev.sora.relay.game.utils.constants.EnumFacing
 import dev.sora.relay.game.utils.toVector3i
 import dev.sora.relay.utils.timing.TheTimer
 import org.cloudburstmc.math.vector.Vector3f
-import org.cloudburstmc.protocol.bedrock.data.PlayerAuthInputData
 import org.cloudburstmc.protocol.bedrock.data.inventory.ContainerId
 import org.cloudburstmc.protocol.bedrock.packet.PlayerHotbarPacket
 
@@ -43,7 +42,7 @@ class ModuleSurround : CheatModule("Surround") {
 			if (holePosition == null) {
 				holePosition = roundPosition
 			}
-			if (basePosition.distance(holePosition) >= 0.1) {
+			if (basePosition.distance(holePosition!!) >= 0.1) {
 				session.thePlayer.teleport(holePosition!!.add(0.5f, EntityPlayer.EYE_HEIGHT, 0.5f))
 			}
 		}

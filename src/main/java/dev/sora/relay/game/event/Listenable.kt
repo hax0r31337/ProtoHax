@@ -18,7 +18,7 @@ interface Listenable {
 
 }
 
-
+@Suppress("unchecked_cast")
 inline fun <reified T : GameEvent> Listenable.handle(noinline handler: Handler<T>) {
 	eventManager.register(EventHook(T::class.java, handler, this) as EventHook<in GameEvent>)
 }
