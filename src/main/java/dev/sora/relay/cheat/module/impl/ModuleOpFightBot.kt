@@ -11,6 +11,7 @@ class ModuleOpFightBot : CheatModule("OPFightBot") {
 
     private var modeValue by listValue("Mode", Mode.values(), Mode.STRAFE)
     private var rangeValue by floatValue("Range", 1.5f, 1.5f..4f)
+	private var passiveValue by boolValue("Passive", false)
     private var horizontalSpeedValue by floatValue("HorizontalSpeed", 5f, 1f..7f)
     private var verticalSpeedValue by floatValue("VerticalSpeed", 4f, 1f..7f)
     private var strafeSpeedValue by intValue("StrafeSpeed", 20, 10..90)
@@ -27,7 +28,7 @@ class ModuleOpFightBot : CheatModule("OPFightBot") {
 				Mode.BEHIND -> target.rotationYaw + 180.0
 			}).toFloat()
 			session.thePlayer.teleport(target.posX - sin(direction) * rangeValue, target.posY + 0.5f, target.posZ + cos(direction) * rangeValue)
-		} else {
+		} else if (!passiveValue) {
 			val direction = atan2(target.posZ - session.thePlayer.posZ, target.posX - session.thePlayer.posX) - Math.toRadians(90.0).toFloat()
 			session.thePlayer.teleport(session.thePlayer.posX - sin(direction) * horizontalSpeedValue,
 				target.posY.coerceIn(session.thePlayer.posY - verticalSpeedValue, session.thePlayer.posY + verticalSpeedValue),
