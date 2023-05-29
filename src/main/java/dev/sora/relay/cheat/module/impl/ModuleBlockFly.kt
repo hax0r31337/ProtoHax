@@ -118,7 +118,7 @@ class ModuleBlockFly : CheatModule("BlockFly") {
         return null
     }
 
-    enum class HeldBlockMode(override val choiceName: String) : NamedChoice {
+    private enum class HeldBlockMode(override val choiceName: String) : NamedChoice {
         MANUAL("Manual"),
         AUTOMATIC("Auto")
     }

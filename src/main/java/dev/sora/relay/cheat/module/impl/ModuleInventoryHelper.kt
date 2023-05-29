@@ -215,7 +215,7 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper") {
         return false
     }
 
-    inner class Sort(val slot: Int, val requiresBestItem: Boolean = false, val judge: (ItemData) -> Float) {
+	private inner class Sort(val slot: Int, val requiresBestItem: Boolean = false, val judge: (ItemData) -> Float) {
 
         constructor(slot: Int, judgeTag: String, requiresBestItem: Boolean = true) : this(slot, requiresBestItem, { item ->
 			val def = item.itemDefinition
@@ -241,7 +241,7 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper") {
         }
     }
 
-	enum class SortOffhandMode(override val choiceName: String) : NamedChoice {
+	private enum class SortOffhandMode(override val choiceName: String) : NamedChoice {
 		SHIELD("Shield"),
 		TOTEM("Totem"),
 		NONE("None")

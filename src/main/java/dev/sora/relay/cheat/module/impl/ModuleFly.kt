@@ -2,10 +2,10 @@ package dev.sora.relay.cheat.module.impl
 
 import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.cheat.value.Choice
+import dev.sora.relay.game.entity.data.Effect
 import dev.sora.relay.game.event.EventPacketInbound
 import dev.sora.relay.game.event.EventPacketOutbound
 import dev.sora.relay.game.event.EventTick
-import dev.sora.relay.game.utils.constants.Effect
 import org.cloudburstmc.math.vector.Vector3f
 import org.cloudburstmc.protocol.bedrock.data.Ability
 import org.cloudburstmc.protocol.bedrock.data.AbilityLayer
@@ -43,7 +43,7 @@ class ModuleFly : CheatModule("Fly") {
         launchY = session.thePlayer.posY
     }
 
-	open inner class Vanilla(choiceName: String) : Choice(choiceName) {
+	private open inner class Vanilla(choiceName: String) : Choice(choiceName) {
 
 		private val handleTick = handle<EventTick> { event ->
 			if (event.session.thePlayer.tickExists % 10 == 0L) {
@@ -75,7 +75,7 @@ class ModuleFly : CheatModule("Fly") {
 		}
 	}
 
-	inner class Mineplex : Vanilla("Mineplex") {
+	private inner class Mineplex : Vanilla("Mineplex") {
 
 		private var mineplexMotionValue by boolValue("MineplexMotion", false)
 
@@ -119,7 +119,7 @@ class ModuleFly : CheatModule("Fly") {
 		}
 	}
 
-	inner class Jetpack : Choice("Jetpack") {
+	private inner class Jetpack : Choice("Jetpack") {
 
 		private val handleTick = handle<EventTick> { event ->
 			val session = event.session
@@ -143,7 +143,7 @@ class ModuleFly : CheatModule("Fly") {
 		}
 	}
 
-	inner class Glide : Choice("Glide") {
+	private inner class Glide : Choice("Glide") {
 
 		override fun onDisable() {
 			if (session.netSessionInitialized) {

@@ -36,7 +36,7 @@ class ModuleOpFightBot : CheatModule("OPFightBot") {
 		}
 	}
 
-    enum class Mode(override val choiceName: String) : NamedChoice {
+	private enum class Mode(override val choiceName: String) : NamedChoice {
         RANDOM("Random"),
         STRAFE("Strafe"),
         BEHIND("Behind")

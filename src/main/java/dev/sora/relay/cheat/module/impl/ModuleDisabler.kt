@@ -13,7 +13,7 @@ class ModuleDisabler : CheatModule("Disabler") {
 
     private var modeValue by choiceValue("Mode", arrayOf(Mineplex, Cubecraft, LifeBoat), Mineplex)
 
-	object Mineplex : Choice("Mineplex") {
+	private object Mineplex : Choice("Mineplex") {
 
 		private val handleTick = handle<EventTick> { event ->
 			event.session.sendPacket(MovePlayerPacket().apply {
@@ -26,7 +26,7 @@ class ModuleDisabler : CheatModule("Disabler") {
 		}
 	}
 
-	object Cubecraft : Choice("Cubecraft") {
+	private object Cubecraft : Choice("Cubecraft") {
 
 		private val handlePacketOutbound = handle<EventPacketOutbound> { event ->
 			val packet = event.packet
@@ -53,7 +53,7 @@ class ModuleDisabler : CheatModule("Disabler") {
 		}
 	}
 
-	object LifeBoat : Choice("LifeBoat") {
+	private object LifeBoat : Choice("LifeBoat") {
 
 		private val handlePacketOutbound = handle<EventPacketOutbound> { event ->
 			val packet = event.packet

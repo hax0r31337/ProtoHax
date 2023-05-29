@@ -33,7 +33,7 @@ class ModuleSpammer : CheatModule("Spammer") {
 		})
 	}
 
-	inner class Spam : Choice("Spam") {
+	private inner class Spam : Choice("Spam") {
 
 		private var delayValue by intValue("Delay", 5000, 500..10000)
 
@@ -47,7 +47,7 @@ class ModuleSpammer : CheatModule("Spammer") {
 		}
 	}
 
-	inner class KillSay : Choice("KillSay") {
+	private inner class KillSay : Choice("KillSay") {
 
 		private var lastAttack: Long? = null
 

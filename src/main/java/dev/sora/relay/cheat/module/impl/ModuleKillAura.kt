@@ -74,12 +74,12 @@ class ModuleKillAura : CheatModule("KillAura") {
 		}.let { if (!reversePriorityValue) it.first() else it.last() }
 	}
 
-    enum class AttackMode(override val choiceName: String) : NamedChoice {
+	private enum class AttackMode(override val choiceName: String) : NamedChoice {
         SINGLE("Single"),
         MULTI("Multi")
     }
 
-    enum class RotationMode(override val choiceName: String) : NamedChoice {
+	private enum class RotationMode(override val choiceName: String) : NamedChoice {
 		/**
 		 * blatant rotation
 		 */
@@ -114,7 +114,7 @@ class ModuleKillAura : CheatModule("KillAura") {
 		abstract fun rotate(session: GameSession, source: Vector3f, target: Vector3f): Rotation?
     }
 
-	enum class PriorityMode(override val choiceName: String) : NamedChoice {
+	private enum class PriorityMode(override val choiceName: String) : NamedChoice {
 		DISTANCE("Distance"),
 		HEALTH("Health"),
 		DIRECTION("Direction")

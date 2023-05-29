@@ -13,10 +13,7 @@ import dev.sora.relay.game.utils.removeNetInfo
 import dev.sora.relay.game.utils.toVector3iFloor
 import org.cloudburstmc.math.vector.Vector3f
 import org.cloudburstmc.math.vector.Vector3i
-import org.cloudburstmc.protocol.bedrock.data.AuthoritativeMovementMode
-import org.cloudburstmc.protocol.bedrock.data.PlayerActionType
-import org.cloudburstmc.protocol.bedrock.data.PlayerAuthInputData
-import org.cloudburstmc.protocol.bedrock.data.SoundEvent
+import org.cloudburstmc.protocol.bedrock.data.*
 import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.InventoryTransactionType
 import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.ItemUseTransaction
 import org.cloudburstmc.protocol.bedrock.packet.*
@@ -81,6 +78,7 @@ class EntityPlayerSP(private val session: GameSession, override val eventManager
 
 	val inputData = mutableListOf<PlayerAuthInputData>()
     private val pendingItemInteraction = LinkedList<ItemUseTransaction>()
+	private val pendingBlockActions = mutableListOf<PlayerBlockActionData>()
     private var skipSwings = 0
 
     override fun rotate(yaw: Float, pitch: Float) {
@@ -127,16 +125,10 @@ class EntityPlayerSP(private val session: GameSession, override val eventManager
 			runtimeEntityId = packet.runtimeEntityId
 			uniqueEntityId = packet.uniqueEntityId
 
-			blockBreakServerAuthoritative = packet.isServerAuthoritativeBlockBreaking
 			movementServerAuthoritative = packet.authoritativeMovementMode != AuthoritativeMovementMode.CLIENT
 			movementServerRewind = packet.authoritativeMovementMode == AuthoritativeMovementMode.SERVER_WITH_REWIND
 			inventoriesServerAuthoritative = packet.isInventoriesServerAuthoritative
 			soundServerAuthoritative = packet.networkPermissions.isServerAuthSounds
-
-			// override movement authoritative mode
-			if (!movementServerAuthoritative) {
-				packet.authoritativeMovementMode = AuthoritativeMovementMode.SERVER
-			}
 
 			reset()
 		} /* else if (packet is RespawnPacket) {
@@ -228,6 +220,13 @@ class EntityPlayerSP(private val session: GameSession, override val eventManager
 				silentRotation = null
 			}
 			lastRotationServerside = Rotation(packet.rotation.y, packet.rotation.x)
+			if (pendingBlockActions.isNotEmpty()) {
+				if (!packet.inputData.contains(PlayerAuthInputData.PERFORM_BLOCK_ACTIONS)) {
+					packet.inputData.add(PlayerAuthInputData.PERFORM_BLOCK_ACTIONS)
+				}
+				packet.playerActions.addAll(pendingBlockActions)
+				pendingBlockActions.clear()
+			}
 		} else if (packet is LoginPacket) {
 			packet.chain.forEach {
 				val chainBody = JsonParser.parseString(it.payload.toString()).asJsonObject
@@ -291,6 +290,20 @@ class EntityPlayerSP(private val session: GameSession, override val eventManager
             })
         }
     }
+
+	fun blockAction(action: PlayerBlockActionData) {
+		if (movementServerAuthoritative) {
+			pendingBlockActions.add(action)
+		} else {
+			session.sendPacket(PlayerActionPacket().apply {
+				runtimeEntityId = runtimeEntityId
+				this.action = action.action
+				blockPosition = action.blockPosition ?: Vector3i.ZERO
+				resultPosition = Vector3i.ZERO
+				face = action.face
+			})
+		}
+	}
 
     fun useItem(inventoryTransaction: ItemUseTransaction) {
         if (movementServerAuthoritative && inventoriesServerAuthoritative) {

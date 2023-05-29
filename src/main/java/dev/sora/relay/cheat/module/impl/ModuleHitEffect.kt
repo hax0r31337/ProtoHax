@@ -29,7 +29,7 @@ class ModuleHitEffect : CheatModule("HitEffect") {
 		}
 	}
 
-	enum class Effect(override val choiceName: String) : NamedChoice {
+	private enum class Effect(override val choiceName: String) : NamedChoice {
 		CRITICAL("Critical") {
 			override fun deployEffect(session: GameSession, target: Entity) {
 				session.netSession.inboundPacket(AnimatePacket().apply {

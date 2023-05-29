@@ -32,7 +32,7 @@ class ModuleTargets : CheatModule("Targets", canToggle = false) {
         }
     }
 
-    enum class AntiBotMode(override val choiceName: String) : NamedChoice {
+	private enum class AntiBotMode(override val choiceName: String) : NamedChoice {
         PLAYER_LIST("PlayerList"),
 		NONE("None")
     }

@@ -9,7 +9,7 @@ class ModuleVelocity : CheatModule("Velocity") {
 
     private var modeValue by choiceValue("Mode", arrayOf(Vanilla, Simple), Vanilla)
 
-	object Vanilla : Choice("Vanilla") {
+	private object Vanilla : Choice("Vanilla") {
 
 		private val handlePacketInbound = handle<EventPacketInbound> { event ->
 			if (event.packet is SetEntityMotionPacket)
@@ -17,7 +17,7 @@ class ModuleVelocity : CheatModule("Velocity") {
 		}
 	}
 
-	object Simple : Choice("Simple") {
+	private object Simple : Choice("Simple") {
 
 		private var horizontalValue by floatValue("Horizontal", 0f, 0f..1f)
 		private var verticalValue by floatValue("Vertical", 0f, 0f..1f)

@@ -1,8 +1,8 @@
 package dev.sora.relay.cheat.module.impl
 
 import dev.sora.relay.cheat.module.CheatModule
+import dev.sora.relay.game.entity.data.Effect
 import dev.sora.relay.game.event.EventTick
-import dev.sora.relay.game.utils.constants.Effect
 import org.cloudburstmc.protocol.bedrock.packet.MobEffectPacket
 
 class ModuleFastBreak : CheatModule("FastBreak") {

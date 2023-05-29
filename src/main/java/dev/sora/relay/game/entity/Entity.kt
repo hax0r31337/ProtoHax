@@ -1,5 +1,6 @@
 package dev.sora.relay.game.entity
 
+import dev.sora.relay.game.entity.data.Effect
 import dev.sora.relay.game.inventory.EntityInventory
 import org.cloudburstmc.math.vector.Vector2f
 import org.cloudburstmc.math.vector.Vector3f
@@ -44,7 +45,12 @@ abstract class Entity(open val runtimeEntityId: Long, open val uniqueEntityId: L
     open var motionZ = 0f
 
     open var tickExists = 0L
-        protected set
+		protected set(value) {
+			effects.forEach {
+				it.duration -= (value - field).toInt()
+			}
+			field = value
+		}
 
 	var rideEntity: Long? = null
 
@@ -52,6 +58,8 @@ abstract class Entity(open val runtimeEntityId: Long, open val uniqueEntityId: L
     open val metadata = EntityDataMap()
 
     open val inventory = EntityInventory(this)
+
+	private val effects = mutableListOf<Effect>()
 
     val vec3Position: Vector3f
         get() = Vector3f.from(posX, posY, posZ)
@@ -121,6 +129,10 @@ abstract class Entity(open val runtimeEntityId: Long, open val uniqueEntityId: L
 	fun distance(vector3f: Vector3f)
 		= distance(vector3f.x, vector3f.y, vector3f.z)
 
+	fun getEffectById(id: Int): Effect? {
+		return effects.find { it.id == id }
+	}
+
     open fun onPacket(packet: BedrockPacket) {
         if (packet is MoveEntityAbsolutePacket && packet.runtimeEntityId == runtimeEntityId) {
             move(packet.position)
@@ -143,6 +155,20 @@ abstract class Entity(open val runtimeEntityId: Long, open val uniqueEntityId: L
 				EntityLinkData.Type.RIDER -> if (packet.entityLink.from == uniqueEntityId) rideEntity = packet.entityLink.to
 				EntityLinkData.Type.REMOVE -> if (packet.entityLink.from == uniqueEntityId) rideEntity = null
 				EntityLinkData.Type.PASSENGER -> if (packet.entityLink.to == uniqueEntityId) rideEntity = packet.entityLink.from
+				else -> {}
+			}
+		} else if (packet is MobEffectPacket && packet.runtimeEntityId == runtimeEntityId) {
+			when (packet.event) {
+				MobEffectPacket.Event.ADD, MobEffectPacket.Event.MODIFY -> {
+					val currentEffect = getEffectById(packet.effectId)
+					if (currentEffect != null) {
+						currentEffect.amplifier = packet.amplifier
+						currentEffect.duration = packet.duration
+					} else {
+						effects.add(Effect(packet.effectId, packet.amplifier, packet.duration))
+					}
+				}
+				MobEffectPacket.Event.REMOVE -> getEffectById(packet.effectId)?.let { effects.remove(it) }
 				else -> {}
 			}
 		} else {

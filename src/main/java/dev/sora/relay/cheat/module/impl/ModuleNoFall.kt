@@ -15,7 +15,7 @@ class ModuleNoFall : CheatModule("NoFall") {
 
 	private var modeValue by choiceValue("Mode", arrayOf(ElytraGlitch, Cubecraft), ElytraGlitch)
 
-	object ElytraGlitch : Choice("ElytraGlitch") {
+	private object ElytraGlitch : Choice("ElytraGlitch") {
 
 		val handleTick = handle<EventTick> { event ->
 			if (event.session.thePlayer.tickExists % 10 == 0L) {
@@ -29,7 +29,7 @@ class ModuleNoFall : CheatModule("NoFall") {
 		}
 	}
 
-	object Cubecraft : Choice("Cubecraft") {
+	private object Cubecraft : Choice("Cubecraft") {
 
 		val handlePacketOutbound = handle<EventPacketOutbound> { event ->
 			val packet = event.packet

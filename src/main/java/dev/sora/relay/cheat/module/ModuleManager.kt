@@ -38,6 +38,7 @@ class ModuleManager(private val session: GameSession) {
 		registerModule(ModuleSurround())
 		registerModule(ModuleCrystalAura())
 		registerModule(ModuleHitEffect())
+		registerModule(ModuleMiner())
     }
 
 	inline fun <reified T : CheatModule> getModule(t: Class<T>): T {
