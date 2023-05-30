@@ -163,6 +163,7 @@ class GameSession : MinecraftRelayPacketListener {
 					clickPosition = Vector3f.ZERO
 					blockDefinition = blockMapping.getDefinition(0)
 				})
+				lastStopBreak = false
 			}
 		}
 

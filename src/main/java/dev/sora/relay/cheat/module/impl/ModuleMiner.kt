@@ -4,7 +4,6 @@ import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.cheat.value.NamedChoice
 import dev.sora.relay.game.GameSession
 import dev.sora.relay.game.entity.EntityPlayerSP
-import dev.sora.relay.game.event.EventPacketOutbound
 import dev.sora.relay.game.event.EventTick
 import dev.sora.relay.game.utils.MineUtils
 import dev.sora.relay.game.utils.distance
@@ -14,10 +13,10 @@ import org.cloudburstmc.math.vector.Vector3f
 import org.cloudburstmc.math.vector.Vector3i
 import org.cloudburstmc.protocol.bedrock.data.PlayerActionType
 import org.cloudburstmc.protocol.bedrock.data.PlayerBlockActionData
+import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData
+import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.InventoryTransactionType
 import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.ItemUseTransaction
-import org.cloudburstmc.protocol.bedrock.packet.PlayerActionPacket
-import org.cloudburstmc.protocol.bedrock.packet.PlayerAuthInputPacket
-import org.cloudburstmc.protocol.bedrock.packet.UpdateBlockPacket
+import org.cloudburstmc.protocol.bedrock.packet.InventoryTransactionPacket
 
 class ModuleMiner : CheatModule("Miner") {
 
@@ -87,6 +86,16 @@ class ModuleMiner : CheatModule("Miner") {
 							action = PlayerActionType.CONTINUE_BREAK
 							blockPosition = pos
 							face = 1
+						})
+						session.sendPacket(InventoryTransactionPacket().apply {
+							transactionType = InventoryTransactionType.ITEM_USE
+							actionType = 2
+							blockPosition = pos
+							blockFace = 1
+							itemInHand = ItemData.AIR
+							playerPosition = session.thePlayer.vec3Position
+							clickPosition = Vector3f.ZERO
+							blockDefinition = session.blockMapping.getDefinition(0)
 						})
 					}
 				} else if (lastingBreakTime < 0) {
