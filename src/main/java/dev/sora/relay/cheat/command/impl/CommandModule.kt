@@ -5,6 +5,7 @@ import dev.sora.relay.cheat.command.CommandManager
 import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.cheat.value.*
 import dev.sora.relay.game.GameSession
+import dev.sora.relay.utils.logError
 
 /**
  * Module command
@@ -42,11 +43,13 @@ class CommandModule(private val module: CheatModule) : Command(module.name.lower
             return
         }
 
+		val source = args.copyOfRange(1, args.size).joinToString(separator = " ")
         try {
-            value.fromString(args.copyOfRange(1, args.size).joinToString(separator = " "))
+            value.fromString(source)
             session.chat("${module.name} ${value.name} was set to ${if (value.value is NamedChoice) (value.value as NamedChoice).choiceName else value.value}.")
-        } catch (e: NumberFormatException) {
-            session.chat("${args[1]} cannot be converted to number!")
+        } catch (e: Throwable) {
+			logError("value.fromString", e)
+            session.chat("Unable to parse value \"$source\" for value ${value.name}")
         }
     }
 }

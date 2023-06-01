@@ -32,8 +32,7 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper") {
     private var autoCloseValue by boolValue("AutoClose", false)
     private var throwUnnecessaryValue by boolValue("ThrowUnnecessary", true)
     private var swingValue by listValue("Swing", EntityPlayerSP.SwingMode.values(), EntityPlayerSP.SwingMode.BOTH)
-    private var clickMaxCpsValue by intValue("ClickMaxCPS", 4, 1..20)
-    private var clickMinCpsValue by intValue("ClickMinCPS", 2, 1..20)
+    private val cpsValue = clickValue(value = 2..4)
     private var sortArmorValue by boolValue("Armor", true)
     private var sortOffhandValue by listValue("Offhand", SortOffhandMode.values(), SortOffhandMode.TOTEM)
     private var sortSwordValue by intValue("SortSword", 0, -1..8)
@@ -50,7 +49,6 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper") {
         Sort(PlayerInventory.SLOT_BOOTS, ItemTags.TAG_IS_BOOTS)
     )
 
-    private val clickTimer = ClickTimer()
     private var sorted = true
     private var hasSimulated = false
     private var hasSimulatedWaitForClose = false
@@ -61,13 +59,8 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper") {
         hasSimulatedWaitForClose = false
     }
 
-    private fun updateClick() {
-        clickTimer.update(clickMinCpsValue, clickMaxCpsValue)
-        sorted = true
-    }
-
 	private val handleTick = handle<EventTick> { event ->
-		if (!clickTimer.canClick()) {
+		if (!cpsValue.canClick) {
 			return@handle
 		}
 
@@ -81,7 +74,8 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper") {
 					val slot = player.inventory.findEmptySlot() ?: return@handle
 					openContainer.moveItem(index, slot, player.inventory, event.session)
 
-					updateClick()
+					cpsValue.click()
+					sorted = true
 					return@handle
 				}
 			}
@@ -95,7 +89,8 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper") {
 					// player will swing if they drop an item
 					player.swing(swingValue)
 
-					updateClick()
+					cpsValue.click()
+					sorted = true
 					return@handle
 				}
 			}
@@ -104,7 +99,8 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper") {
 			val sorts = getSorts(player.inventory)
 			sorts.forEach {
 				if (it.sort(player.inventory, event.session)) {
-					updateClick()
+					cpsValue.click()
+					sorted = true
 					return@handle
 				}
 			}
@@ -118,13 +114,11 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper") {
 					hasSimulated = false
 					hasSimulatedWaitForClose = true
 				}
-				updateClick()
-				sorted = false
+				cpsValue.click()
 				return@handle
 			}
 		} else {
-			updateClick()
-			sorted = false
+			cpsValue.click()
 			return@handle
 		}
 
@@ -209,7 +203,8 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper") {
                 action = InteractPacket.Action.OPEN_INVENTORY
             })
             hasSimulated = true
-            updateClick()
+			cpsValue.click()
+			sorted = true
             return true
         }
         return false

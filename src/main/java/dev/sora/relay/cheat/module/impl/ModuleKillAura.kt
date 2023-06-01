@@ -16,7 +16,7 @@ import kotlin.math.pow
 
 class ModuleKillAura : CheatModule("KillAura") {
 
-    private var cpsValue by intValue("CPS", 7, 1..20)
+    private val cpsValue = clickValue()
     private var rangeValue by floatValue("Range", 3.7f, 2f..7f)
     private var attackModeValue by listValue("AttackMode", AttackMode.values(), AttackMode.SINGLE)
     private var rotationModeValue by listValue("RotationMode", RotationMode.values(), RotationMode.LOCK)
@@ -27,8 +27,6 @@ class ModuleKillAura : CheatModule("KillAura") {
     private var swingSoundValue by boolValue("SwingSound", true)
     private var failRateValue by floatValue("FailRate", 0f, 0f..1f)
     private var failSoundValue by boolValue("FailSound", true)
-
-    private val clickTimer = ClickTimer()
 
 	private val handleTick = handle<EventTick> { event ->
 		val session = event.session
@@ -41,7 +39,7 @@ class ModuleKillAura : CheatModule("KillAura") {
 
 		val aimTarget = selectEntity(session, entityList)
 
-		if (cpsValue >= 20 || clickTimer.canClick()) {
+		if (cpsValue.range.first >= 20 || cpsValue.canClick) {
 			if (Math.random() <= failRateValue) {
 				session.thePlayer.swing(swingValue, failSoundValue)
 			} else {
@@ -53,7 +51,7 @@ class ModuleKillAura : CheatModule("KillAura") {
 						session.thePlayer.attackEntity(aimTarget, swingValue, swingSoundValue, mouseoverValue)
 					}
 				}
-				clickTimer.update(cpsValue, cpsValue + 1)
+				cpsValue.click()
 			}
 		}
 

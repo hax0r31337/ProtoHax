@@ -67,7 +67,7 @@ class ModuleCrystalAura : CheatModule("CrystalAura") {
 		}
 	}
 
-	private val onTickPlace = handle<EventTick>({ placeValue && placeTimer.hasTimePassed(delayValue) }) { event ->
+	private val onTickPlace = handle<EventTick>({ placeValue && placeTimer.hasTimePassed(delayValue) }) { _ ->
 		val slot = if (session.thePlayer.inventory.hand.itemDefinition.identifier == "minecraft:end_crystal") -1
 		else session.thePlayer.inventory.searchForItemInHotbar { it.itemDefinition.identifier == "minecraft:end_crystal" }
 		if (slot == null) {
