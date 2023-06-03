@@ -15,7 +15,7 @@ class ModuleAirJump : CheatModule("AirJump") {
 		if (!player.onGround && !player.prevOnGround) {
 			it.session.netSession.inboundPacket(SetEntityMotionPacket().apply {
 				runtimeEntityId = player.runtimeEntityId
-				motion = Vector3f.from((player.posX - player.prevPosX) * speedMultiplierValue, 0.42f, (player.posZ - player.prevPosZ) * speedMultiplierValue)
+				motion = Vector3f.from(player.motionX * speedMultiplierValue, 0.42f, player.motionZ * speedMultiplierValue)
 			})
 		}
 	}

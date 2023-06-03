@@ -23,7 +23,7 @@ abstract class WorldwideBlockStorage(protected val session: GameSession, overrid
 		protected set
 
 	private fun cleanUp() {
-		chunks.forEach { _, chunk ->
+		chunks.forEach { (_, chunk) ->
 			session.eventManager.emit(EventChunkUnload(session, chunk))
 		}
 		chunks.clear()

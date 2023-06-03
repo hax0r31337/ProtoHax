@@ -19,7 +19,7 @@ import kotlin.math.sin
 
 class ModuleFly : CheatModule("Fly") {
 
-    private var modeValue by choiceValue("Mode", arrayOf(Vanilla("Vanilla"), Mineplex(), Jetpack(), Glide()), "Vanilla")
+    private var modeValue by choiceValue("Mode", arrayOf(Vanilla("Vanilla"), Mineplex(), Jetpack(), Glide(), YPort()), "Vanilla")
     private var speedValue by floatValue("Speed", 1.5f, 0.1f..5f)
 	private var pressJumpValue by boolValue("PressJump", true)
 
@@ -166,6 +166,30 @@ class ModuleFly : CheatModule("Fly") {
 				isParticles = false
 				duration = 360000
 			})
+		}
+	}
+
+
+	private inner class YPort : Choice("YPort") {
+
+		private var flag = true
+
+		override fun onDisable() {
+			flag = true
+		}
+
+		private val onTick = handle<EventTick> { event ->
+			val player = event.session.thePlayer
+
+			if (canFly) {
+				val angle = Math.toRadians(player.rotationYaw.toDouble()).toFloat()
+
+				event.session.netSession.inboundPacket(SetEntityMotionPacket().apply {
+					runtimeEntityId = player.runtimeEntityId
+					motion = Vector3f.from(-sin(angle) * speedValue, if (flag) 0.42f else -0.42f, cos(angle) * speedValue)
+				})
+				flag = !flag
+			}
 		}
 	}
 }

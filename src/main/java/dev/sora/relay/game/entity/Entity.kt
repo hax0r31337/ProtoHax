@@ -41,8 +41,27 @@ abstract class Entity(open val runtimeEntityId: Long, open val uniqueEntityId: L
     open var rotationYawHead = 0f
 
     open var motionX = 0f
+		set(value) {
+			prevMotionX = field
+			field = value
+		}
     open var motionY = 0f
+		set(value) {
+			prevMotionY = field
+			field = value
+		}
     open var motionZ = 0f
+		set(value) {
+			prevMotionZ = field
+			field = value
+		}
+
+	open var prevMotionX = 0f
+		protected set
+	open var prevMotionY = 0f
+		protected set
+	open var prevMotionZ = 0f
+		protected set
 
     open var tickExists = 0L
 		protected set(value) {
