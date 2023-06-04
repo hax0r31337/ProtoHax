@@ -69,8 +69,6 @@ class EntityPlayerSP(private val session: GameSession, override val eventManager
         private set
     var movementServerAuthoritative = true
         private set
-	var movementServerRewind = false
-		private set
     var inventoriesServerAuthoritative = false
         private set
 	var soundServerAuthoritative = false
@@ -124,9 +122,7 @@ class EntityPlayerSP(private val session: GameSession, override val eventManager
 		if (packet is StartGamePacket) {
 			runtimeEntityId = packet.runtimeEntityId
 			uniqueEntityId = packet.uniqueEntityId
-
 			movementServerAuthoritative = packet.authoritativeMovementMode != AuthoritativeMovementMode.CLIENT
-			movementServerRewind = packet.authoritativeMovementMode == AuthoritativeMovementMode.SERVER_WITH_REWIND
 			inventoriesServerAuthoritative = packet.isInventoriesServerAuthoritative
 			soundServerAuthoritative = packet.networkPermissions.isServerAuthSounds
 
@@ -160,7 +156,9 @@ class EntityPlayerSP(private val session: GameSession, override val eventManager
 		// client still sends MovePlayerPacket sometime on if server-auth movement mode
 		if (packet is LoginPacket) {
 			// disable packet conversion by default
-			movementServerAuthoritative = true
+			movementServerAuthoritative = packet.protocolVersion >= 388
+			blockBreakServerAuthoritative = false
+			inventoriesServerAuthoritative = false
 			soundServerAuthoritative = false
 		} else if (packet is MovePlayerPacket) {
 			move(packet.position)
