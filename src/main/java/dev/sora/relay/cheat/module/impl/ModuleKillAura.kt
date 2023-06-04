@@ -10,7 +10,6 @@ import dev.sora.relay.game.utils.Rotation
 import dev.sora.relay.game.utils.constants.Attribute
 import dev.sora.relay.game.utils.getRotationDifference
 import dev.sora.relay.game.utils.toRotation
-import dev.sora.relay.utils.timing.ClickTimer
 import org.cloudburstmc.math.vector.Vector3f
 import kotlin.math.pow
 

@@ -2,7 +2,6 @@ package dev.sora.relay.game.utils
 
 import org.cloudburstmc.math.vector.Vector3f
 import org.cloudburstmc.math.vector.Vector3i
-import kotlin.math.floor
 
 data class AxisAlignedBB(var minX: Float, var minY: Float, var minZ: Float,
                          var maxX: Float, var maxY: Float, var maxZ: Float) {
@@ -12,26 +11,6 @@ data class AxisAlignedBB(var minX: Float, var minY: Float, var minZ: Float,
     constructor(vec: Vector3f, vec1: Vector3f) : this(vec.x, vec.y, vec.z, vec1.x, vec1.y, vec1.z)
 
     constructor(vec: Vector3i, vec1: Vector3i) : this(vec.x, vec.y, vec.z, vec1.x, vec1.y, vec1.z)
-
-    fun floor() {
-        this.minX = floor(this.minX)
-        this.minY = floor(this.minY)
-        this.minZ = floor(this.minZ)
-        this.maxX = floor(this.maxX)
-        this.maxY = floor(this.maxY)
-        this.maxZ = floor(this.maxZ)
-    }
-
-    fun addCoord(x: Float, y: Float, z: Float) {
-        if (x < 0) this.minX += x
-        else this.maxX += x
-
-        if (y < 0) this.minY += y
-        else this.maxY += y
-
-        if (z < 0) this.minZ += z
-        else this.maxZ += z
-    }
 
     fun contract(x: Float, y: Float, z: Float) {
         this.minX += x

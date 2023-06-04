@@ -13,7 +13,6 @@ import dev.sora.relay.game.registry.isBlock
 import dev.sora.relay.game.registry.itemDefinition
 import dev.sora.relay.game.utils.constants.ItemTags
 import dev.sora.relay.game.utils.toVector3i
-import dev.sora.relay.utils.timing.ClickTimer
 import org.cloudburstmc.protocol.bedrock.data.inventory.ContainerType
 import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData
 import org.cloudburstmc.protocol.bedrock.packet.ContainerClosePacket
