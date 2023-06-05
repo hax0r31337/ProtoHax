@@ -2,6 +2,7 @@ package dev.sora.relay
 
 import dev.sora.relay.cheat.command.CommandManager
 import dev.sora.relay.cheat.command.impl.CommandDownloadWorld
+import dev.sora.relay.cheat.config.section.ConfigSectionModule
 import dev.sora.relay.cheat.module.ModuleManager
 import dev.sora.relay.cheat.module.impl.ModuleResourcePackSpoof
 import dev.sora.relay.game.GameSession
@@ -91,7 +92,9 @@ private fun craftSession() : GameSession {
     commandManager.init(moduleManager)
 	commandManager.registerCommand(CommandDownloadWorld(session.eventManager, File("./level")))
 
-    val configManager = SingleFileConfigManager(moduleManager)
+    val configManager = SingleFileConfigManager(moduleManager).apply {
+		addSection(ConfigSectionModule(moduleManager))
+	}
     configManager.loadConfig("default")
 
     // save config automatically
