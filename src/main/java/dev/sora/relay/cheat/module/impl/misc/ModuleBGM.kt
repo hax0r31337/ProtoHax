@@ -1,12 +1,13 @@
-package dev.sora.relay.cheat.module.impl
+package dev.sora.relay.cheat.module.impl.misc
 
+import dev.sora.relay.cheat.module.CheatCategory
 import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.game.event.EventTick
 import dev.sora.relay.game.utils.NoteBlockUtils
 import org.cloudburstmc.protocol.bedrock.data.SoundEvent
 import org.cloudburstmc.protocol.bedrock.packet.LevelSoundEventPacket
 
-class ModuleBGM : CheatModule("BGM") {
+class ModuleBGM : CheatModule("BGM", CheatCategory.MISC) {
 
     private val song by lazy {
 		NoteBlockUtils.Song().apply {

@@ -1,5 +1,6 @@
-package dev.sora.relay.cheat.module.impl
+package dev.sora.relay.cheat.module.impl.movement
 
+import dev.sora.relay.cheat.module.CheatCategory
 import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.cheat.value.Choice
 import dev.sora.relay.game.entity.data.Effect
@@ -17,7 +18,7 @@ import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
 
-class ModuleFly : CheatModule("Fly") {
+class ModuleFly : CheatModule("Fly", CheatCategory.MOVEMENT) {
 
     private var modeValue by choiceValue("Mode", arrayOf(Vanilla("Vanilla"), Mineplex(), Jetpack(), Glide(), YPort()), "Vanilla")
     private var speedValue by floatValue("Speed", 1.5f, 0.1f..5f)

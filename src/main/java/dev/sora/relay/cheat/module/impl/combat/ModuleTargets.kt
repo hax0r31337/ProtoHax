@@ -1,5 +1,6 @@
-package dev.sora.relay.cheat.module.impl
+package dev.sora.relay.cheat.module.impl.combat
 
+import dev.sora.relay.cheat.module.CheatCategory
 import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.cheat.value.NamedChoice
 import dev.sora.relay.game.entity.Entity
@@ -9,7 +10,7 @@ import dev.sora.relay.game.entity.EntityUnknown
 import dev.sora.relay.utils.analyzeColorCoverage
 import org.cloudburstmc.protocol.bedrock.data.entity.EntityDataTypes
 
-class ModuleTargets : CheatModule("Targets", canToggle = false) {
+class ModuleTargets : CheatModule("Targets", CheatCategory.COMBAT, canToggle = false) {
 
 	private var targetPlayersValue by boolValue("TargetPlayers", true)
 	private var targetEntitiesValue by boolValue("TargetEntities", false)

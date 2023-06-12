@@ -1,5 +1,6 @@
-package dev.sora.relay.cheat.module.impl
+package dev.sora.relay.cheat.module.impl.misc
 
+import dev.sora.relay.cheat.module.CheatCategory
 import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.game.event.EventPacketInbound
 import org.cloudburstmc.protocol.bedrock.data.skin.ImageData
@@ -7,7 +8,7 @@ import org.cloudburstmc.protocol.bedrock.data.skin.SerializedSkin
 import org.cloudburstmc.protocol.bedrock.packet.PlayerListPacket
 import org.cloudburstmc.protocol.bedrock.packet.PlayerSkinPacket
 
-class ModuleNoSkin : CheatModule("NoSkin") {
+class ModuleNoSkin : CheatModule("NoSkin", CheatCategory.MISC) {
 
     private val skinData by lazy {
         ImageData.of(ByteArray(16384).also { for(i in it.indices) it[i] = Byte.MAX_VALUE })

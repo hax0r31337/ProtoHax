@@ -1,5 +1,6 @@
-package dev.sora.relay.cheat.module.impl
+package dev.sora.relay.cheat.module.impl.visual
 
+import dev.sora.relay.cheat.module.CheatCategory
 import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.game.entity.data.Effect
 import dev.sora.relay.game.event.EventPacketInbound
@@ -11,7 +12,7 @@ import org.cloudburstmc.protocol.bedrock.packet.AddPlayerPacket
 import org.cloudburstmc.protocol.bedrock.packet.MobEffectPacket
 import org.cloudburstmc.protocol.bedrock.packet.SetEntityDataPacket
 
-class ModuleAntiBlind : CheatModule("AntiBlind") {
+class ModuleAntiBlind : CheatModule("AntiBlind", CheatCategory.VISUAL) {
 
     private var nightVisionValue by boolValue("NightVision", true)
 	private var removeFireValue by boolValue("RemoveFire", false)

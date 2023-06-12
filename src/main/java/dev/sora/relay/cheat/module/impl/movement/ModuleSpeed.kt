@@ -1,5 +1,6 @@
-package dev.sora.relay.cheat.module.impl
+package dev.sora.relay.cheat.module.impl.movement
 
+import dev.sora.relay.cheat.module.CheatCategory
 import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.cheat.value.Choice
 import dev.sora.relay.game.entity.EntityPlayerSP
@@ -10,7 +11,7 @@ import org.cloudburstmc.protocol.bedrock.packet.SetEntityMotionPacket
 import kotlin.math.cos
 import kotlin.math.sin
 
-class ModuleSpeed : CheatModule("Speed") {
+class ModuleSpeed : CheatModule("Speed", CheatCategory.MOVEMENT) {
 
 	private var modeValue by choiceValue("Mode", arrayOf(Simple(), Strafe()), "Simple")
 	private var sprintToMoveValue by boolValue("SprintToMove", true)

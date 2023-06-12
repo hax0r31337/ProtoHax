@@ -1,5 +1,6 @@
-package dev.sora.relay.cheat.module.impl
+package dev.sora.relay.cheat.module.impl.combat
 
+import dev.sora.relay.cheat.module.CheatCategory
 import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.game.entity.EntityPlayer
 import dev.sora.relay.game.event.EventTick
@@ -12,7 +13,7 @@ import org.cloudburstmc.math.vector.Vector3f
 import org.cloudburstmc.protocol.bedrock.data.inventory.ContainerId
 import org.cloudburstmc.protocol.bedrock.packet.PlayerHotbarPacket
 
-class ModuleSurround : CheatModule("Surround") {
+class ModuleSurround : CheatModule("Surround", CheatCategory.COMBAT) {
 
 	private var fitInHoleValue by boolValue("FitInHole", true)
 	private var onSneakValue by boolValue("OnSneak", true)

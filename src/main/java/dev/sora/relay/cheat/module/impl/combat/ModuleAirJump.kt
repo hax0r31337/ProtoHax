@@ -1,12 +1,13 @@
-package dev.sora.relay.cheat.module.impl
+package dev.sora.relay.cheat.module.impl.combat
 
+import dev.sora.relay.cheat.module.CheatCategory
 import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.game.event.EventTick
 import org.cloudburstmc.math.vector.Vector3f
 import org.cloudburstmc.protocol.bedrock.data.PlayerAuthInputData
 import org.cloudburstmc.protocol.bedrock.packet.SetEntityMotionPacket
 
-class ModuleAirJump : CheatModule("AirJump") {
+class ModuleAirJump : CheatModule("AirJump", CheatCategory.COMBAT) {
 
 	private var speedMultiplierValue by floatValue("SpeedMultiplier", 1f, 0.5f..3f)
 

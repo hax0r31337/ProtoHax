@@ -1,11 +1,12 @@
-package dev.sora.relay.cheat.module.impl
+package dev.sora.relay.cheat.module.impl.combat
 
+import dev.sora.relay.cheat.module.CheatCategory
 import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.cheat.value.Choice
 import dev.sora.relay.game.event.EventPacketInbound
 import org.cloudburstmc.protocol.bedrock.packet.SetEntityMotionPacket
 
-class ModuleVelocity : CheatModule("Velocity") {
+class ModuleVelocity : CheatModule("Velocity", CheatCategory.COMBAT) {
 
     private var modeValue by choiceValue("Mode", arrayOf(Vanilla, Simple), Vanilla)
 

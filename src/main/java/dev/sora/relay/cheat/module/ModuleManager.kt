@@ -1,6 +1,11 @@
 package dev.sora.relay.cheat.module
 
-import dev.sora.relay.cheat.module.impl.*
+import dev.sora.relay.cheat.module.impl.combat.*
+import dev.sora.relay.cheat.module.impl.misc.*
+import dev.sora.relay.cheat.module.impl.movement.*
+import dev.sora.relay.cheat.module.impl.visual.ModuleAntiBlind
+import dev.sora.relay.cheat.module.impl.visual.ModuleHitEffect
+import dev.sora.relay.cheat.module.impl.visual.ModuleNoHurtCam
 import dev.sora.relay.game.GameSession
 
 class ModuleManager(private val session: GameSession) {

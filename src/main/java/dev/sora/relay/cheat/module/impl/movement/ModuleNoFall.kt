@@ -1,5 +1,6 @@
-package dev.sora.relay.cheat.module.impl
+package dev.sora.relay.cheat.module.impl.movement
 
+import dev.sora.relay.cheat.module.CheatCategory
 import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.cheat.value.Choice
 import dev.sora.relay.game.event.EventPacketOutbound
@@ -11,7 +12,7 @@ import org.cloudburstmc.protocol.bedrock.packet.PlayerActionPacket
 import org.cloudburstmc.protocol.bedrock.packet.PlayerAuthInputPacket
 
 
-class ModuleNoFall : CheatModule("NoFall") {
+class ModuleNoFall : CheatModule("NoFall", CheatCategory.MOVEMENT) {
 
 	private var modeValue by choiceValue("Mode", arrayOf(ElytraGlitch, Cubecraft), ElytraGlitch)
 

@@ -1,5 +1,6 @@
-package dev.sora.relay.cheat.module.impl
+package dev.sora.relay.cheat.module.impl.misc
 
+import dev.sora.relay.cheat.module.CheatCategory
 import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.cheat.value.NamedChoice
 import dev.sora.relay.game.GameSession
@@ -19,7 +20,7 @@ import org.cloudburstmc.protocol.bedrock.packet.ContainerClosePacket
 import org.cloudburstmc.protocol.bedrock.packet.ContainerOpenPacket
 import org.cloudburstmc.protocol.bedrock.packet.InteractPacket
 
-class ModuleInventoryHelper : CheatModule("InventoryHelper") {
+class ModuleInventoryHelper : CheatModule("InventoryHelper", CheatCategory.MISC) {
 
     private var stealChestValue by boolValue("StealChest", true)
     private var guiOpenValue by boolValue("GuiOpen", false)

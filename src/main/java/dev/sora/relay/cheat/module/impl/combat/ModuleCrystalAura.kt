@@ -1,5 +1,6 @@
-package dev.sora.relay.cheat.module.impl
+package dev.sora.relay.cheat.module.impl.combat
 
+import dev.sora.relay.cheat.module.CheatCategory
 import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.game.GameSession
 import dev.sora.relay.game.entity.Entity
@@ -25,7 +26,7 @@ import org.cloudburstmc.protocol.bedrock.packet.PlayerHotbarPacket
 import kotlin.math.floor
 import kotlin.math.pow
 
-class ModuleCrystalAura : CheatModule("CrystalAura") {
+class ModuleCrystalAura : CheatModule("CrystalAura", CheatCategory.COMBAT) {
 
 	private var rangeValue by floatValue("Range", 5f, 3f..10f)
 	private var suicideValue by boolValue("Suicide", false)

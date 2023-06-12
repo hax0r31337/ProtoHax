@@ -10,9 +10,8 @@ import dev.sora.relay.game.event.EventManager
 import dev.sora.relay.game.event.GameEvent
 import dev.sora.relay.game.event.Handler
 
-abstract class CheatModule(val name: String,
-                           val defaultOn: Boolean = false,
-                           val canToggle: Boolean = true) : Configurable {
+abstract class CheatModule(val name: String, val category: CheatCategory,
+                           val defaultOn: Boolean = false, val canToggle: Boolean = true) : Configurable {
 
     override val values = mutableListOf<Value<*>>()
 
@@ -70,13 +69,13 @@ abstract class CheatModule(val name: String,
 	protected inline fun <reified T : GameEvent> handleOneTime(crossinline condition: (T) -> Boolean, noinline handler: Handler<T>) {
 		var trigger = false
 		handlers.add(EventHook(T::class.java, handler) {
-			val fulfill = condition(it)
+			val satisfied = condition(it)
 			if (this.state) {
-				if (fulfill && !trigger) {
+				if (satisfied && !trigger) {
 					trigger = true
 					true
 				} else {
-					if (!fulfill) {
+					if (!satisfied) {
 						trigger = false
 					}
 					false

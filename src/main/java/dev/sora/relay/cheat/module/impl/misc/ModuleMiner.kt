@@ -1,5 +1,6 @@
-package dev.sora.relay.cheat.module.impl
+package dev.sora.relay.cheat.module.impl.misc
 
+import dev.sora.relay.cheat.module.CheatCategory
 import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.cheat.value.NamedChoice
 import dev.sora.relay.game.GameSession
@@ -18,7 +19,7 @@ import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.InventoryTra
 import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.ItemUseTransaction
 import org.cloudburstmc.protocol.bedrock.packet.InventoryTransactionPacket
 
-class ModuleMiner : CheatModule("Miner") {
+class ModuleMiner : CheatModule("Miner", CheatCategory.MISC) {
 
 	private var blockValue by stringValue("Block", "minecraft:bed")
 	private var rangeValue by intValue("Range", 5, 2..7)

@@ -1,6 +1,7 @@
-package dev.sora.relay.cheat.module.impl
+package dev.sora.relay.cheat.module.impl.misc
 
 import com.google.gson.JsonParser
+import dev.sora.relay.cheat.module.CheatCategory
 import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.game.event.EventPacketInbound
 import dev.sora.relay.game.event.EventPacketOutbound
@@ -14,7 +15,7 @@ import java.util.*
 import java.util.zip.ZipFile
 
 
-class ModuleResourcePackSpoof : CheatModule("ResourcePackSpoof") {
+class ModuleResourcePackSpoof : CheatModule("ResourcePackSpoof", CheatCategory.MISC) {
 
     private var acceptServerPacks by boolValue("AcceptServerPacks", false)
 

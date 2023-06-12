@@ -1,5 +1,6 @@
-package dev.sora.relay.cheat.module.impl
+package dev.sora.relay.cheat.module.impl.movement
 
+import dev.sora.relay.cheat.module.CheatCategory
 import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.cheat.value.NamedChoice
 import dev.sora.relay.game.entity.EntityPlayer
@@ -16,7 +17,7 @@ import org.cloudburstmc.math.vector.Vector3i
 import org.cloudburstmc.protocol.bedrock.data.inventory.ContainerId
 import org.cloudburstmc.protocol.bedrock.packet.PlayerHotbarPacket
 
-class ModuleBlockFly : CheatModule("BlockFly") {
+class ModuleBlockFly : CheatModule("BlockFly", CheatCategory.MOVEMENT) {
 
     private var swingValue by listValue("Swing", EntityPlayerSP.SwingMode.values(), EntityPlayerSP.SwingMode.BOTH)
     private var adaptiveBlockIdValue by boolValue("AdaptiveBlockId", false)

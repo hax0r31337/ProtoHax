@@ -1,5 +1,6 @@
-package dev.sora.relay.cheat.module.impl
+package dev.sora.relay.cheat.module.impl.misc
 
+import dev.sora.relay.cheat.module.CheatCategory
 import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.cheat.value.Choice
 import dev.sora.relay.game.entity.EntityPlayer
@@ -13,7 +14,7 @@ import org.cloudburstmc.protocol.bedrock.packet.InventoryTransactionPacket
 import org.cloudburstmc.protocol.bedrock.packet.TextPacket
 import kotlin.random.Random
 
-class ModuleSpammer : CheatModule("Spammer") {
+class ModuleSpammer : CheatModule("Spammer", CheatCategory.MISC) {
 
 	private var modeValue by choiceValue("Mode", arrayOf(Spam(), KillSay()), "Spam")
     private var messageValue by stringValue("Message", "[!] I'm using ProtoHax t<dot>me/protohax")

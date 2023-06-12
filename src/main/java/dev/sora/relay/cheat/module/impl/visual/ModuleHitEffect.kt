@@ -1,6 +1,8 @@
-package dev.sora.relay.cheat.module.impl
+package dev.sora.relay.cheat.module.impl.visual
 
+import dev.sora.relay.cheat.module.CheatCategory
 import dev.sora.relay.cheat.module.CheatModule
+import dev.sora.relay.cheat.module.impl.combat.ModuleTargets
 import dev.sora.relay.cheat.value.NamedChoice
 import dev.sora.relay.game.GameSession
 import dev.sora.relay.game.entity.Entity
@@ -14,7 +16,7 @@ import org.cloudburstmc.protocol.bedrock.packet.AnimatePacket
 import org.cloudburstmc.protocol.bedrock.packet.InventoryTransactionPacket
 import org.cloudburstmc.protocol.bedrock.packet.LevelEventPacket
 
-class ModuleHitEffect : CheatModule("HitEffect") {
+class ModuleHitEffect : CheatModule("HitEffect", CheatCategory.VISUAL) {
 
 	private var effectValue by listValue("Effect", Effect.values(), Effect.CRITICAL)
 

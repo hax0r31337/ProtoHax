@@ -1,5 +1,6 @@
-package dev.sora.relay.cheat.module.impl
+package dev.sora.relay.cheat.module.impl.combat
 
+import dev.sora.relay.cheat.module.CheatCategory
 import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.cheat.value.NamedChoice
 import dev.sora.relay.game.GameSession
@@ -13,7 +14,7 @@ import dev.sora.relay.game.utils.toRotation
 import org.cloudburstmc.math.vector.Vector3f
 import kotlin.math.pow
 
-class ModuleKillAura : CheatModule("KillAura") {
+class ModuleKillAura : CheatModule("KillAura", CheatCategory.COMBAT) {
 
     private val cpsValue = clickValue()
     private var rangeValue by floatValue("Range", 3.7f, 2f..7f)

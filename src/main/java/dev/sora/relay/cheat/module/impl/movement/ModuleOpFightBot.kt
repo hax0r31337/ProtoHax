@@ -1,13 +1,15 @@
-package dev.sora.relay.cheat.module.impl
+package dev.sora.relay.cheat.module.impl.movement
 
+import dev.sora.relay.cheat.module.CheatCategory
 import dev.sora.relay.cheat.module.CheatModule
+import dev.sora.relay.cheat.module.impl.combat.ModuleTargets
 import dev.sora.relay.cheat.value.NamedChoice
 import dev.sora.relay.game.event.EventTick
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
 
-class ModuleOpFightBot : CheatModule("OPFightBot") {
+class ModuleOpFightBot : CheatModule("OPFightBot", CheatCategory.MOVEMENT) {
 
     private var modeValue by listValue("Mode", Mode.values(), Mode.STRAFE)
     private var rangeValue by floatValue("Range", 1.5f, 1.5f..4f)

@@ -4,14 +4,13 @@ import dev.sora.relay.cheat.command.CommandManager
 import dev.sora.relay.cheat.command.impl.CommandDownloadWorld
 import dev.sora.relay.cheat.config.section.ConfigSectionModule
 import dev.sora.relay.cheat.module.ModuleManager
-import dev.sora.relay.cheat.module.impl.ModuleResourcePackSpoof
+import dev.sora.relay.cheat.module.impl.misc.ModuleResourcePackSpoof
 import dev.sora.relay.game.GameSession
 import dev.sora.relay.session.MinecraftRelaySession
 import dev.sora.relay.session.listener.RelayListenerAutoCodec
 import dev.sora.relay.session.listener.RelayListenerEncryptedSession
 import dev.sora.relay.session.listener.xbox.RelayListenerXboxLogin
 import dev.sora.relay.session.listener.RelayListenerNetworkSettings
-import dev.sora.relay.session.listener.RelayListenerResourcePackDownloader
 import dev.sora.relay.session.listener.xbox.XboxDeviceInfo
 import dev.sora.relay.utils.logInfo
 import dev.sora.relay.utils.logWarn
