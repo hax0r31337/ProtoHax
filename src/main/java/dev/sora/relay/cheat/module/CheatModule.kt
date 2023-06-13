@@ -19,6 +19,14 @@ abstract class CheatModule(val name: String, val category: CheatCategory,
         set(state) {
             if (field == state) return
 
+			if (this::session.isInitialized) {
+				val event = EventModuleToggle(session, this, state)
+				session.eventManager.emit(event)
+				if (event.isCanceled()) {
+					return
+				}
+			}
+
             if (!canToggle) {
                 onEnable()
                 return

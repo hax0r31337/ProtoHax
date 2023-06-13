@@ -13,6 +13,15 @@ class EventManager {
 		handlers.add(hook as EventHook<in GameEvent>)
     }
 
+	/**
+	 * @return true if the handler has been successfully removed
+	 */
+	fun removeHandler(hook: EventHook<out GameEvent>): Boolean {
+		val handlers = registry[hook.eventClass] ?: return false
+
+		return handlers.remove(hook)
+	}
+
 //    fun register(listenable: Listenable) {
 //        listenable.listeners.forEach(this::register)
 //    }
