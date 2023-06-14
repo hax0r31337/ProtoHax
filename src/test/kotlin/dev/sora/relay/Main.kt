@@ -9,8 +9,8 @@ import dev.sora.relay.game.GameSession
 import dev.sora.relay.session.MinecraftRelaySession
 import dev.sora.relay.session.listener.RelayListenerAutoCodec
 import dev.sora.relay.session.listener.RelayListenerEncryptedSession
-import dev.sora.relay.session.listener.xbox.RelayListenerXboxLogin
 import dev.sora.relay.session.listener.RelayListenerNetworkSettings
+import dev.sora.relay.session.listener.xbox.RelayListenerXboxLogin
 import dev.sora.relay.session.listener.xbox.XboxDeviceInfo
 import dev.sora.relay.utils.logInfo
 import dev.sora.relay.utils.logWarn
@@ -91,7 +91,7 @@ private fun craftSession() : GameSession {
     commandManager.init(moduleManager)
 	commandManager.registerCommand(CommandDownloadWorld(session.eventManager, File("./level")))
 
-    val configManager = SingleFileConfigManager(moduleManager).apply {
+    val configManager = SingleFileConfigManager().apply {
 		addSection(ConfigSectionModule(moduleManager))
 	}
     configManager.loadConfig("default")

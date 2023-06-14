@@ -3,20 +3,13 @@ package dev.sora.relay.cheat.config
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
-import dev.sora.relay.cheat.config.section.ConfigSectionModule
 import dev.sora.relay.cheat.config.section.IConfigSection
-import dev.sora.relay.cheat.module.ModuleManager
 import dev.sora.relay.utils.logError
 import java.io.InputStream
 
-abstract class AbstractConfigManager() {
+abstract class AbstractConfigManager {
 
 	protected val sections = mutableListOf<IConfigSection>()
-
-	@Deprecated("Consider use addSection(ConfigSectionModule(moduleManager)) instead.")
-	constructor(moduleManager: ModuleManager) : this() {
-		addSection(ConfigSectionModule(moduleManager))
-	}
 
     abstract fun listConfig(): List<String>
 

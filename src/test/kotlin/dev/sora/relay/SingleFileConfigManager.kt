@@ -1,11 +1,10 @@
 package dev.sora.relay
 
 import dev.sora.relay.cheat.config.AbstractConfigManager
-import dev.sora.relay.cheat.module.ModuleManager
 import java.io.File
 import java.io.InputStream
 
-class SingleFileConfigManager(moduleManager: ModuleManager) : AbstractConfigManager(moduleManager) {
+class SingleFileConfigManager : AbstractConfigManager() {
 
     private val file = File("config.json")
 
