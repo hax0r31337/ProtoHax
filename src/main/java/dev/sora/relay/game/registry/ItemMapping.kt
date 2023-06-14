@@ -4,13 +4,14 @@ import com.google.gson.JsonParser
 import dev.sora.relay.game.utils.constants.ItemTags
 import org.cloudburstmc.protocol.common.DefinitionRegistry
 
-class ItemMapping(private val runtimeToGameMap: Map<Int, ItemDefinition>) : DefinitionRegistry<org.cloudburstmc.protocol.bedrock.data.defintions.ItemDefinition> {
+class ItemMapping(private val runtimeToGameMap: Map<Int, ItemDefinition>)
+	: DefinitionRegistry<org.cloudburstmc.protocol.bedrock.data.definitions.ItemDefinition> {
 
-    override fun getDefinition(runtimeId: Int): org.cloudburstmc.protocol.bedrock.data.defintions.ItemDefinition {
+    override fun getDefinition(runtimeId: Int): org.cloudburstmc.protocol.bedrock.data.definitions.ItemDefinition {
         return runtimeToGameMap[runtimeId] ?: return UnknownItemDefinition(runtimeId)
     }
 
-    override fun isRegistered(definition: org.cloudburstmc.protocol.bedrock.data.defintions.ItemDefinition): Boolean {
+    override fun isRegistered(definition: org.cloudburstmc.protocol.bedrock.data.definitions.ItemDefinition): Boolean {
         return definition is UnknownItemDefinition || getDefinition(definition.runtimeId) == definition
     }
 

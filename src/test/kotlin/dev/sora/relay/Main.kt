@@ -2,14 +2,15 @@ package dev.sora.relay
 
 import dev.sora.relay.cheat.command.CommandManager
 import dev.sora.relay.cheat.command.impl.CommandDownloadWorld
+import dev.sora.relay.cheat.config.section.ConfigSectionModule
 import dev.sora.relay.cheat.module.ModuleManager
-import dev.sora.relay.cheat.module.impl.ModuleResourcePackSpoof
+import dev.sora.relay.cheat.module.impl.misc.ModuleResourcePackSpoof
 import dev.sora.relay.game.GameSession
 import dev.sora.relay.session.MinecraftRelaySession
 import dev.sora.relay.session.listener.RelayListenerAutoCodec
 import dev.sora.relay.session.listener.RelayListenerEncryptedSession
-import dev.sora.relay.session.listener.xbox.RelayListenerXboxLogin
 import dev.sora.relay.session.listener.RelayListenerNetworkSettings
+import dev.sora.relay.session.listener.xbox.RelayListenerXboxLogin
 import dev.sora.relay.session.listener.xbox.XboxDeviceInfo
 import dev.sora.relay.utils.logInfo
 import dev.sora.relay.utils.logWarn
@@ -29,7 +30,7 @@ fun main(args: Array<String>) {
     val dst = InetSocketAddress("127.0.0.1", 19136)
 	var loginThread: Thread? = null
     val sessionEncryptor = if(tokenFile.exists() && !args.contains("--offline")) {
-		val deviceInfo = XboxDeviceInfo.DEVICE_ANDROID
+		val deviceInfo = XboxDeviceInfo.DEVICE_NINTENDO
 		val (accessToken, refreshToken) = deviceInfo.refreshToken(tokenFile.readText())
 		tokenFile.writeText(refreshToken)
 		RelayListenerXboxLogin(accessToken, deviceInfo).also {
@@ -46,6 +47,7 @@ fun main(args: Array<String>) {
         override fun onSessionCreation(session: MinecraftRelaySession): InetSocketAddress {
             session.listeners.add(RelayListenerNetworkSettings(session))
             session.listeners.add(RelayListenerAutoCodec(session))
+//			session.listeners.add(RelayListenerResourcePackDownloader(session, File("./downloaded_resource_packs")))
 			gameSession.netSession = session
             session.listeners.add(gameSession)
 			loginThread?.also {
@@ -89,7 +91,9 @@ private fun craftSession() : GameSession {
     commandManager.init(moduleManager)
 	commandManager.registerCommand(CommandDownloadWorld(session.eventManager, File("./level")))
 
-    val configManager = SingleFileConfigManager(moduleManager)
+    val configManager = SingleFileConfigManager().apply {
+		addSection(ConfigSectionModule(moduleManager))
+	}
     configManager.loadConfig("default")
 
     // save config automatically

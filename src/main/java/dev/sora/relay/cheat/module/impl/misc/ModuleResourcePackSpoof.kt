@@ -1,6 +1,7 @@
-package dev.sora.relay.cheat.module.impl
+package dev.sora.relay.cheat.module.impl.misc
 
 import com.google.gson.JsonParser
+import dev.sora.relay.cheat.module.CheatCategory
 import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.game.event.EventPacketInbound
 import dev.sora.relay.game.event.EventPacketOutbound
@@ -14,7 +15,7 @@ import java.util.*
 import java.util.zip.ZipFile
 
 
-class ModuleResourcePackSpoof : CheatModule("ResourcePackSpoof") {
+class ModuleResourcePackSpoof : CheatModule("ResourcePackSpoof", CheatCategory.MISC) {
 
     private var acceptServerPacks by boolValue("AcceptServerPacks", false)
 
@@ -89,7 +90,7 @@ class ModuleResourcePackSpoof : CheatModule("ResourcePackSpoof") {
 
     companion object {
 
-        private const val RESOURCE_PACK_CHUNK_SIZE = 8 * 1024
+        const val RESOURCE_PACK_CHUNK_SIZE = 8 * 1024
 
         var resourcePackProvider: IResourcePackProvider = EmptyResourcePackProvider()
     }
@@ -132,10 +133,10 @@ class ModuleResourcePackSpoof : CheatModule("ResourcePackSpoof") {
             return files.keys
         }
 
-        override fun getPackById(idRaw: String): Pair<ResourcePacksInfoPacket.Entry, ByteArray>? {
-            val id = idRaw.split("_")[0]
+        override fun getPackById(id: String): Pair<ResourcePacksInfoPacket.Entry, ByteArray>? {
+            val subId = id.substring(0, id.indexOf('_'))
             files.forEach {
-                if (it.key.packId == id) {
+                if (it.key.packId == subId) {
                     return it.key to it.value
                 }
             }

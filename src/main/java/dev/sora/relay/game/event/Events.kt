@@ -44,6 +44,8 @@ class EventContainerClose(session: GameSession, val container: AbstractInventory
  */
 class EventChunkLoad(session: GameSession, val chunk: Chunk) : GameEvent(session, "chunk_load")
 
+class EventChunkUnload(session: GameSession, val chunk: Chunk) : GameEvent(session, "chunk_unload")
+
 class EventDimensionChange(session: GameSession, val dimension: Int) : GameEvent(session, "dimension_change")
 
 class EventEntitySpawn(session: GameSession, val entity: Entity) : GameEvent(session, "entity_spawn")

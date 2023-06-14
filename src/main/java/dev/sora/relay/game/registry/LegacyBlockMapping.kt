@@ -20,6 +20,7 @@ class LegacyBlockMapping(private val stateToRuntimeMap: Map<Int, Int>) {
         override val resourcePath: String
             get() = "/assets/mcpedata/blocks"
 
+		@Suppress("unchecked_cast")
         override fun readMapping(version: Short): LegacyBlockMapping {
             if (!availableVersions.contains(version)) error("Version not available: $version")
 

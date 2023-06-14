@@ -109,8 +109,8 @@ class PlayerInventory(private val player: EntityPlayerSP) : EntityInventory(play
                 dstItem.second(srcItem.first)
                 srcItem.second(dstItem.first)
             }
-            it.actions.filterIsInstance<DropAction>().forEach { action ->
-                val slot = action.source.slot + (getOffsetByContainerType(action.source.container) ?: return@forEach)
+            it.actions.filterIsInstance<DropAction>().forEach FE@ { action ->
+                val slot = action.source.slot + (getOffsetByContainerType(action.source.container) ?: return@FE)
                 val item = content[slot]
                 if (item.count == 1) {
                     content[slot] = ItemData.AIR
@@ -189,6 +189,24 @@ class PlayerInventory(private val player: EntityPlayerSP) : EntityInventory(play
         }
         return null
     }
+
+	fun searchForItemInHotbar(condition: (ItemData) -> Boolean): Int? {
+		for (i in 0 until 9) {
+			if (condition(content[i])) {
+				return i
+			}
+		}
+		return null
+	}
+
+	fun searchForItemIndexedInHotbar(condition: (Int, ItemData) -> Boolean): Int? {
+		for (i in 0 until 9) {
+			if (condition(i, content[i])) {
+				return i
+			}
+		}
+		return null
+	}
 
     override var hand: ItemData
         get() = content[heldItemSlot]

@@ -1,10 +1,11 @@
-package dev.sora.relay.cheat.module.impl
+package dev.sora.relay.cheat.module.impl.movement
 
+import dev.sora.relay.cheat.module.CheatCategory
 import dev.sora.relay.cheat.module.CheatModule
 import kotlin.math.cos
 import kotlin.math.sin
 
-class ModuleClip : CheatModule("Clip", canToggle = false) {
+class ModuleClip : CheatModule("Clip", CheatCategory.MOVEMENT, canToggle = false) {
 
 	private var verticalValue by floatValue("Vertical", 3f, -10f..10f)
 	private var horizontalValue by floatValue("Horizontal", 3f, -10f..10f)

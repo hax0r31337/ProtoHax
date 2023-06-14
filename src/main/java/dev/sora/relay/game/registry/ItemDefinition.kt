@@ -5,7 +5,7 @@ import dev.sora.relay.game.utils.constants.ItemTags
 import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData
 
 open class ItemDefinition(private val runtimeId: Int, private val identifier: String, val tags: Array<String>) :
-    org.cloudburstmc.protocol.bedrock.data.defintions.ItemDefinition {
+    org.cloudburstmc.protocol.bedrock.data.definitions.ItemDefinition {
 
     override fun getRuntimeId() = runtimeId
 
@@ -29,6 +29,9 @@ open class ItemDefinition(private val runtimeId: Int, private val identifier: St
                 || itemTags.contains(ItemTags.TAG_IS_SHOVEL)
                 || itemTags.contains(ItemTags.TAG_IS_FOOD)
                 || identifier == "minecraft:shield"
+				|| identifier == "minecraft:flint_and_steel"
+				|| identifier == "minecraft:totem_of_undying"
+				|| identifier == "minecraft:end_crystal"
     }
 
     fun hasBetterItem(container: AbstractInventory, excludeSlot: Int = -1, strictMode: Boolean = true): Boolean {
@@ -72,6 +75,10 @@ open class ItemDefinition(private val runtimeId: Int, private val identifier: St
             else -> 0
         }
     }
+
+	override fun toString(): String {
+		return identifier
+	}
 }
 
 class UnknownItemDefinition(runtimeId: Int): ItemDefinition(runtimeId, "minecraft:unknown", emptyArray())

@@ -44,12 +44,12 @@ class LevelDBWorld(val folder: File) {
 		}
 	}
 
-	fun saveChunk(chunk: Chunk, dimension: Int) {
-		saveChunkVersion(chunk.x, chunk.z, dimension)
+	fun saveChunk(chunk: Chunk) {
+		saveChunkVersion(chunk.x, chunk.z, chunk.dimension)
 
 		val yOffset = if (chunk.is384World) -4 else 0
 		chunk.sectionStorage.forEachIndexed { i, subChunk ->
-			saveSubChunk(chunk.x, chunk.z, dimension, i + yOffset, subChunk, false)
+			saveSubChunk(chunk.x, chunk.z, chunk.dimension, i + yOffset, subChunk, false)
 		}
 	}
 

@@ -1,5 +1,6 @@
-package dev.sora.relay.cheat.module.impl
+package dev.sora.relay.cheat.module.impl.misc
 
+import dev.sora.relay.cheat.module.CheatCategory
 import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.cheat.value.Choice
 import dev.sora.relay.game.event.EventPacketOutbound
@@ -9,11 +10,11 @@ import org.cloudburstmc.protocol.bedrock.packet.MovePlayerPacket
 import org.cloudburstmc.protocol.bedrock.packet.NetworkStackLatencyPacket
 import org.cloudburstmc.protocol.bedrock.packet.PlayerAuthInputPacket
 
-class ModuleDisabler : CheatModule("Disabler") {
+class ModuleDisabler : CheatModule("Disabler", CheatCategory.MISC) {
 
     private var modeValue by choiceValue("Mode", arrayOf(Mineplex, Cubecraft, LifeBoat), Mineplex)
 
-	object Mineplex : Choice("Mineplex") {
+	private object Mineplex : Choice("Mineplex") {
 
 		private val handleTick = handle<EventTick> { event ->
 			event.session.sendPacket(MovePlayerPacket().apply {
@@ -26,7 +27,7 @@ class ModuleDisabler : CheatModule("Disabler") {
 		}
 	}
 
-	object Cubecraft : Choice("Cubecraft") {
+	private object Cubecraft : Choice("Cubecraft") {
 
 		private val handlePacketOutbound = handle<EventPacketOutbound> { event ->
 			val packet = event.packet
@@ -53,7 +54,7 @@ class ModuleDisabler : CheatModule("Disabler") {
 		}
 	}
 
-	object LifeBoat : Choice("LifeBoat") {
+	private object LifeBoat : Choice("LifeBoat") {
 
 		private val handlePacketOutbound = handle<EventPacketOutbound> { event ->
 			val packet = event.packet

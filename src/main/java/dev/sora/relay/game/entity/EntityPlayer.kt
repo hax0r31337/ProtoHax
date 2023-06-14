@@ -1,11 +1,15 @@
 package dev.sora.relay.game.entity
 
+import org.cloudburstmc.math.vector.Vector3f
 import org.cloudburstmc.protocol.bedrock.packet.BedrockPacket
 import org.cloudburstmc.protocol.bedrock.packet.MovePlayerPacket
 import java.util.*
 
 open class EntityPlayer(runtimeEntityId: Long, uniqueEntityId: Long,
 						open val uuid: UUID, open val username: String) : Entity(runtimeEntityId, uniqueEntityId) {
+
+	val vec3PositionFeet: Vector3f
+		get() = Vector3f.from(posX, posY - EYE_HEIGHT, posZ)
 
     override fun onPacket(packet: BedrockPacket) {
         super.onPacket(packet)

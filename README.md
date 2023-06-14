@@ -42,7 +42,7 @@ To use ProtoHax on a specific platform, you will need to use the platform-specif
 | Android  | [ProtoHax-Android](https://github.com/hax0r31337/ProtoHax-Android) |
 
 ## Setting up a Workspace
-ProtoHax uses Gradle and Maven, please make sure that it is installed properly
+ProtoHax uses Gradle and JDK11, please make sure it is installed properly if you're facing an build failure.
 
 ### Main
 1. Clone the repository using `git clone --recurse-submodules https://github.com/hax0r31337/ProtoHax.git`. 

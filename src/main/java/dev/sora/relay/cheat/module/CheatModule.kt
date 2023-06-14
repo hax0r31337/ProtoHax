@@ -10,15 +10,22 @@ import dev.sora.relay.game.event.EventManager
 import dev.sora.relay.game.event.GameEvent
 import dev.sora.relay.game.event.Handler
 
-abstract class CheatModule(val name: String,
-                           val defaultOn: Boolean = false,
-                           val canToggle: Boolean = true) : Configurable {
+abstract class CheatModule(val name: String, val category: CheatCategory,
+                           val defaultOn: Boolean = false, val canToggle: Boolean = true) : Configurable {
 
     override val values = mutableListOf<Value<*>>()
 
     var state = defaultOn
         set(state) {
             if (field == state) return
+
+			if (this::session.isInitialized) {
+				val event = EventModuleToggle(session, this, state)
+				session.eventManager.emit(event)
+				if (event.isCanceled()) {
+					return
+				}
+			}
 
             if (!canToggle) {
                 onEnable()
@@ -51,12 +58,40 @@ abstract class CheatModule(val name: String,
         this.state = !this.state
     }
 
+	@Suppress("unchecked_cast")
 	protected inline fun <reified T : GameEvent> handle(noinline handler: Handler<T>) {
-		handlers.add(EventHook(T::class.java, handler, this::state) as EventHook<in GameEvent>)
+		handlers.add(EventHook(T::class.java, handler) { this.state } as EventHook<in GameEvent>)
 	}
 
+	@Suppress("unchecked_cast")
 	protected inline fun <reified T : GameEvent> handle(crossinline condition: () -> Boolean, noinline handler: Handler<T>) {
 		handlers.add(EventHook(T::class.java, handler) { this.state && condition() } as EventHook<in GameEvent>)
+	}
+
+	@Suppress("unchecked_cast")
+	protected inline fun <reified T : GameEvent> handleEvent(crossinline condition: (T) -> Boolean, noinline handler: Handler<T>) {
+		handlers.add(EventHook(T::class.java, handler) { this.state && condition(it) } as EventHook<in GameEvent>)
+	}
+
+	@Suppress("unchecked_cast")
+	protected inline fun <reified T : GameEvent> handleOneTime(crossinline condition: (T) -> Boolean, noinline handler: Handler<T>) {
+		var trigger = false
+		handlers.add(EventHook(T::class.java, handler) {
+			val satisfied = condition(it)
+			if (this.state) {
+				if (satisfied && !trigger) {
+					trigger = true
+					true
+				} else {
+					if (!satisfied) {
+						trigger = false
+					}
+					false
+				}
+			} else {
+				trigger = false
+				false
+			}  } as EventHook<in GameEvent>)
 	}
 
 	fun register(eventManager: EventManager) {

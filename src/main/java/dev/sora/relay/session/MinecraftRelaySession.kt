@@ -3,10 +3,7 @@ package dev.sora.relay.session
 import dev.sora.relay.utils.logError
 import dev.sora.relay.utils.logInfo
 import io.netty.util.ReferenceCountUtil
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.newSingleThreadContext
+import kotlinx.coroutines.*
 import org.cloudburstmc.protocol.bedrock.BedrockClientSession
 import org.cloudburstmc.protocol.bedrock.BedrockPeer
 import org.cloudburstmc.protocol.bedrock.BedrockServerSession
@@ -31,7 +28,8 @@ class MinecraftRelaySession(peer: BedrockPeer, subClientId: Int) : BedrockServer
     private val queuedPackets = mutableListOf<BedrockPacket>()
     val listeners = mutableListOf<MinecraftRelayPacketListener>()
 
-	private val scope = CoroutineScope(newSingleThreadContext("RakRelay-Server") + SupervisorJob())
+	@OptIn(DelicateCoroutinesApi::class)
+	private val scope = CoroutineScope(newSingleThreadContext("RakRelay") + SupervisorJob())
 
     init {
         packetHandler = SessionCloseHandler {
@@ -86,8 +84,6 @@ class MinecraftRelaySession(peer: BedrockPeer, subClientId: Int) : BedrockServer
 	}
 
     inner class MinecraftRelayClientSession(peer: BedrockPeer, subClientId: Int) : BedrockClientSession(peer, subClientId) {
-
-		private val scope = CoroutineScope(newSingleThreadContext("RakRelay-Client") + SupervisorJob())
 
         init {
             packetHandler = SessionCloseHandler {

@@ -1,5 +1,6 @@
-package dev.sora.relay.cheat.module.impl
+package dev.sora.relay.cheat.module.impl.movement
 
+import dev.sora.relay.cheat.module.CheatCategory
 import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.cheat.value.NamedChoice
 import dev.sora.relay.game.entity.EntityPlayer
@@ -12,14 +13,11 @@ import dev.sora.relay.game.utils.constants.EnumFacing
 import dev.sora.relay.game.utils.toRotation
 import dev.sora.relay.game.utils.toVector3f
 import dev.sora.relay.game.world.WorldClient
-import org.cloudburstmc.math.vector.Vector3f
 import org.cloudburstmc.math.vector.Vector3i
 import org.cloudburstmc.protocol.bedrock.data.inventory.ContainerId
-import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.ItemUseTransaction
 import org.cloudburstmc.protocol.bedrock.packet.PlayerHotbarPacket
-import org.cloudburstmc.protocol.bedrock.packet.UpdateBlockPacket
 
-class ModuleBlockFly : CheatModule("BlockFly") {
+class ModuleBlockFly : CheatModule("BlockFly", CheatCategory.MOVEMENT) {
 
     private var swingValue by listValue("Swing", EntityPlayerSP.SwingMode.values(), EntityPlayerSP.SwingMode.BOTH)
     private var adaptiveBlockIdValue by boolValue("AdaptiveBlockId", false)
@@ -49,29 +47,10 @@ class ModuleBlockFly : CheatModule("BlockFly") {
 			session.blockMapping.airId
 		}
 		val possibilities = searchBlocks(session.thePlayer.posX, session.thePlayer.posY - EntityPlayer.EYE_HEIGHT,
-			session.thePlayer.posZ, 1, world, airId)
+			session.thePlayer.posZ, 1, session.thePlayer, world, airId)
 		val block = possibilities.firstOrNull() ?: return@handle
 		val facing = getFacing(block, world, airId) ?: return@handle
-
-		val definition = session.thePlayer.inventory.hand.blockDefinition
-		session.netSession.inboundPacket(UpdateBlockPacket().apply {
-			blockPosition = block
-			this.definition = definition
-		})
-		world.setBlockIdAt(block.x, block.y, block.z, definition?.runtimeId ?: 0)
-		session.thePlayer.useItem(ItemUseTransaction().apply {
-			actionType = 0
-			blockPosition = block.sub(facing.unitVector)
-			blockFace = facing.ordinal
-			hotbarSlot = session.thePlayer.inventory.heldItemSlot
-			itemInHand = session.thePlayer.inventory.hand.toBuilder()
-				.usingNetId(false)
-				.netId(0)
-				.build()
-			playerPosition = session.thePlayer.vec3Position
-			clickPosition = Vector3f.from(Math.random(), Math.random(), Math.random())
-			blockDefinition = definition
-		})
+		session.thePlayer.placeBlock(block, facing)
 		session.thePlayer.swing(swingValue)
 
 		if (rotationValue) {
@@ -101,25 +80,38 @@ class ModuleBlockFly : CheatModule("BlockFly") {
         }
     }
 
-    private fun searchBlocks(offsetX: Float, offsetY: Float, offsetZ: Float, range: Int, world: WorldClient, expected: Int): List<Vector3i> {
+    private fun searchBlocks(offsetX: Float, offsetY: Float, offsetZ: Float, range: Int, player: EntityPlayerSP, world: WorldClient, expected: Int): List<Vector3i> {
         val possibilities = mutableListOf<Vector3i>()
         val rangeSq = 4.5f * 4.5f
         val blockNear = mutableListOf<EnumFacing>()
         val bb = AxisAlignedBB(offsetX - .3f, offsetY - 1f, offsetZ - .3f, offsetX + .3f, offsetY + .8f, offsetZ + .3f)
+		val standbb = bb.copy().apply {
+			expand(-0.3f, 0f, -0.3f)
+		}
+		val willCollide = player.motionY < 0.05
 
         for (x in -range..range) {
             for (z in -range..range) {
                 val pos = Vector3i.from(offsetX + x.toDouble(), offsetY - 0.625, offsetZ + z.toDouble())
-                if (world.getBlockIdAt(pos) != expected) continue
-                else if (pos.distanceSquared(offsetX.toDouble(), offsetY + EntityPlayer.EYE_HEIGHT.toDouble(), offsetZ.toDouble()) > rangeSq) continue
+				val posbb = AxisAlignedBB(pos, pos.add(1, 1, 1))
+                if (world.getBlockIdAt(pos) != expected) {
+					if (willCollide && standbb.intersects(posbb)) {
+						return emptyList()
+					} else {
+						continue
+					}
+				} else if (pos.distanceSquared(offsetX.toDouble(), offsetY + EntityPlayer.EYE_HEIGHT.toDouble(), offsetZ.toDouble()) > rangeSq) {
+					continue
+				} else if (!bb.intersects(posbb)) {
+					continue
+				}
                 EnumFacing.values().forEach {
                     val offset = pos.add(it.unitVector)
-                    if (world.getBlockIdAt(offset) != expected/*
-                        && rayTrace(vectorPosition, pos, it)*/) {
+                    if (world.getBlockIdAt(offset) != expected) {
                         blockNear.add(it)
                     }
                 }
-                if (blockNear.size != 6 && blockNear.isNotEmpty() && bb.intersects(AxisAlignedBB(pos, pos.add(1, 1, 1)))) {
+                if (blockNear.size != 6 && blockNear.isNotEmpty()) {
                     possibilities.add(pos)
                 }
                 blockNear.clear()
@@ -140,7 +132,7 @@ class ModuleBlockFly : CheatModule("BlockFly") {
         return null
     }
 
-    enum class HeldBlockMode(override val choiceName: String) : NamedChoice {
+    private enum class HeldBlockMode(override val choiceName: String) : NamedChoice {
         MANUAL("Manual"),
         AUTOMATIC("Auto")
     }

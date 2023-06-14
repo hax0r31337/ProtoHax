@@ -1,8 +1,9 @@
-package dev.sora.relay.cheat.module.impl
+package dev.sora.relay.cheat.module.impl.misc
 
 import com.google.gson.JsonParser
 import com.nimbusds.jose.Payload
 import dev.sora.relay.cheat.config.AbstractConfigManager
+import dev.sora.relay.cheat.module.CheatCategory
 import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.game.event.EventPacketOutbound
 import dev.sora.relay.game.utils.constants.DeviceOS
@@ -14,7 +15,7 @@ import org.cloudburstmc.protocol.bedrock.packet.PlayerAuthInputPacket
 import org.cloudburstmc.protocol.bedrock.util.EncryptionUtils
 import kotlin.random.Random
 
-class ModuleDeviceSpoof : CheatModule("DeviceSpoof") {
+class ModuleDeviceSpoof : CheatModule("DeviceSpoof", CheatCategory.MISC) {
 
     private var deviceIdValue by boolValue("DeviceId", true)
     private var platformValue by boolValue("Platform", true)

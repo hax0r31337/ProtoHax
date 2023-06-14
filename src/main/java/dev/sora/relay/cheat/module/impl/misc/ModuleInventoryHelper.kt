@@ -1,6 +1,8 @@
-package dev.sora.relay.cheat.module.impl
+package dev.sora.relay.cheat.module.impl.misc
 
+import dev.sora.relay.cheat.module.CheatCategory
 import dev.sora.relay.cheat.module.CheatModule
+import dev.sora.relay.cheat.value.NamedChoice
 import dev.sora.relay.game.GameSession
 import dev.sora.relay.game.entity.EntityPlayerSP
 import dev.sora.relay.game.event.EventPacketInbound
@@ -12,14 +14,13 @@ import dev.sora.relay.game.registry.isBlock
 import dev.sora.relay.game.registry.itemDefinition
 import dev.sora.relay.game.utils.constants.ItemTags
 import dev.sora.relay.game.utils.toVector3i
-import dev.sora.relay.utils.timing.ClickTimer
 import org.cloudburstmc.protocol.bedrock.data.inventory.ContainerType
 import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData
 import org.cloudburstmc.protocol.bedrock.packet.ContainerClosePacket
 import org.cloudburstmc.protocol.bedrock.packet.ContainerOpenPacket
 import org.cloudburstmc.protocol.bedrock.packet.InteractPacket
 
-class ModuleInventoryHelper : CheatModule("InventoryHelper") {
+class ModuleInventoryHelper : CheatModule("InventoryHelper", CheatCategory.MISC) {
 
     private var stealChestValue by boolValue("StealChest", true)
     private var guiOpenValue by boolValue("GuiOpen", false)
@@ -31,10 +32,9 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper") {
     private var autoCloseValue by boolValue("AutoClose", false)
     private var throwUnnecessaryValue by boolValue("ThrowUnnecessary", true)
     private var swingValue by listValue("Swing", EntityPlayerSP.SwingMode.values(), EntityPlayerSP.SwingMode.BOTH)
-    private var clickMaxCpsValue by intValue("ClickMaxCPS", 4, 1..20)
-    private var clickMinCpsValue by intValue("ClickMinCPS", 2, 1..20)
+    private val cpsValue = clickValue(value = 2..4)
     private var sortArmorValue by boolValue("Armor", true)
-    private var sortTotemValue by boolValue("Totem", true)
+    private var sortOffhandValue by listValue("Offhand", SortOffhandMode.values(), SortOffhandMode.TOTEM)
     private var sortSwordValue by intValue("SortSword", 0, -1..8)
     private var sortPickaxeValue by intValue("SortPickaxe", 5, -1..8)
     private var sortAxeValue by intValue("SortAxe", 6, -1..8)
@@ -48,11 +48,7 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper") {
         Sort(PlayerInventory.SLOT_LEGGINGS, ItemTags.TAG_IS_LEGGINGS),
         Sort(PlayerInventory.SLOT_BOOTS, ItemTags.TAG_IS_BOOTS)
     )
-    private val sortTotem = Sort(PlayerInventory.SLOT_OFFHAND) {
-        if (it.itemDefinition.identifier == "minecraft:totem_of_undying") 1f else 0f
-    }
 
-    private val clickTimer = ClickTimer()
     private var sorted = true
     private var hasSimulated = false
     private var hasSimulatedWaitForClose = false
@@ -63,13 +59,8 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper") {
         hasSimulatedWaitForClose = false
     }
 
-    private fun updateClick() {
-        clickTimer.update(clickMinCpsValue, clickMaxCpsValue)
-        sorted = true
-    }
-
 	private val handleTick = handle<EventTick> { event ->
-		if (!clickTimer.canClick()) {
+		if (!cpsValue.canClick) {
 			return@handle
 		}
 
@@ -83,7 +74,8 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper") {
 					val slot = player.inventory.findEmptySlot() ?: return@handle
 					openContainer.moveItem(index, slot, player.inventory, event.session)
 
-					updateClick()
+					cpsValue.click()
+					sorted = true
 					return@handle
 				}
 			}
@@ -97,7 +89,8 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper") {
 					// player will swing if they drop an item
 					player.swing(swingValue)
 
-					updateClick()
+					cpsValue.click()
+					sorted = true
 					return@handle
 				}
 			}
@@ -106,7 +99,8 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper") {
 			val sorts = getSorts(player.inventory)
 			sorts.forEach {
 				if (it.sort(player.inventory, event.session)) {
-					updateClick()
+					cpsValue.click()
+					sorted = true
 					return@handle
 				}
 			}
@@ -120,13 +114,11 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper") {
 					hasSimulated = false
 					hasSimulatedWaitForClose = true
 				}
-				updateClick()
-				sorted = false
+				cpsValue.click()
 				return@handle
 			}
 		} else {
-			updateClick()
-			sorted = false
+			cpsValue.click()
 			return@handle
 		}
 
@@ -143,8 +135,16 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper") {
         if (sortArmorValue) {
             sorts.addAll(sortArmor)
         }
-        if (sortTotemValue) {
-            sorts.add(sortTotem)
+        if (sortOffhandValue != SortOffhandMode.NONE) {
+			val (totemPriority, shieldPriority) = if (sortOffhandValue == SortOffhandMode.SHIELD) 1f to 2f
+				else 2f to 1f
+
+			sorts.add(Sort(PlayerInventory.SLOT_OFFHAND) {
+				val identifier = it.itemDefinition.identifier
+				if (identifier == "minecraft:totem_of_undying") totemPriority
+				else if (identifier == "minecraft:shield") shieldPriority
+				else 0f
+			})
         }
         if (sortSwordValue != -1) {
             sorts.add(Sort(sortSwordValue, ItemTags.TAG_IS_SWORD))
@@ -203,15 +203,16 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper") {
                 action = InteractPacket.Action.OPEN_INVENTORY
             })
             hasSimulated = true
-            updateClick()
+			cpsValue.click()
+			sorted = true
             return true
         }
         return false
     }
 
-    inner class Sort(val slot: Int, val judge: (ItemData) -> Float) {
+	private inner class Sort(val slot: Int, val requiresBestItem: Boolean = false, val judge: (ItemData) -> Float) {
 
-        constructor(slot: Int, judgeTag: String) : this(slot, { item ->
+        constructor(slot: Int, judgeTag: String, requiresBestItem: Boolean = true) : this(slot, requiresBestItem, { item ->
 			val def = item.itemDefinition
             if (def.tags.contains(judgeTag)) {
                 def.getTier().toFloat()
@@ -221,7 +222,10 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper") {
         })
 
         fun sort(inventory: AbstractInventory, session: GameSession): Boolean {
-            val bestSlot = inventory.findBestItem { item ->
+			if (!requiresBestItem && judge(inventory.content[slot]) > 0) {
+				return false
+			}
+            val bestSlot = inventory.findBestItem(slot) { item ->
                 judge(item)
             } ?: return false
             if (bestSlot == slot) return false
@@ -231,4 +235,10 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper") {
             return true
         }
     }
+
+	private enum class SortOffhandMode(override val choiceName: String) : NamedChoice {
+		SHIELD("Shield"),
+		TOTEM("Totem"),
+		NONE("None")
+	}
 }

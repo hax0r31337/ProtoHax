@@ -5,8 +5,8 @@ import dev.sora.relay.game.registry.LegacyBlockMapping
 import io.netty.buffer.ByteBuf
 import kotlin.math.abs
 
-class Chunk(val x: Int, val z: Int, val is384World: Boolean,
-            private val blockMapping: BlockMapping, private val legacyBlockMapping: LegacyBlockMapping) {
+class Chunk(val x: Int, val z: Int, val dimension: Int, val is384World: Boolean,
+            private val blockMapping: BlockMapping, private val legacyBlockMapping: Lazy<LegacyBlockMapping>) {
 
     val hash: Long
         get() = hash(x, z)
@@ -30,14 +30,18 @@ class Chunk(val x: Int, val z: Int, val is384World: Boolean,
 
     fun getBlockAt(x: Int, yIn: Int, z: Int): Int {
         val y = if(is384World) yIn + 64 else yIn
-        assert(y in 0..maximumHeight)
+        if (y !in 0..maximumHeight) {
+			return blockMapping.airId
+		}
 
         return sectionStorage[y shr 4].getBlockAt(x, y and 0x0f, z)
     }
 
     fun setBlockAt(x: Int, yIn: Int, z: Int, runtimeId: Int) {
         val y = if(is384World) yIn + 64 else yIn
-        assert(y in 0..maximumHeight)
+        if (y !in 0..maximumHeight) {
+			return
+		}
 
         sectionStorage[y shr 4].setBlockAt(x, y and 0x0f, z, runtimeId)
     }

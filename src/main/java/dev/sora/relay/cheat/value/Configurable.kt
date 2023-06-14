@@ -16,6 +16,12 @@ interface Configurable {
     fun intValue(name: String, value: Int, range: IntRange)
         = IntValue(name, value, range).also { values.add(it) }
 
+	fun intRangeValue(name: String, value: IntRange, range: IntRange)
+		= IntRangeValue(name, value, range).also { values.add(it) }
+
+	fun clickValue(name: String = "CPS", value: IntRange = 5..8, range: IntRange = 1..20)
+		= ClickValue(name, value, range).also { values.add(it) }
+
     fun <T : NamedChoice> listValue(name: String, valuesArr: Array<T>, value: T)
         = ListValue(name, valuesArr, value).also { values.add(it) }
 

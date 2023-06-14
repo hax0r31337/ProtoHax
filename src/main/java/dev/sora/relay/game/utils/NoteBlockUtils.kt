@@ -25,14 +25,16 @@ object NoteBlockUtils {
 
         fun readNbs(inputIn: InputStream) {
 			val buf = Unpooled.wrappedBuffer(inputIn.readBytes())
-            var length = buf.readShortLE()
-            var firstcustominstrument = 10 // Backward compatibility - most of songs with old structure are from 1.12
+            val length = buf.readShortLE()
+//            var firstcustominstrument = 10 // Backward compatibility - most of songs with old structure are from 1.12
             var nbsversion = 0
             if (length.toInt() == 0) {
                 nbsversion = buf.readUnsignedByte().toInt()
-                firstcustominstrument = buf.readUnsignedByte().toInt()
+//                firstcustominstrument =
+					buf.readUnsignedByte().toInt()
                 if (nbsversion >= 3) {
-                    length = buf.readShortLE()
+//                    length =
+						buf.readShortLE()
                 }
             }
             buf.readShortLE()

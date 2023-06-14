@@ -13,14 +13,15 @@ import dev.sora.relay.utils.logInfo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.asCoroutineDispatcher
-import kotlinx.coroutines.launch
 import org.cloudburstmc.math.vector.Vector3f
 import org.cloudburstmc.math.vector.Vector3i
 import org.cloudburstmc.protocol.bedrock.data.PlayerActionType
+import org.cloudburstmc.protocol.bedrock.data.PlayerAuthInputData
 import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData
 import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.InventoryTransactionType
 import org.cloudburstmc.protocol.bedrock.packet.*
 import java.util.concurrent.Executors
+import kotlin.concurrent.thread
 
 class GameSession : MinecraftRelayPacketListener {
 
@@ -35,7 +36,7 @@ class GameSession : MinecraftRelayPacketListener {
 
     var blockMapping = BlockMapping(emptyMap(), 0)
         private set
-    var legacyBlockMapping = LegacyBlockMapping(emptyMap())
+    var legacyBlockMapping: Lazy<LegacyBlockMapping> = lazy { LegacyBlockMapping(emptyMap()) }
         private set
 
     val netSessionInitialized: Boolean
@@ -63,25 +64,29 @@ class GameSession : MinecraftRelayPacketListener {
         }
 
         if (packet is LoginPacket) {
-            val protocolVersion = packet.protocolVersion
-            val itemDefinitions = ItemMapping.Provider.craftMapping(protocolVersion)
-            val blockDefinitions = BlockMapping.Provider.craftMapping(protocolVersion)
-            netSession.peer.codecHelper.itemDefinitions = itemDefinitions
-            netSession.peer.codecHelper.blockDefinitions = blockDefinitions
-            netSession.client?.let {
-                it.peer.codecHelper.itemDefinitions = itemDefinitions
-                it.peer.codecHelper.blockDefinitions = blockDefinitions
-            } ?: scope.launch {
-				while (netSession.client == null) {
-					Thread.sleep(10L) // wait client connect
-				}
-				netSession.client!!.peer.codecHelper.also {
-					it.itemDefinitions = itemDefinitions
-					it.blockDefinitions = blockDefinitions
-				}
+			val protocolVersion = packet.protocolVersion
+
+			while (netSession.client == null) {
+				Thread.sleep(10L) // wait client connect
 			}
-            blockMapping = blockDefinitions
-            legacyBlockMapping = LegacyBlockMapping.Provider.craftMapping(packet.protocolVersion)
+
+			val blockTask = thread {
+				val blockDefinitions = BlockMapping.Provider.craftMapping(protocolVersion)
+				netSession.peer.codecHelper.blockDefinitions = blockDefinitions
+				netSession.client!!.peer.codecHelper.blockDefinitions = blockDefinitions
+
+				blockMapping = blockDefinitions
+			}
+
+			val itemDefinitions = ItemMapping.Provider.craftMapping(protocolVersion)
+			netSession.peer.codecHelper.itemDefinitions = itemDefinitions
+			netSession.client!!.peer.codecHelper.itemDefinitions = itemDefinitions
+
+			legacyBlockMapping = lazy { LegacyBlockMapping.Provider.craftMapping(protocolVersion) }
+
+			if (blockTask.isAlive) {
+				blockTask.join()
+			}
         } else if (!thePlayer.movementServerAuthoritative && packet is PlayerAuthInputPacket) {
 			convertAuthInput(packet)?.also { netSession.outboundPacket(it) }
 			return false
@@ -123,11 +128,18 @@ class GameSession : MinecraftRelayPacketListener {
 		sendPacketToClient(TextPacket().apply {
 			type = TextPacket.Type.RAW
 			isNeedsTranslation = false
-			message = "[§9§lProtoHax§r] $msg"
+			message = "[$COLORED_NAME] $msg"
 			xuid = ""
 			sourceName = ""
 		})
 	}
+
+	private val inputDataConversionMap by lazy { mapOf(
+		PlayerAuthInputData.START_SPRINTING to PlayerActionType.START_SPRINT, PlayerAuthInputData.STOP_SPRINTING to PlayerActionType.STOP_SPRINT,
+		PlayerAuthInputData.START_SNEAKING to PlayerActionType.START_SNEAK, PlayerAuthInputData.STOP_SNEAKING to PlayerActionType.STOP_SNEAK,
+		PlayerAuthInputData.START_SWIMMING to PlayerActionType.START_SWIMMING, PlayerAuthInputData.STOP_SWIMMING to PlayerActionType.STOP_SWIMMING,
+		PlayerAuthInputData.START_GLIDING to PlayerActionType.START_GLIDE, PlayerAuthInputData.STOP_GLIDING to PlayerActionType.STOP_GLIDE,
+		PlayerAuthInputData.START_JUMPING to PlayerActionType.JUMP) }
 
 	private fun convertAuthInput(packet: PlayerAuthInputPacket): MovePlayerPacket? {
 		packet.playerActions.forEach { action ->
@@ -150,6 +162,18 @@ class GameSession : MinecraftRelayPacketListener {
 					playerPosition = thePlayer.vec3Position
 					clickPosition = Vector3f.ZERO
 					blockDefinition = blockMapping.getDefinition(0)
+				})
+				lastStopBreak = false
+			}
+		}
+
+		inputDataConversionMap.forEach { (k, v) ->
+			if (packet.inputData.contains(k)) {
+				netSession.outboundPacket(PlayerActionPacket().apply {
+					runtimeEntityId = thePlayer.runtimeEntityId
+					action = v
+					blockPosition = Vector3i.ZERO
+					resultPosition = Vector3i.ZERO
 				})
 			}
 		}
@@ -176,5 +200,6 @@ class GameSession : MinecraftRelayPacketListener {
 
     companion object {
         const val RECOMMENDED_VERSION = "1.19.73.02"
+		const val COLORED_NAME = "§9§lProtoHax§r"
     }
 }

@@ -60,15 +60,8 @@ class BlockStorage {
             if (isRuntime) {
                 palette.add(readInt())
             } else {
-                val map = (nbtStream!!.readTag() as NbtMap).toBuilder()
-                val name = map["name"].toString()
-                map.replace("name", if(!name.startsWith("minecraft:")) {
-                    // For some reason, persistent chunks don't include the "minecraft:" that should be used in state names.
-                    "minecraft:$name"
-                } else {
-                    name
-                })
-                palette.add(blockMapping.getRuntimeByIdentifier(BlockMapping.Provider.getBlockNameFromNbt(map.build())))
+                val map = nbtStream!!.readTag() as NbtMap
+                palette.add(blockMapping.getRuntimeByDefinition(BlockDefinition(0, map.getString("name"), map.getCompound("states") ?: NbtMap.EMPTY)))
             }
         }
     }
@@ -156,11 +149,8 @@ class BlockStorage {
 			val bos = ByteBufOutputStream(buf)
 			val nbtos = NBTOutputStream(if (network) NetworkDataOutputStream(bos) else LittleEndianDataOutputStream(bos))
 			palette.forEach {
-				val tag = (blockMapping.getDefinition(it) as BlockDefinition).extraData.toBuilder()
-				tag.remove("id")
-				tag.remove("data")
-				tag.remove("runtimeId")
-				tag.remove("stateOverload")
+				val tag = NbtMap.builder()
+				tag.putCompound("states", blockMapping.getDefinition(it).states)
 				nbtos.writeTag(tag.build())
 			}
 		}

@@ -1,10 +1,12 @@
 package dev.sora.relay.game.entity
 
+import dev.sora.relay.game.entity.data.Effect
 import dev.sora.relay.game.inventory.EntityInventory
 import org.cloudburstmc.math.vector.Vector2f
 import org.cloudburstmc.math.vector.Vector3f
 import org.cloudburstmc.protocol.bedrock.data.AttributeData
 import org.cloudburstmc.protocol.bedrock.data.entity.EntityDataMap
+import org.cloudburstmc.protocol.bedrock.data.entity.EntityFlag
 import org.cloudburstmc.protocol.bedrock.data.entity.EntityLinkData
 import org.cloudburstmc.protocol.bedrock.packet.*
 import kotlin.math.sqrt
@@ -39,11 +41,35 @@ abstract class Entity(open val runtimeEntityId: Long, open val uniqueEntityId: L
     open var rotationYawHead = 0f
 
     open var motionX = 0f
+		set(value) {
+			prevMotionX = field
+			field = value
+		}
     open var motionY = 0f
+		set(value) {
+			prevMotionY = field
+			field = value
+		}
     open var motionZ = 0f
+		set(value) {
+			prevMotionZ = field
+			field = value
+		}
+
+	open var prevMotionX = 0f
+		protected set
+	open var prevMotionY = 0f
+		protected set
+	open var prevMotionZ = 0f
+		protected set
 
     open var tickExists = 0L
-        protected set
+		protected set(value) {
+			effects.forEach {
+				it.duration -= (value - field).toInt()
+			}
+			field = value
+		}
 
 	var rideEntity: Long? = null
 
@@ -52,11 +78,22 @@ abstract class Entity(open val runtimeEntityId: Long, open val uniqueEntityId: L
 
     open val inventory = EntityInventory(this)
 
+	private val effects = mutableListOf<Effect>()
+
     val vec3Position: Vector3f
         get() = Vector3f.from(posX, posY, posZ)
 
     val vec3Rotation: Vector3f
         get() = Vector3f.from(rotationPitch, rotationYaw, rotationYawHead)
+
+	open val isSneaking: Boolean
+		get() = metadata.flags.contains(EntityFlag.SNEAKING)
+	open val isSprinting: Boolean
+		get() = metadata.flags.contains(EntityFlag.SPRINTING)
+	open val isSwimming: Boolean
+		get() = metadata.flags.contains(EntityFlag.SWIMMING)
+	open val isGliding: Boolean
+		get() = metadata.flags.contains(EntityFlag.GLIDING)
 
     open fun move(x: Float, y: Float, z: Float) {
         this.posX = x
@@ -99,11 +136,21 @@ abstract class Entity(open val runtimeEntityId: Long, open val uniqueEntityId: L
     fun distanceSq(entity: Entity)
             = distanceSq(entity.posX, entity.posY, entity.posZ)
 
+	fun distanceSq(vector3f: Vector3f)
+		= distanceSq(vector3f.x, vector3f.y, vector3f.z)
+
     fun distance(x: Float, y: Float, z: Float)
         = sqrt(distanceSq(x, y, z))
 
     fun distance(entity: Entity)
         = distance(entity.posX, entity.posY, entity.posZ)
+
+	fun distance(vector3f: Vector3f)
+		= distance(vector3f.x, vector3f.y, vector3f.z)
+
+	fun getEffectById(id: Int): Effect? {
+		return effects.find { it.id == id }
+	}
 
     open fun onPacket(packet: BedrockPacket) {
         if (packet is MoveEntityAbsolutePacket && packet.runtimeEntityId == runtimeEntityId) {
@@ -111,9 +158,9 @@ abstract class Entity(open val runtimeEntityId: Long, open val uniqueEntityId: L
             rotate(packet.rotation)
             tickExists++
         } else if (packet is MoveEntityDeltaPacket && packet.runtimeEntityId == runtimeEntityId) {
-            move(posX + if (packet.flags.contains(MoveEntityDeltaPacket.Flag.HAS_X)) packet.x else 0f,
-                posY + if (packet.flags.contains(MoveEntityDeltaPacket.Flag.HAS_Y)) packet.y else 0f,
-                posZ + if (packet.flags.contains(MoveEntityDeltaPacket.Flag.HAS_Z)) packet.z else 0f)
+            move(if (packet.flags.contains(MoveEntityDeltaPacket.Flag.HAS_X)) packet.x else posX,
+                if (packet.flags.contains(MoveEntityDeltaPacket.Flag.HAS_Y)) packet.y else posY,
+                if (packet.flags.contains(MoveEntityDeltaPacket.Flag.HAS_Z)) packet.z else posZ)
             rotate(rotationYaw + if (packet.flags.contains(MoveEntityDeltaPacket.Flag.HAS_YAW)) packet.yaw else 0f,
                 rotationPitch + if (packet.flags.contains(MoveEntityDeltaPacket.Flag.HAS_PITCH)) packet.pitch else 0f,
                 rotationYawHead + if (packet.flags.contains(MoveEntityDeltaPacket.Flag.HAS_HEAD_YAW)) packet.headYaw else 0f)
@@ -127,6 +174,20 @@ abstract class Entity(open val runtimeEntityId: Long, open val uniqueEntityId: L
 				EntityLinkData.Type.RIDER -> if (packet.entityLink.from == uniqueEntityId) rideEntity = packet.entityLink.to
 				EntityLinkData.Type.REMOVE -> if (packet.entityLink.from == uniqueEntityId) rideEntity = null
 				EntityLinkData.Type.PASSENGER -> if (packet.entityLink.to == uniqueEntityId) rideEntity = packet.entityLink.from
+				else -> {}
+			}
+		} else if (packet is MobEffectPacket && packet.runtimeEntityId == runtimeEntityId) {
+			when (packet.event) {
+				MobEffectPacket.Event.ADD, MobEffectPacket.Event.MODIFY -> {
+					val currentEffect = getEffectById(packet.effectId)
+					if (currentEffect != null) {
+						currentEffect.amplifier = packet.amplifier
+						currentEffect.duration = packet.duration
+					} else {
+						effects.add(Effect(packet.effectId, packet.amplifier, packet.duration))
+					}
+				}
+				MobEffectPacket.Event.REMOVE -> getEffectById(packet.effectId)?.let { effects.remove(it) }
 				else -> {}
 			}
 		} else {
