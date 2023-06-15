@@ -31,7 +31,7 @@ class ModuleSpeed : CheatModule("Speed", CheatCategory.MOVEMENT) {
 			val player = event.session.thePlayer
 
 			if (canMove) {
-				if (player.onGround || (player.motionY > player.prevMotionY && player.motionY < 0)) {
+				if (player.onGround || player.motionY == 0f || (player.motionY > player.prevMotionY && player.motionY < 0)) {
 					event.session.netSession.inboundPacket(SetEntityMotionPacket().apply {
 						runtimeEntityId = player.runtimeEntityId
 						val angle = getMoveDirectionAngle(player)
@@ -52,7 +52,7 @@ class ModuleSpeed : CheatModule("Speed", CheatCategory.MOVEMENT) {
 				val motionX = -sin(angle) * speedValue
 				val motionZ = cos(angle) * speedValue
 
-				if (player.onGround || (player.motionY > player.prevMotionY && player.motionY < 0 && player.posY % 0.125f == 0f)) {
+				if (player.onGround || player.motionY == 0f || (player.motionY > player.prevMotionY && player.motionY < 0f)) {
 					event.session.netSession.inboundPacket(SetEntityMotionPacket().apply {
 						runtimeEntityId = player.runtimeEntityId
 						motion = Vector3f.from(motionX, jumpValue, motionZ)
