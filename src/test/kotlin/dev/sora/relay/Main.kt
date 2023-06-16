@@ -34,9 +34,11 @@ fun main(args: Array<String>) {
 	var loginThread: Thread? = null
     val sessionEncryptor = if(tokenFile.exists() && !args.contains("--offline")) {
 		val deviceInfo = XboxDeviceInfo.DEVICE_NINTENDO
-		val (accessToken, refreshToken) = deviceInfo.refreshToken(tokenFile.readText())
-		tokenFile.writeText(refreshToken)
-		RelayListenerXboxLogin(accessToken, deviceInfo).also {
+		RelayListenerXboxLogin({
+			val (accessToken, refreshToken) = deviceInfo.refreshToken(tokenFile.readText())
+			tokenFile.writeText(refreshToken)
+			accessToken
+		}, deviceInfo).also {
 			it.chainCache = XboxChainCacheFileSystem(chainCacheFile, "account")
 			loginThread = thread {
 				it.forceFetchChain()

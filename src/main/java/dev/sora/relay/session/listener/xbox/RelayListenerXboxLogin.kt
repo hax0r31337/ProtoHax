@@ -27,22 +27,15 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
 
-class RelayListenerXboxLogin(val accessToken: String, val deviceInfo: XboxDeviceInfo) : RelayListenerEncryptedSession() {
+class RelayListenerXboxLogin(val accessToken: () -> String, val deviceInfo: XboxDeviceInfo) : RelayListenerEncryptedSession() {
 
-    constructor(accessToken: String, deviceInfo: XboxDeviceInfo, session: MinecraftRelaySession) : this(accessToken, deviceInfo) {
+    constructor(accessToken: () -> String, deviceInfo: XboxDeviceInfo, session: MinecraftRelaySession) : this(accessToken, deviceInfo) {
         this.session = session
     }
 
 	var chainCache: IXboxChainCache? = null
 
     private var chainExpires = 0L
-    private var identityToken = ""
-        get() {
-            if (field.isEmpty()) {
-                field = fetchIdentityToken(accessToken, deviceInfo)
-            }
-            return field
-        }
     private var chain: List<SignedJWT>? = null
         get() {
             if (field == null || chainExpires < Instant.now().epochSecond) {
@@ -51,7 +44,7 @@ class RelayListenerXboxLogin(val accessToken: String, val deviceInfo: XboxDevice
 					logInfo("chain cache hit")
 					keyPair = it.second
 					it.first
-				} ?: fetchChain(identityToken, keyPair).also {
+				} ?: fetchChain(fetchIdentityToken(accessToken(), deviceInfo), keyPair).also {
 					isFreshChain = true
 				}
 				field = chains
