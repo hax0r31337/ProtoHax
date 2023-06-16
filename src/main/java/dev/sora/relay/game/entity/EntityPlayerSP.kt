@@ -166,6 +166,18 @@ class EntityPlayerSP(private val session: GameSession, override val eventManager
 			inventoriesServerAuthoritative = false
 			soundServerAuthoritative = false
 			hasSetEntityId = false
+
+			packet.chain.forEach {
+				val chainBody = JsonParser.parseString(it.payload.toString()).asJsonObject
+				if (chainBody.has("extraData")) {
+					val xData = chainBody.getAsJsonObject("extraData")
+					uuid = UUID.fromString(xData.get("identity").asString)
+					username = xData.get("displayName").asString
+					if (xData.has("XUID")) {
+						xuid = xData.get("XUID").asString
+					}
+				}
+			}
 		} else if (packet is MovePlayerPacket) {
 			move(packet.position)
 			rotate(packet.rotation)
@@ -230,18 +242,6 @@ class EntityPlayerSP(private val session: GameSession, override val eventManager
 				}
 				packet.playerActions.addAll(pendingBlockActions)
 				pendingBlockActions.clear()
-			}
-		} else if (packet is LoginPacket) {
-			packet.chain.forEach {
-				val chainBody = JsonParser.parseString(it.payload.toString()).asJsonObject
-				if (chainBody.has("extraData")) {
-					val xData = chainBody.getAsJsonObject("extraData")
-					uuid = UUID.fromString(xData.get("identity").asString)
-					username = xData.get("displayName").asString
-					if (xData.has("XUID")) {
-						xuid = xData.get("XUID").asString
-					}
-				}
 			}
 		} else if (packet is InteractPacket && packet.action == InteractPacket.Action.OPEN_INVENTORY) {
 			openContainer = inventory

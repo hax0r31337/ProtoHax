@@ -45,6 +45,7 @@ class GameSession : MinecraftRelayPacketListener {
         get() = this::netSession.isInitialized
 
 	private var lastStopBreak = false
+	private var backgroundTask: Thread? = null
 
 	val scope = CoroutineScope(Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()).asCoroutineDispatcher() + SupervisorJob())
 
@@ -62,6 +63,13 @@ class GameSession : MinecraftRelayPacketListener {
 //			if (packet.blockProperties.isNotEmpty()) {
 //				blockMapping.registerCustomBlocks(packet.blockProperties)
 //			}
+			backgroundTask?.let {
+				if (it.isAlive) {
+					logInfo("awaiting mappings to load")
+					it.join()
+				}
+				backgroundTask = null
+			}
 		}
 
         return true
@@ -89,16 +97,18 @@ class GameSession : MinecraftRelayPacketListener {
 				blockMapping = blockDefinitions
 			}
 
-			val itemDefinitions = ItemMapping.Provider.craftMapping(protocolVersion)
-			netSession.peer.codecHelper.itemDefinitions = itemDefinitions
-			netSession.client!!.peer.codecHelper.itemDefinitions = itemDefinitions
+			backgroundTask = thread {
+				val itemDefinitions = ItemMapping.Provider.craftMapping(protocolVersion)
+				netSession.peer.codecHelper.itemDefinitions = itemDefinitions
+				netSession.client!!.peer.codecHelper.itemDefinitions = itemDefinitions
 
-			itemMapping = itemDefinitions
+				itemMapping = itemDefinitions
 
-			legacyBlockMapping = lazy { LegacyBlockMapping.Provider.craftMapping(protocolVersion) }
+				legacyBlockMapping = lazy { LegacyBlockMapping.Provider.craftMapping(protocolVersion) }
 
-			if (blockTask.isAlive) {
-				blockTask.join()
+				if (blockTask.isAlive) {
+					blockTask.join()
+				}
 			}
         } else if (!thePlayer.movementServerAuthoritative && packet is PlayerAuthInputPacket) {
 			convertAuthInput(packet)?.also { netSession.outboundPacket(it) }

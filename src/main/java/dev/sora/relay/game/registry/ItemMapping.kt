@@ -29,16 +29,19 @@ class ItemMapping(private val runtimeToGameMap: MutableMap<Int, ItemDefinition>)
         override fun readMapping(version: Short): ItemMapping {
             if (!availableVersions.contains(version)) error("Version not available: $version")
 
-            val mapping = JsonParser
-                .parseReader(MappingProvider::class.java.getResourceAsStream("$resourcePath/runtime_item_states_$version.json").reader(Charsets.UTF_8))
-                .asJsonArray.associate {
-                    val obj = it.asJsonObject
+			val mapping = mutableMapOf<Int, ItemDefinition>()
+
+			JsonParser
+				.parseReader(MappingProvider::class.java.getResourceAsStream("$resourcePath/runtime_item_states_$version.json").reader(Charsets.UTF_8))
+				.asJsonArray
+				.forEach {
+					val obj = it.asJsonObject
 					val id = obj.get("id").asInt
 					val name = obj.get("name").asString
-                    id to ItemDefinition(id, name, ItemTags.tags(name).toTypedArray())
-                }
+					mapping[id] = ItemDefinition(id, name, ItemTags.tags(name).toTypedArray())
+				}
 
-            return ItemMapping(mapping.toMutableMap())
+            return ItemMapping(mapping)
         }
     }
 }
