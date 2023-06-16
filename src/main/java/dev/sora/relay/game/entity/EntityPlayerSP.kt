@@ -79,6 +79,8 @@ class EntityPlayerSP(private val session: GameSession, override val eventManager
 	private val pendingBlockActions = mutableListOf<PlayerBlockActionData>()
     private var skipSwings = 0
 
+	private var hasSetEntityId = false
+
     override fun rotate(yaw: Float, pitch: Float) {
         this.prevRotationYaw = rotationYaw
         this.prevRotationPitch = rotationPitch
@@ -120,8 +122,11 @@ class EntityPlayerSP(private val session: GameSession, override val eventManager
 		val packet = it.packet
 
 		if (packet is StartGamePacket) {
-			runtimeEntityId = packet.runtimeEntityId
-			uniqueEntityId = packet.uniqueEntityId
+			if (!hasSetEntityId) {
+				runtimeEntityId = packet.runtimeEntityId
+				uniqueEntityId = packet.uniqueEntityId
+				hasSetEntityId = true
+			}
 			movementServerAuthoritative = packet.authoritativeMovementMode != AuthoritativeMovementMode.CLIENT
 			inventoriesServerAuthoritative = packet.isInventoriesServerAuthoritative
 			soundServerAuthoritative = packet.networkPermissions.isServerAuthSounds
@@ -160,6 +165,7 @@ class EntityPlayerSP(private val session: GameSession, override val eventManager
 			blockBreakServerAuthoritative = false
 			inventoriesServerAuthoritative = false
 			soundServerAuthoritative = false
+			hasSetEntityId = false
 		} else if (packet is MovePlayerPacket) {
 			move(packet.position)
 			rotate(packet.rotation)
