@@ -29,10 +29,6 @@ class ModuleBlockFly : CheatModule("BlockFly", CheatCategory.MOVEMENT) {
     private var lastRotation: Rotation? = null
 
 	private val handleTick = handle<EventTick> { event ->
-
-		val world = session.theWorld
-		println(world.getBlockAt(session.thePlayer.posX.toInt(), (session.thePlayer.posY - 1.62f).toInt() - 1,
-			session.thePlayer.posZ.toInt()))
 		val session = event.session
 		if (!switchToBlock()) {
 			lastRotation = null
@@ -42,6 +38,8 @@ class ModuleBlockFly : CheatModule("BlockFly", CheatCategory.MOVEMENT) {
 		if (lastRotation != null) {
 			session.thePlayer.silentRotation = lastRotation
 		}
+
+		val world = session.theWorld
 		val airId = if (adaptiveBlockIdValue) {
 			world.getBlockIdAt(session.thePlayer.posX.toInt(), session.thePlayer.posY.toInt(),
 				session.thePlayer.posZ.toInt())

@@ -95,8 +95,9 @@ abstract class WorldwideBlockStorage(protected val session: GameSession, overrid
 		if (viewDistance <= 0) return
 		val playerChunkX = floor(session.thePlayer.posX).toInt() shr 4
 		val playerChunkZ = floor(session.thePlayer.posZ).toInt() shr 4
+		val time = System.currentTimeMillis()
 		chunks.entries.removeIf { (_, chunk) ->
-			val bl = !chunk.isInRadius(playerChunkX, playerChunkZ, viewDistance+1)
+			val bl = time - 10000 > chunk.loadedAt && !chunk.isInRadius(playerChunkX, playerChunkZ, viewDistance+1)
 			if (bl) {
 				val event = EventChunkUnload(session, chunk)
 				session.eventManager.emit(event)

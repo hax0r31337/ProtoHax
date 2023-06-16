@@ -4,7 +4,7 @@ import com.google.gson.JsonParser
 import dev.sora.relay.game.utils.constants.ItemTags
 import org.cloudburstmc.protocol.common.DefinitionRegistry
 
-class ItemMapping(private val runtimeToGameMap: Map<Int, ItemDefinition>)
+class ItemMapping(private val runtimeToGameMap: MutableMap<Int, ItemDefinition>)
 	: DefinitionRegistry<org.cloudburstmc.protocol.bedrock.data.definitions.ItemDefinition> {
 
     override fun getDefinition(runtimeId: Int): org.cloudburstmc.protocol.bedrock.data.definitions.ItemDefinition {
@@ -14,6 +14,12 @@ class ItemMapping(private val runtimeToGameMap: Map<Int, ItemDefinition>)
     override fun isRegistered(definition: org.cloudburstmc.protocol.bedrock.data.definitions.ItemDefinition): Boolean {
         return definition is UnknownItemDefinition || getDefinition(definition.runtimeId) == definition
     }
+
+	fun registerCustomItems(itemDefinitions: List<org.cloudburstmc.protocol.bedrock.data.definitions.ItemDefinition>) {
+		itemDefinitions.forEach { itemDefinition ->
+			runtimeToGameMap[itemDefinition.runtimeId] = ItemDefinition(itemDefinition.runtimeId, itemDefinition.identifier, emptyArray())
+		}
+	}
 
     object Provider : MappingProvider<ItemMapping>() {
 
@@ -32,7 +38,7 @@ class ItemMapping(private val runtimeToGameMap: Map<Int, ItemDefinition>)
                     id to ItemDefinition(id, name, ItemTags.tags(name).toTypedArray())
                 }
 
-            return ItemMapping(mapping)
+            return ItemMapping(mapping.toMutableMap())
         }
     }
 }

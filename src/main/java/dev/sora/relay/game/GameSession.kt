@@ -34,7 +34,9 @@ class GameSession : MinecraftRelayPacketListener {
 
     lateinit var netSession: MinecraftRelaySession
 
-    var blockMapping = BlockMapping(emptyMap(), 0)
+	var itemMapping = ItemMapping(mutableMapOf())
+		private set
+    var blockMapping = BlockMapping(mutableMapOf(), 0)
         private set
     var legacyBlockMapping: Lazy<LegacyBlockMapping> = lazy { LegacyBlockMapping(emptyMap()) }
         private set
@@ -52,6 +54,15 @@ class GameSession : MinecraftRelayPacketListener {
         if (event.isCanceled()) {
             return false
         }
+
+		if (packet is StartGamePacket) {
+			if (packet.itemDefinitions.isNotEmpty()) {
+				itemMapping.registerCustomItems(packet.itemDefinitions)
+			}
+//			if (packet.blockProperties.isNotEmpty()) {
+//				blockMapping.registerCustomBlocks(packet.blockProperties)
+//			}
+		}
 
         return true
     }
@@ -81,6 +92,8 @@ class GameSession : MinecraftRelayPacketListener {
 			val itemDefinitions = ItemMapping.Provider.craftMapping(protocolVersion)
 			netSession.peer.codecHelper.itemDefinitions = itemDefinitions
 			netSession.client!!.peer.codecHelper.itemDefinitions = itemDefinitions
+
+			itemMapping = itemDefinitions
 
 			legacyBlockMapping = lazy { LegacyBlockMapping.Provider.craftMapping(protocolVersion) }
 

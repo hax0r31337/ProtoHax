@@ -7,10 +7,12 @@ import org.cloudburstmc.protocol.common.DefinitionRegistry
 import java.io.DataInputStream
 import java.util.zip.GZIPInputStream
 
-class BlockMapping(private val runtimeToGameMap: Map<Int, BlockDefinition>, val airId: Int)
+class BlockMapping(private val runtimeToGameMap: MutableMap<Int, BlockDefinition>, val airId: Int)
 	: DefinitionRegistry<org.cloudburstmc.protocol.bedrock.data.definitions.BlockDefinition> {
 
     private val gameToRuntimeMap = mutableMapOf<BlockDefinition, Int>()
+
+//	private var hasRegisteredCustomBlocks = false
 
     init {
         runtimeToGameMap.forEach { (k, v) ->
@@ -31,8 +33,19 @@ class BlockMapping(private val runtimeToGameMap: Map<Int, BlockDefinition>, val 
     }
 
 	fun getRuntimeByDefinition(definition: BlockDefinition): Int {
-		return gameToRuntimeMap[definition] ?: 0.also { println("no block found $definition") }
+		return gameToRuntimeMap[definition] ?: 0
 	}
+
+//	fun registerCustomBlocks(customBlocks: List<BlockPropertyData>) {
+//		if (hasRegisteredCustomBlocks) {
+//			throw IllegalStateException("Custom blocks has already registered once!")
+//		}
+//		hasRegisteredCustomBlocks = true
+//
+//		customBlocks.forEach { blockPropertyData ->
+//
+//		}
+//	}
 
     object Provider : MappingProvider<BlockMapping>() {
 

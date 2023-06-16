@@ -8,6 +8,9 @@ import kotlin.math.abs
 class Chunk(val x: Int, val z: Int, val dimension: Int, val is384World: Boolean,
             private val blockMapping: BlockMapping, private val legacyBlockMapping: Lazy<LegacyBlockMapping>) {
 
+	var loadedAt = System.currentTimeMillis()
+		private set
+
     val hash: Long
         get() = hash(x, z)
 
@@ -25,6 +28,7 @@ class Chunk(val x: Int, val z: Int, val dimension: Int, val is384World: Boolean,
     }
 
     fun readSubChunk(index: Int, buf: ByteBuf) {
+		loadedAt = System.currentTimeMillis()
         sectionStorage[index].read(buf)
     }
 
