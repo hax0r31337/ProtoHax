@@ -26,7 +26,7 @@ open class RelayListenerEncryptedSession() : MinecraftRelayPacketListener {
 		this.session = session
 	}
 
-	protected val keyPair = EncryptionUtils.createKeyPair()
+	protected var keyPair = EncryptionUtils.createKeyPair()
 
 	lateinit var session: MinecraftRelaySession
 
