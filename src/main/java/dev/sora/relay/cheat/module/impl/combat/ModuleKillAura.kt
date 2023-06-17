@@ -26,7 +26,7 @@ class ModuleKillAura : CheatModule("KillAura", CheatCategory.COMBAT) {
 	private var mouseoverValue by boolValue("Mouseover", false)
     private var swingSoundValue by boolValue("SwingSound", true)
     private var failRateValue by floatValue("FailRate", 0f, 0f..1f)
-    private var failSoundValue by boolValue("FailSound", true)
+    private var failSoundValue by boolValue("FailSound", true).visible { failRateValue > 0f }
 
 	private val handleTick = handle<EventTick> { event ->
 		val session = event.session

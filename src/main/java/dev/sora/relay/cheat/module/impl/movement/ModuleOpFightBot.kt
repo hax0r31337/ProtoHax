@@ -16,7 +16,7 @@ class ModuleOpFightBot : CheatModule("OPFightBot", CheatCategory.MOVEMENT) {
 	private var passiveValue by boolValue("Passive", false)
     private var horizontalSpeedValue by floatValue("HorizontalSpeed", 5f, 1f..7f)
     private var verticalSpeedValue by floatValue("VerticalSpeed", 4f, 1f..7f)
-    private var strafeSpeedValue by intValue("StrafeSpeed", 20, 10..90)
+    private var strafeSpeedValue by intValue("StrafeSpeed", 20, 10..90).visible { modeValue == Mode.STRAFE }
 
 	private val handleTick = handle<EventTick> { event ->
 		val session = event.session

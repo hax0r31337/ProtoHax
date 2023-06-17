@@ -13,8 +13,6 @@ import dev.sora.relay.game.event.Handler
 abstract class CheatModule(val name: String, val category: CheatCategory,
                            val defaultOn: Boolean = false, val canToggle: Boolean = true) : Configurable {
 
-    override val values = mutableListOf<Value<*>>()
-
     var state = defaultOn
         set(state) {
             if (field == state) return
@@ -97,6 +95,11 @@ abstract class CheatModule(val name: String, val category: CheatCategory,
 	fun register(eventManager: EventManager) {
 		handlers.forEach(eventManager::register)
 	}
+
+	override val values = mutableListOf<Value<*>>()
+
+	val visibleValues: List<Value<*>>
+		get() = values.filter { it.visible }
 
 	fun choiceValue(name: String, values: Array<Choice>, defaultValue: Choice): ChoiceValue {
 		val value = ChoiceValue(name, values, defaultValue)

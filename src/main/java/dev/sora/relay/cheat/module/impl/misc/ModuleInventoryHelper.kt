@@ -28,7 +28,7 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper", CheatCategory.MISC)
 	/**
 	 * FIXME
 	 */
-    private var simulateInventoryValue by boolValue("SimulateInventory", false)
+    private var simulateInventoryValue by boolValue("SimulateInventory", false).visible { !guiOpenValue }
     private var autoCloseValue by boolValue("AutoClose", false)
     private var throwUnnecessaryValue by boolValue("ThrowUnnecessary", true)
     private var swingValue by listValue("Swing", EntityLocalPlayer.SwingMode.values(), EntityLocalPlayer.SwingMode.BOTH)
