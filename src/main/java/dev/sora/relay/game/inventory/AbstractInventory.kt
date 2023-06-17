@@ -16,8 +16,9 @@ import org.cloudburstmc.protocol.bedrock.packet.*
 
 abstract class AbstractInventory(val containerId: Int) {
 
-    abstract val capacity: Int
-    open val content = Array(capacity) { ItemData.AIR }
+    abstract val content: Array<ItemData>
+	open val capacity: Int
+		get() = content.size
 
     /**
      * @return containerId, slotId
@@ -26,7 +27,7 @@ abstract class AbstractInventory(val containerId: Int) {
         return containerId to slot
     }
 
-    private fun getSlotTypeFromInventoryId(id: Int, slot: Int): ContainerSlotType {
+    private fun getSlotTypeFromInventoryId(id: Int): ContainerSlotType {
         return when(id) {
             ContainerId.INVENTORY -> ContainerSlotType.INVENTORY
             ContainerId.ARMOR -> ContainerSlotType.ARMOR
@@ -42,8 +43,8 @@ abstract class AbstractInventory(val containerId: Int) {
             ItemStackRequestPacket().also {
                 it.requests.add(ItemStackRequest(serverAuthoritative,
                     arrayOf(PlaceAction(content[sourceSlot].count,
-                    ItemStackRequestSlotData(getSlotTypeFromInventoryId(sourceInfo.first, sourceInfo.second), sourceInfo.second, content[sourceSlot].netId),
-                    ItemStackRequestSlotData(getSlotTypeFromInventoryId(destinationInfo.first, destinationInfo.second), destinationInfo.second, destinationInventory.content[destinationSlot].netId)
+                    ItemStackRequestSlotData(getSlotTypeFromInventoryId(sourceInfo.first), sourceInfo.second, content[sourceSlot].netId),
+                    ItemStackRequestSlotData(getSlotTypeFromInventoryId(destinationInfo.first), destinationInfo.second, destinationInventory.content[destinationSlot].netId)
                     )),
                     arrayOf(), null
                 ))
@@ -93,7 +94,7 @@ abstract class AbstractInventory(val containerId: Int) {
         return if (serverAuthoritative != Int.MAX_VALUE) {
             ItemStackRequestPacket().also {
                 it.requests.add(ItemStackRequest(serverAuthoritative,
-                    arrayOf(DropAction(content[slot].count, ItemStackRequestSlotData(getSlotTypeFromInventoryId(info.first, info.second), info.second, content[slot].netId), false)),
+                    arrayOf(DropAction(content[slot].count, ItemStackRequestSlotData(getSlotTypeFromInventoryId(info.first), info.second, content[slot].netId), false)),
                     arrayOf(), null
                 ))
             }

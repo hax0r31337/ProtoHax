@@ -18,11 +18,11 @@ import java.util.*
 
 class PlayerInventory(private val player: EntityLocalPlayer) : EntityInventory(player) {
 
+	// 36 (inventory) + 4 (armor) + 1 (off-hand)
+	override val content = Array(41) { ItemData.AIR }
+
     var heldItemSlot = 0
         private set
-
-    override val capacity: Int
-        get() = 41 // 36 (inventory) + 4 (armor) + 1 (off-hand)
 
     private var requestId = -1
     private val requestIdMap = mutableMapOf<Int, Int>()
