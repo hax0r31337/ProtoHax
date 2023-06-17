@@ -34,11 +34,11 @@ object MineUtils {
 
 		// TODO: tool speed multiplier
 
-		session.thePlayer.getEffectById(Effect.HASTE)?.let {
+		session.player.getEffectById(Effect.HASTE)?.let {
 			speedMultiplier *= 0.2f * it.amplifier + 1
 		}
 
-		session.thePlayer.getEffectById(Effect.MINING_FATIGUE)?.let {
+		session.player.getEffectById(Effect.MINING_FATIGUE)?.let {
 			speedMultiplier *= when (it.amplifier) {
 				0 -> 0.3f
 				1 -> 0.09f
@@ -47,16 +47,16 @@ object MineUtils {
 			}
 		}
 
-		val pos = session.thePlayer.vec3PositionFeet.toVector3iFloor()
+		val pos = session.player.vec3PositionFeet.toVector3iFloor()
 
 		// in water check
-		if ((session.theWorld.getBlockAt(pos.x, pos.y, pos.z).identifier.contains("water")
-			|| session.theWorld.getBlockAt(pos.x, pos.y + 1, pos.z).identifier.contains("water"))
-			&& !session.thePlayer.inventory.hand.hasEnchant(Enchantment.WATER_WORKER)) {
+		if ((session.level.getBlockAt(pos.x, pos.y, pos.z).identifier.contains("water")
+			|| session.level.getBlockAt(pos.x, pos.y + 1, pos.z).identifier.contains("water"))
+			&& !session.player.inventory.hand.hasEnchant(Enchantment.WATER_WORKER)) {
 			speedMultiplier /= 5
 		}
 
-		if (!session.thePlayer.onGround) {
+		if (!session.player.onGround) {
 			speedMultiplier /= 5
 		}
 

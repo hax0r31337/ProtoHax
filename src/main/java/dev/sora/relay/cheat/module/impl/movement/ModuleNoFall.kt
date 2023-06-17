@@ -19,9 +19,9 @@ class ModuleNoFall : CheatModule("NoFall", CheatCategory.MOVEMENT) {
 	private object ElytraGlitch : Choice("ElytraGlitch") {
 
 		val handleTick = handle<EventTick> { event ->
-			if (event.session.thePlayer.tickExists % 10 == 0L) {
+			if (event.session.player.tickExists % 10 == 0L) {
 				event.session.sendPacket(PlayerActionPacket().apply {
-					runtimeEntityId = event.session.thePlayer.runtimeEntityId
+					runtimeEntityId = event.session.player.runtimeEntityId
 					action = PlayerActionType.START_GLIDE
 					blockPosition = Vector3i.ZERO
 					resultPosition = Vector3i.ZERO

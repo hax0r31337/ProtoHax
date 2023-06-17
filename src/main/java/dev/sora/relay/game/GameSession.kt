@@ -1,12 +1,12 @@
 package dev.sora.relay.game
 
-import dev.sora.relay.game.entity.EntityPlayerSP
+import dev.sora.relay.game.entity.EntityLocalPlayer
 import dev.sora.relay.game.event.*
 import dev.sora.relay.game.management.BlobCacheManager
 import dev.sora.relay.game.registry.BlockMapping
 import dev.sora.relay.game.registry.ItemMapping
 import dev.sora.relay.game.registry.LegacyBlockMapping
-import dev.sora.relay.game.world.WorldClient
+import dev.sora.relay.game.world.Level
 import dev.sora.relay.session.MinecraftRelayPacketListener
 import dev.sora.relay.session.MinecraftRelaySession
 import dev.sora.relay.utils.logInfo
@@ -27,8 +27,8 @@ class GameSession : MinecraftRelayPacketListener {
 
 	val eventManager = EventManager()
 
-    val thePlayer = EntityPlayerSP(this, eventManager)
-    val theWorld = WorldClient(this, eventManager)
+    val player = EntityLocalPlayer(this, eventManager)
+    val level = Level(this, eventManager)
 
     val cacheManager = BlobCacheManager(eventManager)
 
@@ -110,7 +110,7 @@ class GameSession : MinecraftRelayPacketListener {
 					blockTask.join()
 				}
 			}
-        } else if (!thePlayer.movementServerAuthoritative && packet is PlayerAuthInputPacket) {
+        } else if (!player.movementServerAuthoritative && packet is PlayerAuthInputPacket) {
 			convertAuthInput(packet)?.also { netSession.outboundPacket(it) }
 			return false
 		}
@@ -167,7 +167,7 @@ class GameSession : MinecraftRelayPacketListener {
 	private fun convertAuthInput(packet: PlayerAuthInputPacket): MovePlayerPacket? {
 		packet.playerActions.forEach { action ->
 			netSession.outboundPacket(PlayerActionPacket().apply {
-				runtimeEntityId = thePlayer.runtimeEntityId
+				runtimeEntityId = player.runtimeEntityId
 				this.action = action.action
 				blockPosition = action.blockPosition ?: Vector3i.ZERO
 				resultPosition = Vector3i.ZERO
@@ -182,7 +182,7 @@ class GameSession : MinecraftRelayPacketListener {
 					blockPosition = action.blockPosition
 					blockFace = action.face
 					itemInHand = ItemData.AIR
-					playerPosition = thePlayer.vec3Position
+					playerPosition = player.vec3Position
 					clickPosition = Vector3f.ZERO
 					blockDefinition = blockMapping.getDefinition(0)
 				})
@@ -193,7 +193,7 @@ class GameSession : MinecraftRelayPacketListener {
 		inputDataConversionMap.forEach { (k, v) ->
 			if (packet.inputData.contains(k)) {
 				netSession.outboundPacket(PlayerActionPacket().apply {
-					runtimeEntityId = thePlayer.runtimeEntityId
+					runtimeEntityId = player.runtimeEntityId
 					action = v
 					blockPosition = Vector3i.ZERO
 					resultPosition = Vector3i.ZERO
@@ -202,8 +202,8 @@ class GameSession : MinecraftRelayPacketListener {
 		}
 
 		var mode = MovePlayerPacket.Mode.NORMAL
-		if (packet.position.x == thePlayer.prevPosX && packet.position.y == thePlayer.prevPosY && packet.position.z == thePlayer.prevPosZ) {
-			if (packet.rotation.x == thePlayer.prevRotationPitch && packet.rotation.y == thePlayer.prevRotationYaw) {
+		if (packet.position.x == player.prevPosX && packet.position.y == player.prevPosY && packet.position.z == player.prevPosZ) {
+			if (packet.rotation.x == player.prevRotationPitch && packet.rotation.y == player.prevRotationYaw) {
 				return null
 			} else {
 				mode = MovePlayerPacket.Mode.HEAD_ROTATION
@@ -211,10 +211,10 @@ class GameSession : MinecraftRelayPacketListener {
 		}
 
 		return MovePlayerPacket().apply {
-			runtimeEntityId = thePlayer.runtimeEntityId
-			thePlayer.rideEntity?.also { ride -> ridingRuntimeEntityId = ride; println(ride) }
+			runtimeEntityId = player.runtimeEntityId
+			player.rideEntity?.also { ride -> ridingRuntimeEntityId = ride; println(ride) }
 			this.mode = mode
-			isOnGround = thePlayer.onGround
+			isOnGround = player.onGround
 			tick = packet.tick
 			rotation = packet.rotation
 			position = packet.position

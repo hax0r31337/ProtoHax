@@ -24,7 +24,7 @@ class ModuleHitEffect : CheatModule("HitEffect", CheatCategory.VISUAL) {
 		val packet = event.packet
 
 		if (packet is InventoryTransactionPacket && packet.transactionType == InventoryTransactionType.ITEM_USE_ON_ENTITY && packet.actionType == 1) {
-			val target = event.session.theWorld.entityMap[packet.runtimeEntityId] ?: return@handle
+			val target = event.session.level.entityMap[packet.runtimeEntityId] ?: return@handle
 			if (with(moduleManager.getModule(ModuleTargets::class.java)) { target.isTarget() }) {
 				effectValue.deployEffect(event.session, target)
 			}

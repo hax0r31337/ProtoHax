@@ -53,7 +53,7 @@ class CommandDownloadWorld(override val eventManager: EventManager, private val 
 
 		// save chunks
 		level ?: return
-		session.theWorld.chunks.forEach { (_, chunk) ->
+		session.level.chunks.forEach { (_, chunk) ->
 			level!!.saveChunk(chunk)
 			chunkSaved++
 		}

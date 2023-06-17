@@ -11,8 +11,8 @@ class ModuleAirJump : CheatModule("AirJump", CheatCategory.MOVEMENT) {
 
 	private var speedMultiplierValue by floatValue("SpeedMultiplier", 1f, 0.5f..3f)
 
-	private val onTick = handleOneTime<EventTick>({ it.session.thePlayer.inputData.contains(PlayerAuthInputData.JUMP_DOWN) }) {
-		val player = it.session.thePlayer
+	private val onTick = handleOneTime<EventTick>({ it.session.player.inputData.contains(PlayerAuthInputData.JUMP_DOWN) }) {
+		val player = it.session.player
 		if (!player.onGround && !player.prevOnGround) {
 			it.session.netSession.inboundPacket(SetEntityMotionPacket().apply {
 				runtimeEntityId = player.runtimeEntityId

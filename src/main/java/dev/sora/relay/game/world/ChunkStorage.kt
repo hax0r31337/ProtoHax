@@ -12,7 +12,7 @@ import org.cloudburstmc.protocol.bedrock.data.SubChunkRequestResult
 import org.cloudburstmc.protocol.bedrock.packet.*
 import kotlin.math.floor
 
-abstract class WorldwideBlockStorage(protected val session: GameSession, override val eventManager: EventManager) : Listenable {
+abstract class ChunkStorage(protected val session: GameSession, override val eventManager: EventManager) : Listenable {
 
 	val chunks = mutableMapOf<Long, Chunk>()
 
@@ -93,8 +93,8 @@ abstract class WorldwideBlockStorage(protected val session: GameSession, overrid
 
 	protected fun chunkOutOfRangeCheck() {
 		if (viewDistance <= 0) return
-		val playerChunkX = floor(session.thePlayer.posX).toInt() shr 4
-		val playerChunkZ = floor(session.thePlayer.posZ).toInt() shr 4
+		val playerChunkX = floor(session.player.posX).toInt() shr 4
+		val playerChunkZ = floor(session.player.posZ).toInt() shr 4
 		val time = System.currentTimeMillis()
 		chunks.entries.removeIf { (_, chunk) ->
 			val bl = time - 10000 > chunk.loadedAt && !chunk.isInRadius(playerChunkX, playerChunkZ, viewDistance+1)

@@ -23,8 +23,8 @@ class ModuleSpammer : CheatModule("Spammer", CheatCategory.MISC) {
 	private fun sendMessage(placeholders: Map<String, String>) {
 		session.sendPacket(TextPacket().apply {
 			type = TextPacket.Type.CHAT
-			xuid = session.thePlayer.xuid
-			sourceName = session.thePlayer.username
+			xuid = session.player.xuid
+			sourceName = session.player.username
 			platformChatId = ""
 			message = messageValue.let { if (randomSuffix) "$it >${getRandomString(10 + Random.nextInt(5))}<" else it }.let {
 				var result = it

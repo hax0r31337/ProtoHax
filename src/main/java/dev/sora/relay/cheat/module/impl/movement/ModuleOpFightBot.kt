@@ -21,20 +21,20 @@ class ModuleOpFightBot : CheatModule("OPFightBot", CheatCategory.MOVEMENT) {
 	private val handleTick = handle<EventTick> { event ->
 		val session = event.session
 		val moduleTargets = moduleManager.getModule(ModuleTargets::class.java)
-		val target = session.theWorld.entityMap.values.filter { with(moduleTargets) { it.isTarget() } }
-			.minByOrNull { it.distanceSq(session.thePlayer) } ?: return@handle
-		if(target.distance(session.thePlayer) < 5) {
+		val target = session.level.entityMap.values.filter { with(moduleTargets) { it.isTarget() } }
+			.minByOrNull { it.distanceSq(session.player) } ?: return@handle
+		if(target.distance(session.player) < 5) {
 			val direction = Math.toRadians(when(modeValue) {
 				Mode.RANDOM -> Math.random() * 360
-				Mode.STRAFE -> ((session.thePlayer.tickExists * strafeSpeedValue) % 360).toDouble()
+				Mode.STRAFE -> ((session.player.tickExists * strafeSpeedValue) % 360).toDouble()
 				Mode.BEHIND -> target.rotationYaw + 180.0
 			}).toFloat()
-			session.thePlayer.teleport(target.posX - sin(direction) * rangeValue, target.posY + 0.5f, target.posZ + cos(direction) * rangeValue)
+			session.player.teleport(target.posX - sin(direction) * rangeValue, target.posY + 0.5f, target.posZ + cos(direction) * rangeValue)
 		} else if (!passiveValue) {
-			val direction = atan2(target.posZ - session.thePlayer.posZ, target.posX - session.thePlayer.posX) - Math.toRadians(90.0).toFloat()
-			session.thePlayer.teleport(session.thePlayer.posX - sin(direction) * horizontalSpeedValue,
-				target.posY.coerceIn(session.thePlayer.posY - verticalSpeedValue, session.thePlayer.posY + verticalSpeedValue),
-				session.thePlayer.posZ + cos(direction) * horizontalSpeedValue)
+			val direction = atan2(target.posZ - session.player.posZ, target.posX - session.player.posX) - Math.toRadians(90.0).toFloat()
+			session.player.teleport(session.player.posX - sin(direction) * horizontalSpeedValue,
+				target.posY.coerceIn(session.player.posY - verticalSpeedValue, session.player.posY + verticalSpeedValue),
+				session.player.posZ + cos(direction) * horizontalSpeedValue)
 		}
 	}
 

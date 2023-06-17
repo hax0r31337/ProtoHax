@@ -4,7 +4,7 @@ import dev.sora.relay.cheat.module.CheatCategory
 import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.cheat.value.NamedChoice
 import dev.sora.relay.game.GameSession
-import dev.sora.relay.game.entity.EntityPlayerSP
+import dev.sora.relay.game.entity.EntityLocalPlayer
 import dev.sora.relay.game.event.EventPacketInbound
 import dev.sora.relay.game.event.EventPacketOutbound
 import dev.sora.relay.game.event.EventTick
@@ -31,7 +31,7 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper", CheatCategory.MISC)
     private var simulateInventoryValue by boolValue("SimulateInventory", false)
     private var autoCloseValue by boolValue("AutoClose", false)
     private var throwUnnecessaryValue by boolValue("ThrowUnnecessary", true)
-    private var swingValue by listValue("Swing", EntityPlayerSP.SwingMode.values(), EntityPlayerSP.SwingMode.BOTH)
+    private var swingValue by listValue("Swing", EntityLocalPlayer.SwingMode.values(), EntityLocalPlayer.SwingMode.BOTH)
     private val cpsValue = clickValue(value = 2..4)
     private var sortArmorValue by boolValue("Armor", true)
     private var sortOffhandValue by listValue("Offhand", SortOffhandMode.values(), SortOffhandMode.TOTEM)
@@ -64,7 +64,7 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper", CheatCategory.MISC)
 			return@handle
 		}
 
-		val player = event.session.thePlayer
+		val player = event.session.player
 		val openContainer = player.openContainer
 
 		if (stealChestValue && openContainer != null && openContainer !is PlayerInventory) {
@@ -190,16 +190,16 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper", CheatCategory.MISC)
 			event.session.sendPacketToClient(ContainerOpenPacket().apply {
 				id = 0.toByte()
 				type = ContainerType.INVENTORY
-				blockPosition = event.session.thePlayer.vec3Position.toVector3i()
-				uniqueEntityId = event.session.thePlayer.uniqueEntityId
+				blockPosition = event.session.player.vec3Position.toVector3i()
+				uniqueEntityId = event.session.player.uniqueEntityId
 			})
 		}
 	}
 
     private fun checkFakeOpen(session: GameSession): Boolean {
-        if (!hasSimulated && session.thePlayer.openContainer == null && simulateInventoryValue) {
+        if (!hasSimulated && session.player.openContainer == null && simulateInventoryValue) {
             session.netSession.outboundPacket(InteractPacket().apply {
-                runtimeEntityId = session.thePlayer.runtimeEntityId
+                runtimeEntityId = session.player.runtimeEntityId
                 action = InteractPacket.Action.OPEN_INVENTORY
             })
             hasSimulated = true

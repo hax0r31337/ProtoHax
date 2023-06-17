@@ -11,7 +11,7 @@ import org.cloudburstmc.protocol.bedrock.packet.*
 import java.util.*
 import kotlin.math.pow
 
-class WorldClient(session: GameSession, eventManager: EventManager) : WorldwideBlockStorage(session, eventManager) {
+class Level(session: GameSession, eventManager: EventManager) : ChunkStorage(session, eventManager) {
 
     val entityMap = mutableMapOf<Long, Entity>()
     val playerList = mutableMapOf<UUID, PlayerListPacket.Entry>()

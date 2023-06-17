@@ -18,7 +18,7 @@ class ModuleDisabler : CheatModule("Disabler", CheatCategory.MISC) {
 
 		private val handleTick = handle<EventTick> { event ->
 			event.session.sendPacket(MovePlayerPacket().apply {
-				val thePlayer = event.session.thePlayer
+				val thePlayer = event.session.player
 				runtimeEntityId = thePlayer.runtimeEntityId
 				position = thePlayer.vec3Position
 				rotation = thePlayer.vec3Rotation
@@ -45,7 +45,7 @@ class ModuleDisabler : CheatModule("Disabler", CheatCategory.MISC) {
 
 		private val handleTick = handle<EventTick> { event ->
 			event.session.sendPacket(MovePlayerPacket().apply {
-				val thePlayer = event.session.thePlayer
+				val thePlayer = event.session.player
 				runtimeEntityId = thePlayer.runtimeEntityId
 				position = thePlayer.vec3Position
 				rotation = thePlayer.vec3Rotation

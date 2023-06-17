@@ -31,12 +31,12 @@ class ModuleSurround : CheatModule("Surround", CheatCategory.COMBAT) {
 	private val onTick = handle<EventTick> { event ->
 		val session = event.session
 
-		if (onSneakValue && !session.thePlayer.isSneaking) {
+		if (onSneakValue && !session.player.isSneaking) {
 			holePosition = null
 			return@handle
 		}
 
-		val basePosition = session.thePlayer.vec3PositionFeet.sub(0.5f, 0f, 0.5f)
+		val basePosition = session.player.vec3PositionFeet.sub(0.5f, 0f, 0.5f)
 		val roundPosition = basePosition.round()
 
 		if (fitInHoleValue) {
@@ -44,7 +44,7 @@ class ModuleSurround : CheatModule("Surround", CheatCategory.COMBAT) {
 				holePosition = roundPosition
 			}
 			if (basePosition.distance(holePosition!!) >= 0.1) {
-				session.thePlayer.teleport(holePosition!!.add(0.5f, EntityPlayer.EYE_HEIGHT, 0.5f))
+				session.player.teleport(holePosition!!.add(0.5f, EntityPlayer.EYE_HEIGHT, 0.5f))
 			}
 		}
 
@@ -53,19 +53,19 @@ class ModuleSurround : CheatModule("Surround", CheatCategory.COMBAT) {
 
 		val blockToPlace = placeableDirections
 			.map { roundPosition.toVector3i().add(it.unitVector.x, it.unitVector.y, it.unitVector.z) }
-			.filter { session.theWorld.getBlockAt(it).identifier == "minecraft:air" }
+			.filter { session.level.getBlockAt(it).identifier == "minecraft:air" }
 		if (blockToPlace.isEmpty()) return@handle
 
-		val slot = if (session.thePlayer.inventory.hand.itemDefinition.identifier == "minecraft:obsidian") -1
-			else session.thePlayer.inventory.searchForItemInHotbar { it.itemDefinition.identifier == "minecraft:obsidian" }
+		val slot = if (session.player.inventory.hand.itemDefinition.identifier == "minecraft:obsidian") -1
+			else session.player.inventory.searchForItemInHotbar { it.itemDefinition.identifier == "minecraft:obsidian" }
 		if (slot == null) {
 			session.chat("Disabling due to no obsidian found in hotbar!")
 			state = false
 			return@handle
 		}
 
-		val bb = AxisAlignedBB(session.thePlayer.posX - .3f, session.thePlayer.posY - 1f, session.thePlayer.posZ - .3f,
-			session.thePlayer.posX + .3f, session.thePlayer.posY + .8f, session.thePlayer.posZ + .3f)
+		val bb = AxisAlignedBB(session.player.posX - .3f, session.player.posY - 1f, session.player.posZ - .3f,
+			session.player.posX + .3f, session.player.posY + .8f, session.player.posZ + .3f)
 
 		// TODO: better block searching
 		blockToPlace.forEach { block ->
@@ -74,7 +74,7 @@ class ModuleSurround : CheatModule("Surround", CheatCategory.COMBAT) {
 				return@forEach
 
 			val (facing, _) = EnumFacing.values().map { it to block.sub(it.unitVector) }
-				.filter { session.theWorld.getBlockAt(it.second).identifier != "minecraft:air" }
+				.filter { session.level.getBlockAt(it.second).identifier != "minecraft:air" }
 				.minByOrNull { it.second.distance(roundPosition.toVector3i()) } ?: return@forEach
 
 			val originalSlot = if (slot != -1) {
@@ -83,10 +83,10 @@ class ModuleSurround : CheatModule("Surround", CheatCategory.COMBAT) {
 					isSelectHotbarSlot = true
 					containerId = ContainerId.INVENTORY
 				})
-				session.thePlayer.inventory.heldItemSlot
+				session.player.inventory.heldItemSlot
 			} else -1
 
-			session.thePlayer.placeBlock(block, facing)
+			session.player.placeBlock(block, facing)
 			delayTimer.reset()
 
 			if (slot != -1) {

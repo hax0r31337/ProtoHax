@@ -4,8 +4,8 @@ import dev.sora.relay.cheat.module.CheatCategory
 import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.cheat.value.NamedChoice
 import dev.sora.relay.game.entity.Entity
+import dev.sora.relay.game.entity.EntityLocalPlayer
 import dev.sora.relay.game.entity.EntityPlayer
-import dev.sora.relay.game.entity.EntityPlayerSP
 import dev.sora.relay.game.entity.EntityUnknown
 import dev.sora.relay.utils.analyzeColorCoverage
 import org.cloudburstmc.protocol.bedrock.data.entity.EntityDataTypes
@@ -18,18 +18,18 @@ class ModuleTargets : CheatModule("Targets", CheatCategory.COMBAT, canToggle = f
 	private var teamCheckModeValue by listValue("TeamCheckMode", TeamCheckMode.values(), TeamCheckMode.NONE)
 
 	fun Entity.isTarget(): Boolean {
-		return if (this == session.thePlayer) false
+		return if (this == session.player) false
 		else if (targetPlayersValue && this is EntityPlayer) !this.isBot() && !this.isTeammate()
 		else if (targetEntitiesValue && this is EntityUnknown) true
 		else false
 	}
 
     fun EntityPlayer.isBot(): Boolean {
-        if (this is EntityPlayerSP || !state) return false
+        if (this is EntityLocalPlayer || !state) return false
 
         return when (antiBotModeValue) {
             AntiBotMode.PLAYER_LIST -> {
-                val playerList = session.theWorld.playerList[this.uuid] ?: return true
+                val playerList = session.level.playerList[this.uuid] ?: return true
                 playerList.name.isBlank()
             }
 			AntiBotMode.NONE -> false
@@ -37,11 +37,11 @@ class ModuleTargets : CheatModule("Targets", CheatCategory.COMBAT, canToggle = f
     }
 
 	fun EntityPlayer.isTeammate(): Boolean {
-		if (this is EntityPlayerSP || !state) return false
+		if (this is EntityLocalPlayer || !state) return false
 
 		return when (teamCheckModeValue) {
 			TeamCheckMode.NAME_TAG -> {
-				val selfColor = session.thePlayer.metadata[EntityDataTypes.NAME]?.let { analyzeColorCoverage(it as String).maxBy { it.value }.key } ?: 'f'
+				val selfColor = session.player.metadata[EntityDataTypes.NAME]?.let { analyzeColorCoverage(it as String).maxBy { it.value }.key } ?: 'f'
 				val playerColor = this.metadata[EntityDataTypes.NAME]?.let { analyzeColorCoverage(it as String).maxBy { it.value }.key } ?: 'f'
 
 				selfColor == playerColor

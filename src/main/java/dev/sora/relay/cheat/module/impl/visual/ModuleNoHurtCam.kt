@@ -11,7 +11,7 @@ class ModuleNoHurtCam : CheatModule("NoHurtCam", CheatCategory.VISUAL) {
 	private val handlePacketInbound = handle<EventPacketInbound> { event ->
 		val packet = event.packet
 
-		if (packet is EntityEventPacket && packet.runtimeEntityId == event.session.thePlayer.runtimeEntityId
+		if (packet is EntityEventPacket && packet.runtimeEntityId == event.session.player.runtimeEntityId
 			&& packet.type == EntityEventType.HURT) {
 
 			event.cancel()

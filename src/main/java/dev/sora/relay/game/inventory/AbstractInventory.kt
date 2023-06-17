@@ -64,7 +64,7 @@ abstract class AbstractInventory(val containerId: Int) {
     open fun moveItem(sourceSlot: Int, destinationSlot: Int, destinationInventory: AbstractInventory, session: GameSession) {
         // send packet to server
         val pk = moveItem(sourceSlot, destinationSlot, destinationInventory,
-            if (session.thePlayer.inventoriesServerAuthoritative) session.thePlayer.inventory.getRequestId() else Int.MAX_VALUE)
+            if (session.player.inventoriesServerAuthoritative) session.player.inventory.getRequestId() else Int.MAX_VALUE)
         sendInventoryPacket(pk, destinationInventory, session)
 
         // sync with client
@@ -112,7 +112,7 @@ abstract class AbstractInventory(val containerId: Int) {
     open fun dropItem(slot: Int, session: GameSession) {
         // send packet to server
         val pk = dropItem(slot,
-            if (session.thePlayer.inventoriesServerAuthoritative) session.thePlayer.inventory.getRequestId() else Int.MAX_VALUE)
+            if (session.player.inventoriesServerAuthoritative) session.player.inventory.getRequestId() else Int.MAX_VALUE)
         sendInventoryPacket(pk, null, session)
 
         // sync with client

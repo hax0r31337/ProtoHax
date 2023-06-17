@@ -3,8 +3,8 @@ package dev.sora.relay.cheat.module.impl.movement
 import dev.sora.relay.cheat.module.CheatCategory
 import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.cheat.value.NamedChoice
+import dev.sora.relay.game.entity.EntityLocalPlayer
 import dev.sora.relay.game.entity.EntityPlayer
-import dev.sora.relay.game.entity.EntityPlayerSP
 import dev.sora.relay.game.event.EventTick
 import dev.sora.relay.game.registry.isBlock
 import dev.sora.relay.game.utils.AxisAlignedBB
@@ -12,14 +12,14 @@ import dev.sora.relay.game.utils.Rotation
 import dev.sora.relay.game.utils.constants.EnumFacing
 import dev.sora.relay.game.utils.toRotation
 import dev.sora.relay.game.utils.toVector3f
-import dev.sora.relay.game.world.WorldClient
+import dev.sora.relay.game.world.Level
 import org.cloudburstmc.math.vector.Vector3i
 import org.cloudburstmc.protocol.bedrock.data.inventory.ContainerId
 import org.cloudburstmc.protocol.bedrock.packet.PlayerHotbarPacket
 
 class ModuleBlockFly : CheatModule("BlockFly", CheatCategory.MOVEMENT) {
 
-    private var swingValue by listValue("Swing", EntityPlayerSP.SwingMode.values(), EntityPlayerSP.SwingMode.BOTH)
+    private var swingValue by listValue("Swing", EntityLocalPlayer.SwingMode.values(), EntityLocalPlayer.SwingMode.BOTH)
     private var adaptiveBlockIdValue by boolValue("AdaptiveBlockId", false)
     private var heldBlockValue by listValue("HeldBlock", HeldBlockMode.values(), HeldBlockMode.MANUAL)
     private var rotationValue by boolValue("Rotation", false)
@@ -36,35 +36,35 @@ class ModuleBlockFly : CheatModule("BlockFly", CheatCategory.MOVEMENT) {
 		}
 
 		if (lastRotation != null) {
-			session.thePlayer.silentRotation = lastRotation
+			session.player.silentRotation = lastRotation
 		}
 
-		val world = session.theWorld
+		val world = session.level
 		val airId = if (adaptiveBlockIdValue) {
-			world.getBlockIdAt(session.thePlayer.posX.toInt(), session.thePlayer.posY.toInt(),
-				session.thePlayer.posZ.toInt())
+			world.getBlockIdAt(session.player.posX.toInt(), session.player.posY.toInt(),
+				session.player.posZ.toInt())
 		} else {
 			session.blockMapping.airId
 		}
-		val possibilities = searchBlocks(session.thePlayer.posX, session.thePlayer.posY - EntityPlayer.EYE_HEIGHT,
-			session.thePlayer.posZ, 1, session.thePlayer, world, airId)
+		val possibilities = searchBlocks(session.player.posX, session.player.posY - EntityPlayer.EYE_HEIGHT,
+			session.player.posZ, 1, session.player, world, airId)
 		val block = possibilities.firstOrNull() ?: return@handle
 		val facing = getFacing(block, world, airId) ?: return@handle
-		session.thePlayer.placeBlock(block, facing)
-		session.thePlayer.swing(swingValue)
+		session.player.placeBlock(block, facing)
+		session.player.swing(swingValue)
 
 		if (rotationValue) {
-			lastRotation = toRotation(session.thePlayer.vec3Position, block.sub(facing.unitVector).toVector3f())
-			session.thePlayer.silentRotation = lastRotation
+			lastRotation = toRotation(session.player.vec3Position, block.sub(facing.unitVector).toVector3f())
+			session.player.silentRotation = lastRotation
 		}
 	}
 
     private fun switchToBlock(): Boolean {
         return when(heldBlockValue) {
-            HeldBlockMode.MANUAL -> session.thePlayer.inventory.hand.isBlock()
+            HeldBlockMode.MANUAL -> session.player.inventory.hand.isBlock()
             HeldBlockMode.AUTOMATIC -> {
-                if (!session.thePlayer.inventory.hand.isBlock()) {
-                    val slot = session.thePlayer.inventory.searchForItem(0..8) {
+                if (!session.player.inventory.hand.isBlock()) {
+                    val slot = session.player.inventory.searchForItem(0..8) {
                         (it.blockDefinition?.runtimeId ?: 0) != 0
                     } ?: return false
                     val packet = PlayerHotbarPacket().apply {
@@ -80,7 +80,7 @@ class ModuleBlockFly : CheatModule("BlockFly", CheatCategory.MOVEMENT) {
         }
     }
 
-    private fun searchBlocks(offsetX: Float, offsetY: Float, offsetZ: Float, range: Int, player: EntityPlayerSP, world: WorldClient, expected: Int): List<Vector3i> {
+    private fun searchBlocks(offsetX: Float, offsetY: Float, offsetZ: Float, range: Int, player: EntityLocalPlayer, world: Level, expected: Int): List<Vector3i> {
         val possibilities = mutableListOf<Vector3i>()
         val rangeSq = 4.5f * 4.5f
         val blockNear = mutableListOf<EnumFacing>()
@@ -122,7 +122,7 @@ class ModuleBlockFly : CheatModule("BlockFly", CheatCategory.MOVEMENT) {
             .sortedBy { it.distanceSquared(offsetX.toDouble(), offsetY-1.0, offsetZ.toDouble()) }
     }
 
-    private fun getFacing(block: Vector3i, world: WorldClient, expected: Int): EnumFacing? {
+    private fun getFacing(block: Vector3i, world: Level, expected: Int): EnumFacing? {
         extendableFacing.forEach {
             val blockExtend = world.getBlockIdAt(block.sub(it.unitVector))
             if (blockExtend != expected) {

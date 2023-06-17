@@ -23,7 +23,7 @@ class ModuleAntiBlind : CheatModule("AntiBlind", CheatCategory.VISUAL) {
 		if (nightVisionValue && session.netSessionInitialized) {
 			session.netSession.inboundPacket(MobEffectPacket().apply {
 				event = MobEffectPacket.Event.REMOVE
-				runtimeEntityId = session.thePlayer.runtimeEntityId
+				runtimeEntityId = session.player.runtimeEntityId
 				effectId = Effect.NIGHT_VISION
 			})
 		}
@@ -31,9 +31,9 @@ class ModuleAntiBlind : CheatModule("AntiBlind", CheatCategory.VISUAL) {
 
 	private val handleTick = handle<EventTick>(this::nightVisionValue) { event ->
 		val session = event.session
-		if (session.thePlayer.tickExists % 20 != 0L) return@handle
+		if (session.player.tickExists % 20 != 0L) return@handle
 		session.netSession.inboundPacket(MobEffectPacket().apply {
-			runtimeEntityId = session.thePlayer.runtimeEntityId
+			runtimeEntityId = session.player.runtimeEntityId
 			setEvent(MobEffectPacket.Event.ADD)
 			effectId = Effect.NIGHT_VISION
 			amplifier = 0
@@ -49,7 +49,7 @@ class ModuleAntiBlind : CheatModule("AntiBlind", CheatCategory.VISUAL) {
 				event.cancel()
 			}
 		} else if (packet is SetEntityDataPacket) {
-			if (packet.runtimeEntityId == event.session.thePlayer.runtimeEntityId) {
+			if (packet.runtimeEntityId == event.session.player.runtimeEntityId) {
 				if (removeFireValue && packet.metadata.flags.contains(EntityFlag.ON_FIRE)) {
 					packet.metadata.setFlag(EntityFlag.ON_FIRE, false)
 				}

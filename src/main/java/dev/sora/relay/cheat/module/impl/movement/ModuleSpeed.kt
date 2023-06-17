@@ -3,7 +3,7 @@ package dev.sora.relay.cheat.module.impl.movement
 import dev.sora.relay.cheat.module.CheatCategory
 import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.cheat.value.Choice
-import dev.sora.relay.game.entity.EntityPlayerSP
+import dev.sora.relay.game.entity.EntityLocalPlayer
 import dev.sora.relay.game.event.EventTick
 import org.cloudburstmc.math.vector.Vector3f
 import org.cloudburstmc.protocol.bedrock.data.PlayerAuthInputData
@@ -19,16 +19,16 @@ class ModuleSpeed : CheatModule("Speed", CheatCategory.MOVEMENT) {
 	private var jumpValue by floatValue("Jump", 0.42f, 0.2f..1f)
 
 	private val canMove: Boolean
-		get() = !sprintToMoveValue || session.thePlayer.inputData.contains(PlayerAuthInputData.SPRINT_DOWN)
+		get() = !sprintToMoveValue || session.player.inputData.contains(PlayerAuthInputData.SPRINT_DOWN)
 
-	private fun getMoveDirectionAngle(player: EntityPlayerSP): Float {
+	private fun getMoveDirectionAngle(player: EntityLocalPlayer): Float {
 		return Math.toRadians(player.rotationYaw.toDouble()).toFloat()
 	}
 
 	private inner class Simple : Choice("Simple") {
 
 		private val onTick = handle<EventTick> { event ->
-			val player = event.session.thePlayer
+			val player = event.session.player
 
 			if (canMove) {
 				if (player.onGround || player.motionY == 0f || (player.motionY > player.prevMotionY && player.motionY < 0)) {
@@ -45,7 +45,7 @@ class ModuleSpeed : CheatModule("Speed", CheatCategory.MOVEMENT) {
 	private inner class Strafe : Choice("Strafe") {
 
 		private val onTick = handle<EventTick> { event ->
-			val player = event.session.thePlayer
+			val player = event.session.player
 
 			if (canMove) {
 				val angle = getMoveDirectionAngle(player)

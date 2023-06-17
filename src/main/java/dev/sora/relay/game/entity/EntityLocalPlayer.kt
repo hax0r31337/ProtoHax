@@ -20,7 +20,7 @@ import org.cloudburstmc.protocol.bedrock.packet.*
 import java.util.*
 import kotlin.math.floor
 
-class EntityPlayerSP(private val session: GameSession, override val eventManager: EventManager) : EntityPlayer(0L, 0L, UUID.randomUUID(), ""), Listenable {
+class EntityLocalPlayer(private val session: GameSession, override val eventManager: EventManager) : EntityPlayer(0L, 0L, UUID.randomUUID(), ""), Listenable {
 
     override var runtimeEntityId: Long = 0L
         private set
@@ -90,7 +90,7 @@ class EntityPlayerSP(private val session: GameSession, override val eventManager
     fun teleport(x: Float, y: Float, z: Float) {
         move(x, y, z)
         session.netSession.inboundPacket(MovePlayerPacket().apply {
-            runtimeEntityId = this@EntityPlayerSP.runtimeEntityId
+            runtimeEntityId = this@EntityLocalPlayer.runtimeEntityId
             position = Vector3f.from(x, y, z)
             rotation = Vector3f.from(rotationPitch, rotationYaw, 0f)
             if (rideEntity != null) {
@@ -204,7 +204,7 @@ class EntityPlayerSP(private val session: GameSession, override val eventManager
 			onGround = if (playerMinY % 0.125f == 0f) {
 				packet.position.add(0f, -EYE_HEIGHT, 0f).toVector3iFloor()
 					.let { if (playerMinY % 1 == 0f) it.add(0, -1, 0) else it }
-					.let { session.theWorld.getBlockAt(it.x, it.y, it.z).identifier != "minecraft:air" }
+					.let { session.level.getBlockAt(it.x, it.y, it.z).identifier != "minecraft:air" }
 			} else prevPosY == posY
 
 			inputData.clear()
@@ -272,7 +272,7 @@ class EntityPlayerSP(private val session: GameSession, override val eventManager
     fun swing(swingValue: SwingMode = SwingMode.BOTH, sound: Boolean = false) {
         AnimatePacket().apply {
             action = AnimatePacket.Action.SWING_ARM
-            runtimeEntityId = this@EntityPlayerSP.runtimeEntityId
+            runtimeEntityId = this@EntityLocalPlayer.runtimeEntityId
         }.also {
             // send the packet back to client in order to display the swing animation
             if (swingValue == SwingMode.BOTH || swingValue == SwingMode.SERVERSIDE)
@@ -373,7 +373,7 @@ class EntityPlayerSP(private val session: GameSession, override val eventManager
 			blockPosition = block
 			this.definition = definition
 		})
-		session.theWorld.setBlockIdAt(block.x, block.y, block.z, definition?.runtimeId ?: 0)
+		session.level.setBlockIdAt(block.x, block.y, block.z, definition?.runtimeId ?: 0)
 		useItem(ItemUseTransaction().apply {
 			actionType = 0
 			blockPosition = block.sub(facing.unitVector)

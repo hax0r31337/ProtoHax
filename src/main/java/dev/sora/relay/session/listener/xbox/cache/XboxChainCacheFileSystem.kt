@@ -12,9 +12,7 @@ import org.cloudburstmc.protocol.bedrock.util.EncryptionUtils
 import java.io.File
 import java.security.KeyFactory
 import java.security.KeyPair
-import java.security.spec.ECPrivateKeySpec
 import java.security.spec.PKCS8EncodedKeySpec
-import java.security.spec.X509EncodedKeySpec
 import java.time.Instant
 import java.util.*
 
