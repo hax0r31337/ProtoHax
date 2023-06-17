@@ -18,6 +18,7 @@ import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.InventoryTra
 import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.ItemUseTransaction
 import org.cloudburstmc.protocol.bedrock.packet.*
 import java.util.*
+import kotlin.math.atan2
 import kotlin.math.floor
 
 class EntityLocalPlayer(private val session: GameSession, override val eventManager: EventManager) : EntityPlayer(0L, 0L, UUID.randomUUID(), ""), Listenable {
@@ -78,6 +79,12 @@ class EntityLocalPlayer(private val session: GameSession, override val eventMana
     private val pendingItemInteraction = LinkedList<ItemUseTransaction>()
 	private val pendingBlockActions = mutableListOf<PlayerBlockActionData>()
     private var skipSwings = 0
+
+	/**
+	 * move direction in radians
+	 */
+	var moveDirectionAngle = 0f
+		private set
 
 	private var hasSetEntityId = false
 
@@ -199,6 +206,8 @@ class EntityLocalPlayer(private val session: GameSession, override val eventMana
 		} else if (packet is PlayerAuthInputPacket) {
 			move(packet.position)
 			rotate(packet.rotation)
+
+			moveDirectionAngle = Math.toRadians(rotationYaw.toDouble()).toFloat() + atan2(-packet.motion.x, packet.motion.y)
 
 			val playerMinY = floor((posY - EYE_HEIGHT) * 1000) / 1000
 			onGround = if (playerMinY % 0.125f == 0f) {
