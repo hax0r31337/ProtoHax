@@ -11,6 +11,7 @@ import dev.sora.relay.game.utils.Rotation
 import dev.sora.relay.game.utils.constants.EnumFacing
 import dev.sora.relay.game.utils.removeNetInfo
 import dev.sora.relay.game.utils.toVector3iFloor
+import org.cloudburstmc.math.vector.Vector2f
 import org.cloudburstmc.math.vector.Vector3f
 import org.cloudburstmc.math.vector.Vector3i
 import org.cloudburstmc.protocol.bedrock.data.*
@@ -83,7 +84,7 @@ class EntityLocalPlayer(private val session: GameSession, override val eventMana
 	/**
 	 * move direction in radians
 	 */
-	var moveDirectionAngle = 0f
+	var moveDirectionAngle: Float? = null
 		private set
 
 	private var hasSetEntityId = false
@@ -207,7 +208,11 @@ class EntityLocalPlayer(private val session: GameSession, override val eventMana
 			move(packet.position)
 			rotate(packet.rotation)
 
-			moveDirectionAngle = Math.toRadians(rotationYaw.toDouble()).toFloat() + atan2(-packet.motion.x, packet.motion.y)
+			moveDirectionAngle = if (packet.motion == Vector2f.ZERO) {
+				null
+			} else {
+				Math.toRadians(rotationYaw.toDouble()).toFloat() + atan2(-packet.motion.x, packet.motion.y)
+			}
 
 			val playerMinY = floor((posY - EYE_HEIGHT) * 1000) / 1000
 			onGround = if (playerMinY % 0.125f == 0f) {
@@ -233,6 +238,9 @@ class EntityLocalPlayer(private val session: GameSession, override val eventMana
 			}
 
 			session.onTick()
+
+			packet.inputData.clear()
+			packet.inputData.addAll(inputData)
 
 			if (pendingItemInteraction.isNotEmpty() && !packet.inputData.contains(PlayerAuthInputData.PERFORM_ITEM_INTERACTION)) {
 				packet.inputData.add(PlayerAuthInputData.PERFORM_ITEM_INTERACTION)
