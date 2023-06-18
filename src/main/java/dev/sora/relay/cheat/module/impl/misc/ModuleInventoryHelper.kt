@@ -10,6 +10,8 @@ import dev.sora.relay.game.event.EventPacketOutbound
 import dev.sora.relay.game.event.EventTick
 import dev.sora.relay.game.inventory.AbstractInventory
 import dev.sora.relay.game.inventory.PlayerInventory
+import dev.sora.relay.game.registry.getEnchantScore
+import dev.sora.relay.game.registry.hasBetterItem
 import dev.sora.relay.game.registry.isBlock
 import dev.sora.relay.game.registry.itemDefinition
 import dev.sora.relay.game.utils.constants.ItemTags
@@ -36,6 +38,7 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper", CheatCategory.MISC)
     private var sortArmorValue by boolValue("Armor", true)
     private var sortOffhandValue by listValue("Offhand", SortOffhandMode.values(), SortOffhandMode.TOTEM)
     private var sortSwordValue by intValue("SortSword", 0, -1..8)
+	private var sortTridentValue by intValue("SortTrident", 1, -1..8)
     private var sortPickaxeValue by intValue("SortPickaxe", 5, -1..8)
     private var sortAxeValue by intValue("SortAxe", 6, -1..8)
     private var sortBlockValue by intValue("SortBlock", 7, -1..8)
@@ -43,10 +46,10 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper", CheatCategory.MISC)
     private var noSortNoCloseValue by boolValue("NoCloseIfNoSort", true)
 
     private val sortArmor = arrayOf(
-        Sort(PlayerInventory.SLOT_HELMET, ItemTags.TAG_IS_HELMET),
-        Sort(PlayerInventory.SLOT_CHESTPLATE, ItemTags.TAG_IS_CHESTPLATE),
-        Sort(PlayerInventory.SLOT_LEGGINGS, ItemTags.TAG_IS_LEGGINGS),
-        Sort(PlayerInventory.SLOT_BOOTS, ItemTags.TAG_IS_BOOTS)
+		sortByTag(PlayerInventory.SLOT_HELMET, ItemTags.TAG_IS_HELMET),
+		sortByTag(PlayerInventory.SLOT_CHESTPLATE, ItemTags.TAG_IS_CHESTPLATE),
+		sortByTag(PlayerInventory.SLOT_LEGGINGS, ItemTags.TAG_IS_LEGGINGS),
+		sortByTag(PlayerInventory.SLOT_BOOTS, ItemTags.TAG_IS_BOOTS)
     )
 
     private var sorted = true
@@ -70,7 +73,7 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper", CheatCategory.MISC)
 		if (stealChestValue && openContainer != null && openContainer !is PlayerInventory) {
 			// steal items
 			openContainer.content.forEachIndexed { index, item ->
-				if (item.itemDefinition.isNecessaryItem(item) && !item.itemDefinition.hasBetterItem(openContainer, index, strictMode = false) && !item.itemDefinition.hasBetterItem(player.inventory)) {
+				if (item.itemDefinition.isNecessaryItem(item) && !item.hasBetterItem(openContainer, index, strictMode = false) && !item.hasBetterItem(player.inventory)) {
 					val slot = player.inventory.findEmptySlot() ?: return@handle
 					openContainer.moveItem(index, slot, player.inventory, session)
 
@@ -83,7 +86,7 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper", CheatCategory.MISC)
 			// drop garbage
 			player.inventory.content.forEachIndexed { index, item ->
 				if (item == ItemData.AIR) return@forEachIndexed
-				if (item.itemDefinition.hasBetterItem(player.inventory, index) || (throwUnnecessaryValue && !item.itemDefinition.isNecessaryItem(item))) {
+				if (item.hasBetterItem(player.inventory, index) || (throwUnnecessaryValue && !item.itemDefinition.isNecessaryItem(item))) {
 					if (checkFakeOpen(session)) return@handle
 					player.inventory.dropItem(index, session)
 					// player will swing if they drop an item
@@ -147,13 +150,16 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper", CheatCategory.MISC)
 			})
         }
         if (sortSwordValue != -1) {
-            sorts.add(Sort(sortSwordValue, ItemTags.TAG_IS_SWORD))
+            sorts.add(sortByTag(sortSwordValue, ItemTags.TAG_IS_SWORD))
         }
+		if (sortTridentValue != -1) {
+			sorts.add(sortByIdentifier(sortTridentValue, "minecraft:trident"))
+		}
         if (sortPickaxeValue != -1) {
-            sorts.add(Sort(sortPickaxeValue, ItemTags.TAG_IS_PICKAXE))
+            sorts.add(sortByTag(sortPickaxeValue, ItemTags.TAG_IS_PICKAXE))
         }
         if (sortAxeValue != -1) {
-            sorts.add(Sort(sortAxeValue, ItemTags.TAG_IS_AXE))
+            sorts.add(sortByTag(sortAxeValue, ItemTags.TAG_IS_AXE))
         }
         if (sortBlockValue != -1 && !inventory.content[sortBlockValue].isBlock()) {
             sorts.add(Sort(sortBlockValue) { item ->
@@ -161,9 +167,7 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper", CheatCategory.MISC)
             })
         }
         if (sortGAppleValue != -1) {
-            sorts.add(Sort(sortGAppleValue) { item ->
-                if (item.itemDefinition.identifier == "minecraft:golden_apple") 1f else 0f
-            })
+            sorts.add(sortByIdentifier(sortGAppleValue, "minecraft:golden_apple"))
         }
         return sorts
     }
@@ -206,16 +210,24 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper", CheatCategory.MISC)
         return false
     }
 
-	private inner class Sort(val slot: Int, val requiresBestItem: Boolean = false, val judge: (ItemData) -> Float) {
-
-        constructor(slot: Int, judgeTag: String, requiresBestItem: Boolean = true) : this(slot, requiresBestItem, { item ->
+	private fun sortByTag(slot: Int, judgeTag: String, requiresBestItem: Boolean = true): Sort {
+		return Sort(slot, requiresBestItem) { item ->
 			val def = item.itemDefinition
-            if (def.tags.contains(judgeTag)) {
-                def.getTier().toFloat()
-            } else {
-                0f
-            }
-        })
+			if (def.tags.contains(judgeTag)) {
+				def.getTier().toFloat() + item.getEnchantScore()
+			} else {
+				0f
+			}
+		}
+	}
+
+	private fun sortByIdentifier(slot: Int, identifier: String, requiresBestItem: Boolean = false): Sort {
+		return Sort(slot, requiresBestItem) { item ->
+			if (item.itemDefinition.identifier == identifier) 1f else 0f
+		}
+	}
+
+	private inner class Sort(val slot: Int, val requiresBestItem: Boolean = false, val judge: (ItemData) -> Float) {
 
         fun sort(inventory: AbstractInventory, session: GameSession): Boolean {
 			if (!requiresBestItem && judge(inventory.content[slot]) > 0) {

@@ -8,7 +8,6 @@ import dev.sora.relay.game.entity.EntityLocalPlayer
 import dev.sora.relay.game.entity.EntityPlayer
 import dev.sora.relay.game.entity.EntityUnknown
 import dev.sora.relay.utils.analyzeColorCoverage
-import org.cloudburstmc.protocol.bedrock.data.entity.EntityDataTypes
 
 class ModuleTargets : CheatModule("Targets", CheatCategory.COMBAT, canToggle = false) {
 
