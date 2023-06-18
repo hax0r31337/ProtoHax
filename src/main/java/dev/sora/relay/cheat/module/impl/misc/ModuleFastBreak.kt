@@ -10,11 +10,11 @@ class ModuleFastBreak : CheatModule("FastBreak", CheatCategory.MISC) {
 
     private var amplifierValue by intValue("Level", 5, 1..128)
 
-	private val handleTick = handle<EventTick> { event ->
-		if (event.session.player.tickExists % 20 != 0L) return@handle
-		event.session.netSession.inboundPacket(MobEffectPacket().apply {
+	private val handleTick = handle<EventTick> {
+		if (session.player.tickExists % 20 != 0L) return@handle
+		session.netSession.inboundPacket(MobEffectPacket().apply {
 			setEvent(MobEffectPacket.Event.ADD)
-			runtimeEntityId = event.session.player.runtimeEntityId
+			runtimeEntityId = session.player.runtimeEntityId
 			effectId = Effect.HASTE
 			amplifier = amplifierValue - 1
 			isParticles = false

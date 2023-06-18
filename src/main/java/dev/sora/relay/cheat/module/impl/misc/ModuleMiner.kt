@@ -36,9 +36,7 @@ class ModuleMiner : CheatModule("Miner", CheatCategory.MISC) {
 		freshBreak = false
 	}
 
-	private val onTick = handle<EventTick> { event ->
-		val session = event.session
-
+	private val onTick = handle<EventTick> {
 		if (pos == null || session.player.vec3PositionFeet.distance(pos!!) > rangeValue) {
 			pos = find(session)?.also {
 				lastingBreakTime = MineUtils.calculateBreakTime(session, session.level.getBlockAt(it))
@@ -109,7 +107,7 @@ class ModuleMiner : CheatModule("Miner", CheatCategory.MISC) {
 //						blockPosition = pos
 //						this.definition = session.blockMapping.let { it.getDefinition(it.getRuntimeByIdentifier("minecraft:air")) }
 //					})
-					this.pos = null
+					this@ModuleMiner.pos = null
 				}
 				if (freshBreak) {
 					session.player.blockAction(PlayerBlockActionData().apply {

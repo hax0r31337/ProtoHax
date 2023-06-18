@@ -33,9 +33,7 @@ abstract class ChunkStorage(protected val session: GameSession, override val eve
 		cleanUp()
 	}
 
-	private val handlePacketInbound = handle<EventPacketInbound> { event ->
-		val packet = event.packet
-
+	private val handlePacketInbound = handle<EventPacketInbound> {
 		if (packet is LevelChunkPacket) {
 			chunkOutOfRangeCheck()
 			val chunk = Chunk(packet.chunkX, packet.chunkZ, dimension,

@@ -28,8 +28,7 @@ class ModuleBlockFly : CheatModule("BlockFly", CheatCategory.MOVEMENT) {
 
     private var lastRotation: Rotation? = null
 
-	private val handleTick = handle<EventTick> { event ->
-		val session = event.session
+	private val handleTick = handle<EventTick> {
 		if (!switchToBlock()) {
 			lastRotation = null
 			return@handle

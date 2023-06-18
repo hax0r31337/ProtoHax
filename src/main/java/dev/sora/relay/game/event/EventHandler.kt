@@ -1,6 +1,6 @@
 package dev.sora.relay.game.event
 
-typealias Handler<T> = (T) -> Unit
+typealias Handler<T> = T.() -> Unit
 
 class EventHook<T : GameEvent> (
     val eventClass: Class<T>,

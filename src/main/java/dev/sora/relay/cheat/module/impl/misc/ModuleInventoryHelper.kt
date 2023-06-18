@@ -59,12 +59,12 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper", CheatCategory.MISC)
         hasSimulatedWaitForClose = false
     }
 
-	private val handleTick = handle<EventTick> { event ->
+	private val handleTick = handle<EventTick> {
 		if (!cpsValue.canClick) {
 			return@handle
 		}
 
-		val player = event.session.player
+		val player = session.player
 		val openContainer = player.openContainer
 
 		if (stealChestValue && openContainer != null && openContainer !is PlayerInventory) {
@@ -72,7 +72,7 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper", CheatCategory.MISC)
 			openContainer.content.forEachIndexed { index, item ->
 				if (item.itemDefinition.isNecessaryItem(item) && !item.itemDefinition.hasBetterItem(openContainer, index, strictMode = false) && !item.itemDefinition.hasBetterItem(player.inventory)) {
 					val slot = player.inventory.findEmptySlot() ?: return@handle
-					openContainer.moveItem(index, slot, player.inventory, event.session)
+					openContainer.moveItem(index, slot, player.inventory, session)
 
 					cpsValue.click()
 					sorted = true
@@ -84,8 +84,8 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper", CheatCategory.MISC)
 			player.inventory.content.forEachIndexed { index, item ->
 				if (item == ItemData.AIR) return@forEachIndexed
 				if (item.itemDefinition.hasBetterItem(player.inventory, index) || (throwUnnecessaryValue && !item.itemDefinition.isNecessaryItem(item))) {
-					if (checkFakeOpen(event.session)) return@handle
-					player.inventory.dropItem(index, event.session)
+					if (checkFakeOpen(session)) return@handle
+					player.inventory.dropItem(index, session)
 					// player will swing if they drop an item
 					player.swing(swingValue)
 
@@ -98,7 +98,7 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper", CheatCategory.MISC)
 			// sort items and wear armor
 			val sorts = getSorts(player.inventory)
 			sorts.forEach {
-				if (it.sort(player.inventory, event.session)) {
+				if (it.sort(player.inventory, session)) {
 					cpsValue.click()
 					sorted = true
 					return@handle
@@ -168,30 +168,26 @@ class ModuleInventoryHelper : CheatModule("InventoryHelper", CheatCategory.MISC)
         return sorts
     }
 
-	private val handlePacketInbound = handle<EventPacketInbound> { event ->
-		val packet = event.packet
-
+	private val handlePacketInbound = handle<EventPacketInbound> {
 		if (hasSimulated && packet is ContainerOpenPacket && packet.id == 0.toByte()) {
-			event.cancel()
+			cancel()
 		} else if (hasSimulatedWaitForClose && packet is ContainerClosePacket && packet.id == 0.toByte()) {
 			// inventories gui will no longer display if this packet is received or unable to receive the one that required by the client
-			event.cancel()
+			cancel()
 			hasSimulatedWaitForClose = false
 		}
 	}
 
-	private val handlePacketOutbound = handle<EventPacketOutbound> { event ->
-		val packet = event.packet
-
+	private val handlePacketOutbound = handle<EventPacketOutbound> {
 		if (hasSimulated && packet is InteractPacket && packet.action == InteractPacket.Action.OPEN_INVENTORY) {
 			hasSimulated = false
-			event.cancel()
+			cancel()
 			// client only display inventory gui if server accepts it
-			event.session.sendPacketToClient(ContainerOpenPacket().apply {
+			session.sendPacketToClient(ContainerOpenPacket().apply {
 				id = 0.toByte()
 				type = ContainerType.INVENTORY
-				blockPosition = event.session.player.vec3Position.toVector3i()
-				uniqueEntityId = event.session.player.uniqueEntityId
+				blockPosition = session.player.vec3Position.toVector3i()
+				uniqueEntityId = session.player.uniqueEntityId
 			})
 		}
 	}

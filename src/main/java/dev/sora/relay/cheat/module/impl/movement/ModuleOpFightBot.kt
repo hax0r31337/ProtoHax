@@ -18,8 +18,7 @@ class ModuleOpFightBot : CheatModule("OPFightBot", CheatCategory.MOVEMENT) {
     private var verticalSpeedValue by floatValue("VerticalSpeed", 4f, 1f..7f)
     private var strafeSpeedValue by intValue("StrafeSpeed", 20, 10..90).visible { modeValue == Mode.STRAFE }
 
-	private val handleTick = handle<EventTick> { event ->
-		val session = event.session
+	private val handleTick = handle<EventTick> {
 		val moduleTargets = moduleManager.getModule(ModuleTargets::class.java)
 		val target = session.level.entityMap.values.filter { with(moduleTargets) { it.isTarget() } }
 			.minByOrNull { it.distanceSq(session.player) } ?: return@handle

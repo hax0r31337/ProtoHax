@@ -18,21 +18,21 @@ class CommandDownloadWorld(override val eventManager: EventManager, private val 
 	private var level: LevelDBWorld? = null
 	private var chunkSaved = 0
 
-	private val handleChunkUnload = handle<EventChunkUnload> { event ->
+	private val handleChunkUnload = handle<EventChunkUnload> {
 		level ?: return@handle
-		level!!.saveChunk(event.chunk)
+		level!!.saveChunk(chunk)
 		chunkSaved++
 	}
 
 	private val handleDisconnect = handle<EventDisconnect> {
-		saveWorld(it.session)
+		saveWorld(session)
 	}
 
 	/**
 	 * used to show status tooltip
 	 */
 	private val handleTick = handle<EventTick> {
-		it.session.sendPacketToClient(TextPacket().apply {
+		session.sendPacketToClient(TextPacket().apply {
 			type = TextPacket.Type.TIP
 			message = "§7[§bWorldDownloader§7]§f Download chunks: ${chunkSaved}"
 			xuid = ""

@@ -12,9 +12,10 @@ class ModuleVelocity : CheatModule("Velocity", CheatCategory.COMBAT) {
 
 	private object Vanilla : Choice("Vanilla") {
 
-		private val handlePacketInbound = handle<EventPacketInbound> { event ->
-			if (event.packet is SetEntityMotionPacket)
-				event.cancel()
+		private val handlePacketInbound = handle<EventPacketInbound> {
+			if (packet is SetEntityMotionPacket) {
+				cancel()
+			}
 		}
 	}
 
@@ -23,9 +24,10 @@ class ModuleVelocity : CheatModule("Velocity", CheatCategory.COMBAT) {
 		private var horizontalValue by floatValue("Horizontal", 0f, 0f..1f)
 		private var verticalValue by floatValue("Vertical", 0f, 0f..1f)
 
-		private val handlePacketInbound = handle<EventPacketInbound> { event ->
-			if (event.packet is SetEntityMotionPacket)
-				event.packet.motion = event.packet.motion.mul(horizontalValue, verticalValue, horizontalValue)
+		private val handlePacketInbound = handle<EventPacketInbound> {
+			if (packet is SetEntityMotionPacket) {
+				packet.motion = packet.motion.mul(horizontalValue, verticalValue, horizontalValue)
+			}
 		}
 	}
 }

@@ -29,8 +29,7 @@ class ModuleAntiBlind : CheatModule("AntiBlind", CheatCategory.VISUAL) {
 		}
 	}
 
-	private val handleTick = handle<EventTick>(this::nightVisionValue) { event ->
-		val session = event.session
+	private val handleTick = handle<EventTick>(this::nightVisionValue) {
 		if (session.player.tickExists % 20 != 0L) return@handle
 		session.netSession.inboundPacket(MobEffectPacket().apply {
 			runtimeEntityId = session.player.runtimeEntityId
@@ -42,14 +41,13 @@ class ModuleAntiBlind : CheatModule("AntiBlind", CheatCategory.VISUAL) {
 		})
 	}
 
-	private val handlePacketInbound = handle<EventPacketInbound> { event ->
-		val packet = event.packet
+	private val handlePacketInbound = handle<EventPacketInbound> {
 		if (removeBadEffectsValue && packet is MobEffectPacket) {
 			if (packet.effectId == Effect.NAUSEA || packet.effectId == Effect.BLINDNESS || packet.effectId == Effect.DARKNESS) {
-				event.cancel()
+				cancel()
 			}
 		} else if (packet is SetEntityDataPacket) {
-			if (packet.runtimeEntityId == event.session.player.runtimeEntityId) {
+			if (packet.runtimeEntityId == session.player.runtimeEntityId) {
 				if (removeFireValue && packet.metadata.flags.contains(EntityFlag.ON_FIRE)) {
 					packet.metadata.setFlag(EntityFlag.ON_FIRE, false)
 				}

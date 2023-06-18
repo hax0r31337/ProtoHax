@@ -26,9 +26,7 @@ class BlobCacheManager(override val eventManager: EventManager) : Listenable {
 		cacheCallbacks.clear()
 	}
 
-	private val handlePacketOutbound = handle<EventPacketOutbound> { event ->
-		val packet = event.packet
-
+	private val handlePacketOutbound = handle<EventPacketOutbound> {
 		if (packet is ClientCacheBlobStatusPacket) {
 			// sync the cache denylist
 			clientAcknowledgements.addAll(packet.acks)
@@ -48,15 +46,13 @@ class BlobCacheManager(override val eventManager: EventManager) : Listenable {
         }*/
 	}
 
-	private val handlePacketInbound = handle<EventPacketInbound> { event ->
-		val packet = event.packet
-
+	private val handlePacketInbound = handle<EventPacketInbound> {
 		if (packet is ClientCacheMissResponsePacket) {
 			// call cache callback
 			packet.blobs.forEach { (id, data) ->
 				cacheCallbacks.remove(id)?.let {
 					try {
-						it.invoke(event.session, data)
+						it.invoke(session, data)
 					} catch (t: Throwable) {
 						logError("cache callback", t)
 					}
@@ -69,7 +65,7 @@ class BlobCacheManager(override val eventManager: EventManager) : Listenable {
 				}
 			}
 			if (packet.blobs.isEmpty()) {
-				event.cancel()
+				cancel()
 			}
 		}
 	}

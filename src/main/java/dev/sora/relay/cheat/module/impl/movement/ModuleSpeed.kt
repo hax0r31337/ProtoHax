@@ -41,8 +41,8 @@ class ModuleSpeed : CheatModule("Speed", CheatCategory.MOVEMENT) {
 
 	private inner class Simple : Choice("Simple") {
 
-		private val onTick = handle<EventTick> { event ->
-			val player = event.session.player
+		private val onTick = handle<EventTick> {
+			val player = session.player
 
 			val angle = player.moveDirectionAngle ?: run {
 				if (fakeSprintValue) {
@@ -56,7 +56,7 @@ class ModuleSpeed : CheatModule("Speed", CheatCategory.MOVEMENT) {
 			}
 
 			if (player.onGround || player.motionY == 0f || (player.motionY > player.prevMotionY && player.motionY < 0)) {
-				event.session.netSession.inboundPacket(SetEntityMotionPacket().apply {
+				session.netSession.inboundPacket(SetEntityMotionPacket().apply {
 					runtimeEntityId = player.runtimeEntityId
 					motion = Vector3f.from(-sin(angle) * speedValue, jumpValue, cos(angle) * speedValue)
 				})
@@ -71,8 +71,8 @@ class ModuleSpeed : CheatModule("Speed", CheatCategory.MOVEMENT) {
 		private val EntityLocalPlayer.nextMotionY: Float
 			get() = (motionY - 0.1f) * 0.95f
 
-		private val onTick = handle<EventTick> { event ->
-			val player = event.session.player
+		private val onTick = handle<EventTick> {
+			val player = session.player
 
 			val angle = player.moveDirectionAngle
 
@@ -82,7 +82,7 @@ class ModuleSpeed : CheatModule("Speed", CheatCategory.MOVEMENT) {
 				}
 
 				if (resetMotionValue && abs(player.motionX) > 0.01f && abs(player.motionZ) > 0.01f) {
-					event.session.netSession.inboundPacket(SetEntityMotionPacket().apply {
+					session.netSession.inboundPacket(SetEntityMotionPacket().apply {
 						runtimeEntityId = player.runtimeEntityId
 						motion = Vector3f.from(0f, player.nextMotionY, 0f)
 					})
@@ -95,12 +95,12 @@ class ModuleSpeed : CheatModule("Speed", CheatCategory.MOVEMENT) {
 				val motionZ = cos(angle) * speedValue
 
 				if (player.onGround || player.motionY == 0f || (player.motionY > player.prevMotionY && player.motionY < 0f)) {
-					event.session.netSession.inboundPacket(SetEntityMotionPacket().apply {
+					session.netSession.inboundPacket(SetEntityMotionPacket().apply {
 						runtimeEntityId = player.runtimeEntityId
 						motion = Vector3f.from(motionX, jumpValue, motionZ)
 					})
 				} else {
-					event.session.netSession.inboundPacket(SetEntityMotionPacket().apply {
+					session.netSession.inboundPacket(SetEntityMotionPacket().apply {
 						runtimeEntityId = player.runtimeEntityId
 						motion = Vector3f.from(motionX, player.nextMotionY, motionZ)
 					})

@@ -8,13 +8,11 @@ import org.cloudburstmc.protocol.bedrock.packet.EntityEventPacket
 
 class ModuleNoHurtCam : CheatModule("NoHurtCam", CheatCategory.VISUAL) {
 
-	private val handlePacketInbound = handle<EventPacketInbound> { event ->
-		val packet = event.packet
-
-		if (packet is EntityEventPacket && packet.runtimeEntityId == event.session.player.runtimeEntityId
+	private val handlePacketInbound = handle<EventPacketInbound> {
+		if (packet is EntityEventPacket && packet.runtimeEntityId == session.player.runtimeEntityId
 			&& packet.type == EntityEventType.HURT) {
 
-			event.cancel()
+			cancel()
 		}
 	}
 }

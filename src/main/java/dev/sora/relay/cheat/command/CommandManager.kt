@@ -45,11 +45,10 @@ class CommandManager(private val session: GameSession) : Listenable {
         }
     }
 
-	private val handlePacketOutbound = handle<EventPacketOutbound> { event ->
-		val packet = event.packet
+	private val handlePacketOutbound = handle<EventPacketOutbound> {
 		if (packet is TextPacket && packet.message.startsWith(PREFIX)) {
 			exec(packet.message.substring(PREFIX.length))
-			event.cancel()
+			cancel()
 		}
 	}
 

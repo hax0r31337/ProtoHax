@@ -28,9 +28,7 @@ class ModuleSurround : CheatModule("Surround", CheatCategory.COMBAT) {
 		holePosition = null
 	}
 
-	private val onTick = handle<EventTick> { event ->
-		val session = event.session
-
+	private val onTick = handle<EventTick> {
 		if (onSneakValue && !session.player.isSneaking) {
 			holePosition = null
 			return@handle

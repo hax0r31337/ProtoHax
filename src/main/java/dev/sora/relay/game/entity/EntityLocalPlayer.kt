@@ -127,8 +127,6 @@ class EntityLocalPlayer(private val session: GameSession, override val eventMana
 	}
 
 	private val handlePacketInbound = handle<EventPacketInbound> {
-		val packet = it.packet
-
 		if (packet is StartGamePacket) {
 			if (!hasSetEntityId) {
 				runtimeEntityId = packet.runtimeEntityId
@@ -164,8 +162,7 @@ class EntityLocalPlayer(private val session: GameSession, override val eventMana
 		onPacket(packet)
 	}
 
-	private val handlePacketOutbound = handle<EventPacketOutbound> { event ->
-		val packet = event.packet
+	private val handlePacketOutbound = handle<EventPacketOutbound> {
 		// client still sends MovePlayerPacket sometime on if server-auth movement mode
 		if (packet is LoginPacket) {
 			// disable packet conversion by default
@@ -264,7 +261,7 @@ class EntityLocalPlayer(private val session: GameSession, override val eventMana
 			openContainer = inventory
 		} else if (skipSwings > 0 && packet is AnimatePacket && packet.action == AnimatePacket.Action.SWING_ARM) {
 			skipSwings--
-			event.cancel()
+			cancel()
 		} else if (packet is PlayerActionPacket) {
 			when(packet.action) {
 				PlayerActionType.START_SNEAK -> isSneaking = true

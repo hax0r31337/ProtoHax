@@ -16,12 +16,12 @@ class ModuleDisabler : CheatModule("Disabler", CheatCategory.MISC) {
 
 	private object Mineplex : Choice("Mineplex") {
 
-		private val handleTick = handle<EventTick> { event ->
-			event.session.sendPacket(MovePlayerPacket().apply {
-				val thePlayer = event.session.player
-				runtimeEntityId = thePlayer.runtimeEntityId
-				position = thePlayer.vec3Position
-				rotation = thePlayer.vec3Rotation
+		private val handleTick = handle<EventTick> {
+			session.sendPacket(MovePlayerPacket().apply {
+				val player = session.player
+				runtimeEntityId = player.runtimeEntityId
+				position = player.vec3Position
+				rotation = player.vec3Rotation
 				isOnGround = true
 			})
 		}
@@ -29,26 +29,24 @@ class ModuleDisabler : CheatModule("Disabler", CheatCategory.MISC) {
 
 	private object Cubecraft : Choice("Cubecraft") {
 
-		private val handlePacketOutbound = handle<EventPacketOutbound> { event ->
-			val packet = event.packet
-
+		private val handlePacketOutbound = handle<EventPacketOutbound> {
 			if (packet is PlayerAuthInputPacket) {
 				packet.motion = Vector2f.from(0.01f, 0.01f)
 
 				for (i in 0 until 9) {
-					event.session.netSession.outboundPacket(packet)
+					session.netSession.outboundPacket(packet)
 				}
 			} else if (packet is NetworkStackLatencyPacket) {
-				event.cancel()
+				cancel()
 			}
 		}
 
-		private val handleTick = handle<EventTick> { event ->
-			event.session.sendPacket(MovePlayerPacket().apply {
-				val thePlayer = event.session.player
-				runtimeEntityId = thePlayer.runtimeEntityId
-				position = thePlayer.vec3Position
-				rotation = thePlayer.vec3Rotation
+		private val handleTick = handle<EventTick> {
+			session.sendPacket(MovePlayerPacket().apply {
+				val player = session.player
+				runtimeEntityId = player.runtimeEntityId
+				position = player.vec3Position
+				rotation = player.vec3Rotation
 				isOnGround = true
 			})
 		}
@@ -56,11 +54,9 @@ class ModuleDisabler : CheatModule("Disabler", CheatCategory.MISC) {
 
 	private object LifeBoat : Choice("LifeBoat") {
 
-		private val handlePacketOutbound = handle<EventPacketOutbound> { event ->
-			val packet = event.packet
-
+		private val handlePacketOutbound = handle<EventPacketOutbound> {
 			if (packet is PlayerAuthInputPacket) {
-				event.session.sendPacket(MovePlayerPacket().apply {
+				session.sendPacket(MovePlayerPacket().apply {
 					position = packet.position.add(0f, 0.1f, 0f)
 					rotation = packet.rotation
 					mode = MovePlayerPacket.Mode.NORMAL

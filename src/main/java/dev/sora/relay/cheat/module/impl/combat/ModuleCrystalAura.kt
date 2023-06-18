@@ -39,9 +39,7 @@ class ModuleCrystalAura : CheatModule("CrystalAura", CheatCategory.COMBAT) {
 	private val explodeTimer = TheTimer()
 	private val placeTimer = TheTimer()
 
-	private val onTickExplode = handle<EventTick>({ explodeTimer.hasTimePassed(delayValue) }) { event ->
-		val session = event.session
-
+	private val onTickExplode = handle<EventTick>({ explodeTimer.hasTimePassed(delayValue) }) {
 		val rangeSq = rangeValue.pow(2)
 		val crystal = session.level.entityMap.values
 			.filter { it is EntityUnknown && it.identifier == "minecraft:ender_crystal" && it.distanceSq(session.player) < rangeSq }.map {
@@ -68,7 +66,7 @@ class ModuleCrystalAura : CheatModule("CrystalAura", CheatCategory.COMBAT) {
 		}
 	}
 
-	private val onTickPlace = handle<EventTick>({ placeValue && placeTimer.hasTimePassed(delayValue) }) { _ ->
+	private val onTickPlace = handle<EventTick>({ placeValue && placeTimer.hasTimePassed(delayValue) }) {
 		val slot = if (session.player.inventory.hand.itemDefinition.identifier == "minecraft:end_crystal") -1
 		else session.player.inventory.searchForItemInHotbar { it.itemDefinition.identifier == "minecraft:end_crystal" }
 		if (slot == null) {
@@ -126,9 +124,7 @@ class ModuleCrystalAura : CheatModule("CrystalAura", CheatCategory.COMBAT) {
 		}
 	}
 
-	private val handleEntitySpawn = handle<EventEntitySpawn> { event ->
-		val entity = event.entity
-		val session = event.session
+	private val handleEntitySpawn = handle<EventEntitySpawn> {
 		if (!explodeTimer.hasTimePassed(delayValue) || entity !is EntityUnknown || entity.identifier != "minecraft:ender_crystal" || entity.distance(session.player) > rangeValue)
 			return@handle
 
@@ -148,11 +144,9 @@ class ModuleCrystalAura : CheatModule("CrystalAura", CheatCategory.COMBAT) {
 		}
 	}
 
-	private val handlePacketInbound = handle<EventPacketInbound> { event ->
-		val packet = event.packet
-
+	private val handlePacketInbound = handle<EventPacketInbound> {
 		if (removeParticlesValue && packet is LevelEventPacket && packet.type == LevelEvent.PARTICLE_EXPLOSION) {
-			event.cancel()
+			cancel()
 		}
 	}
 

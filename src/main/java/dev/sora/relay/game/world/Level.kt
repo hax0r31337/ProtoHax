@@ -21,8 +21,7 @@ class Level(session: GameSession, eventManager: EventManager) : ChunkStorage(ses
 		playerList.clear()
 	}
 
-	private val handlePacketInbound = handle<EventPacketInbound> { event ->
-		val packet = event.packet
+	private val handlePacketInbound = handle<EventPacketInbound> {
 
 		if (packet is StartGamePacket) {
 			entityMap.clear()

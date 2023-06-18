@@ -46,32 +46,30 @@ class ModuleFly : CheatModule("Fly", CheatCategory.MOVEMENT) {
 
 	private open inner class Vanilla(choiceName: String) : Choice(choiceName) {
 
-		private val handleTick = handle<EventTick> { event ->
-			if (event.session.player.tickExists % 10 == 0L) {
-				event.session.netSession.inboundPacket(abilityPacket.apply {
-					uniqueEntityId = event.session.player.uniqueEntityId
+		private val handleTick = handle<EventTick> {
+			if (session.player.tickExists % 10 == 0L) {
+				session.netSession.inboundPacket(abilityPacket.apply {
+					uniqueEntityId = session.player.uniqueEntityId
 				})
 			}
 		}
 
-		private val handlePacketInbound = handle<EventPacketInbound> { event ->
-			val packet = event.packet
+		private val handlePacketInbound = handle<EventPacketInbound> {
 			if (packet is UpdateAbilitiesPacket) {
-				event.cancel()
-				event.session.netSession.inboundPacket(abilityPacket.apply {
-					uniqueEntityId = event.session.player.uniqueEntityId
+				cancel()
+				session.netSession.inboundPacket(abilityPacket.apply {
+					uniqueEntityId = session.player.uniqueEntityId
 				})
 			} else if (packet is StartGamePacket) {
-				event.session.netSession.inboundPacket(abilityPacket.apply {
-					uniqueEntityId = event.session.player.uniqueEntityId
+				session.netSession.inboundPacket(abilityPacket.apply {
+					uniqueEntityId = session.player.uniqueEntityId
 				})
 			}
 		}
 
-		private val handlePacketOutbound = handle<EventPacketOutbound> { event ->
-			val packet = event.packet
+		private val handlePacketOutbound = handle<EventPacketOutbound> {
 			if (packet is RequestAbilityPacket && packet.ability == Ability.FLYING) {
-				event.cancel()
+				cancel()
 			}
 		}
 	}
@@ -80,8 +78,7 @@ class ModuleFly : CheatModule("Fly", CheatCategory.MOVEMENT) {
 
 		private var motionValue by boolValue("MineplexMotion", false)
 
-		private val handleTick = handle<EventTick> { event ->
-			val session = event.session
+		private val handleTick = handle<EventTick> {
 			if (session.player.tickExists % 10 == 0L) {
 				session.netSession.inboundPacket(abilityPacket.apply {
 					uniqueEntityId = session.player.uniqueEntityId
@@ -104,14 +101,12 @@ class ModuleFly : CheatModule("Fly", CheatCategory.MOVEMENT) {
 			}
 		}
 
-		private val handlePacketInbound = handle<EventPacketOutbound> { event ->
-			val packet = event.packet
-
+		private val handlePacketInbound = handle<EventPacketOutbound> {
 			if (packet is RequestAbilityPacket && packet.ability == Ability.FLYING) {
-				event.session.netSession.inboundPacket(abilityPacket.apply {
+				session.netSession.inboundPacket(abilityPacket.apply {
 					uniqueEntityId = session.player.uniqueEntityId
 				})
-				event.cancel()
+				cancel()
 			} else if (packet is PlayerAuthInputPacket && canFly) {
 				packet.position = packet.position.let {
 					Vector3f.from(it.x, launchY, it.z)
@@ -122,9 +117,7 @@ class ModuleFly : CheatModule("Fly", CheatCategory.MOVEMENT) {
 
 	private inner class Jetpack : Choice("Jetpack") {
 
-		private val handleTick = handle<EventTick> { event ->
-			val session = event.session
-
+		private val handleTick = handle<EventTick> {
 			if (!canFly) {
 				return@handle
 			}
@@ -156,8 +149,7 @@ class ModuleFly : CheatModule("Fly", CheatCategory.MOVEMENT) {
 			}
 		}
 
-		private val handleTick = handle<EventTick> { event ->
-			val session = event.session
+		private val handleTick = handle<EventTick> {
 			if (session.player.tickExists % 20 != 0L) return@handle
 			session.netSession.inboundPacket(MobEffectPacket().apply {
 				runtimeEntityId = session.player.runtimeEntityId
@@ -179,14 +171,12 @@ class ModuleFly : CheatModule("Fly", CheatCategory.MOVEMENT) {
 			flag = true
 		}
 
-		private val onTick = handle<EventTick> { event ->
-			val player = event.session.player
-
+		private val onTick = handle<EventTick> {
 			if (canFly) {
-				val angle = Math.toRadians(player.rotationYaw.toDouble()).toFloat()
+				val angle = Math.toRadians(session.player.rotationYaw.toDouble()).toFloat()
 
-				event.session.netSession.inboundPacket(SetEntityMotionPacket().apply {
-					runtimeEntityId = player.runtimeEntityId
+				session.netSession.inboundPacket(SetEntityMotionPacket().apply {
+					runtimeEntityId = session.player.runtimeEntityId
 					motion = Vector3f.from(-sin(angle) * speedValue, if (flag) 0.42f else -0.42f, cos(angle) * speedValue)
 				})
 				flag = !flag
