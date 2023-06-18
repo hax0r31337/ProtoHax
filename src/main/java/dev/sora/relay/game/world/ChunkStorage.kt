@@ -10,6 +10,7 @@ import kotlinx.coroutines.launch
 import org.cloudburstmc.math.vector.Vector3i
 import org.cloudburstmc.protocol.bedrock.data.SubChunkRequestResult
 import org.cloudburstmc.protocol.bedrock.packet.*
+import java.lang.Exception
 import kotlin.math.floor
 
 abstract class ChunkStorage(protected val session: GameSession, override val eventManager: EventManager) : Listenable {
@@ -21,6 +22,12 @@ abstract class ChunkStorage(protected val session: GameSession, override val eve
 
 	var viewDistance = -1
 		protected set
+
+	/**
+	 * is 384 new world format supported by the server engine
+	 */
+	var is384WorldSupported = false
+		private set
 
 	private fun cleanUp() {
 		chunks.forEach { (_, chunk) ->
@@ -34,10 +41,18 @@ abstract class ChunkStorage(protected val session: GameSession, override val eve
 	}
 
 	private val handlePacketInbound = handle<EventPacketInbound> {
-		if (packet is LevelChunkPacket) {
+		if (packet is StartGamePacket) {
+			is384WorldSupported = try {
+				// 384 height world was introduced in minecraft 1.18
+				val vanillaVersion = packet.vanillaVersion.split(".")
+				vanillaVersion.size >= 2 && vanillaVersion[0] == "1" && vanillaVersion[1].toInt() >= 18
+			} catch (e: Exception) {
+				true
+			}
+		} else if (packet is LevelChunkPacket) {
 			chunkOutOfRangeCheck()
 			val chunk = Chunk(packet.chunkX, packet.chunkZ, dimension,
-				dimension == Dimension.OVERWORLD && (!session.netSessionInitialized || session.netSession.codec.protocolVersion >= 440),
+				is384WorldSupported && dimension == Dimension.OVERWORLD && (!session.netSessionInitialized || session.netSession.codec.protocolVersion >= 475),
 				session.blockMapping, session.legacyBlockMapping)
 			if (!packet.isCachingEnabled && !packet.isRequestSubChunks) {
 				val buf = packet.data.retainedDuplicate()
