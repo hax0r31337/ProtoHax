@@ -8,6 +8,7 @@ import dev.sora.relay.game.event.EventTick
 import org.cloudburstmc.math.vector.Vector3f
 import org.cloudburstmc.protocol.bedrock.data.PlayerAuthInputData
 import org.cloudburstmc.protocol.bedrock.packet.SetEntityMotionPacket
+import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -65,32 +66,45 @@ class ModuleSpeed : CheatModule("Speed", CheatCategory.MOVEMENT) {
 
 	private inner class Strafe : Choice("Strafe") {
 
+		private var resetMotionValue by boolValue("StrafeResetMotion", false)
+
+		private val EntityLocalPlayer.nextMotionY: Float
+			get() = (motionY - 0.1f) * 0.95f
+
 		private val onTick = handle<EventTick> { event ->
 			val player = event.session.player
 
-			val angle = player.moveDirectionAngle ?: run {
+			val angle = player.moveDirectionAngle
+
+			if (angle == null) {
 				if (fakeSprintValue) {
 					player.stopFakeSprint()
 				}
-				return@handle
-			}
 
-			if (fakeSprintValue) {
-				player.fakeSprint()
-			}
-			val motionX = -sin(angle) * speedValue
-			val motionZ = cos(angle) * speedValue
-
-			if (player.onGround || player.motionY == 0f || (player.motionY > player.prevMotionY && player.motionY < 0f)) {
-				event.session.netSession.inboundPacket(SetEntityMotionPacket().apply {
-					runtimeEntityId = player.runtimeEntityId
-					motion = Vector3f.from(motionX, jumpValue, motionZ)
-				})
+				if (resetMotionValue && abs(player.motionX) > 0.01f && abs(player.motionZ) > 0.01f) {
+					event.session.netSession.inboundPacket(SetEntityMotionPacket().apply {
+						runtimeEntityId = player.runtimeEntityId
+						motion = Vector3f.from(0f, player.nextMotionY, 0f)
+					})
+				}
 			} else {
-				event.session.netSession.inboundPacket(SetEntityMotionPacket().apply {
-					runtimeEntityId = player.runtimeEntityId
-					motion = Vector3f.from(motionX, (player.motionY - 0.1f) * 0.95f, motionZ)
-				})
+				if (fakeSprintValue) {
+					player.fakeSprint()
+				}
+				val motionX = -sin(angle) * speedValue
+				val motionZ = cos(angle) * speedValue
+
+				if (player.onGround || player.motionY == 0f || (player.motionY > player.prevMotionY && player.motionY < 0f)) {
+					event.session.netSession.inboundPacket(SetEntityMotionPacket().apply {
+						runtimeEntityId = player.runtimeEntityId
+						motion = Vector3f.from(motionX, jumpValue, motionZ)
+					})
+				} else {
+					event.session.netSession.inboundPacket(SetEntityMotionPacket().apply {
+						runtimeEntityId = player.runtimeEntityId
+						motion = Vector3f.from(motionX, player.nextMotionY, motionZ)
+					})
+				}
 			}
 		}
 	}

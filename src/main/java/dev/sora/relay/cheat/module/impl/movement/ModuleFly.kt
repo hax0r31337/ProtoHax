@@ -78,7 +78,7 @@ class ModuleFly : CheatModule("Fly", CheatCategory.MOVEMENT) {
 
 	private inner class Mineplex : Vanilla("Mineplex") {
 
-		private var mineplexMotionValue by boolValue("MineplexMotion", false)
+		private var motionValue by boolValue("MineplexMotion", false)
 
 		private val handleTick = handle<EventTick> { event ->
 			val session = event.session
@@ -94,7 +94,7 @@ class ModuleFly : CheatModule("Fly", CheatCategory.MOVEMENT) {
 			val player = session.player
 			val yaw = Math.toRadians(player.rotationYaw.toDouble()).toFloat()
 			val value = speedValue
-			if (mineplexMotionValue) {
+			if (motionValue) {
 				session.netSession.inboundPacket(SetEntityMotionPacket().apply {
 					runtimeEntityId = session.player.runtimeEntityId
 					motion = Vector3f.from(-sin(yaw) * value, 0f, +cos(yaw) * value)
