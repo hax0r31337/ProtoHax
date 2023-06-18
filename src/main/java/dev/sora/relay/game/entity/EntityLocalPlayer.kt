@@ -77,7 +77,7 @@ class EntityLocalPlayer(private val session: GameSession, override val eventMana
 		private set
 
 	val inputData = mutableListOf<PlayerAuthInputData>()
-    private val pendingItemInteraction = LinkedList<ItemUseTransaction>()
+//    private val pendingItemInteraction = LinkedList<ItemUseTransaction>()
 	private val pendingBlockActions = mutableListOf<PlayerBlockActionData>()
     private var skipSwings = 0
 
@@ -134,7 +134,9 @@ class EntityLocalPlayer(private val session: GameSession, override val eventMana
 				hasSetEntityId = true
 			}
 			movementServerAuthoritative = packet.authoritativeMovementMode != AuthoritativeMovementMode.CLIENT
+			packet.authoritativeMovementMode = AuthoritativeMovementMode.SERVER
 			inventoriesServerAuthoritative = packet.isInventoriesServerAuthoritative
+			blockBreakServerAuthoritative = packet.isServerAuthoritativeBlockBreaking
 			soundServerAuthoritative = packet.networkPermissions.isServerAuthSounds
 
 			reset()
@@ -239,10 +241,10 @@ class EntityLocalPlayer(private val session: GameSession, override val eventMana
 			packet.inputData.clear()
 			packet.inputData.addAll(inputData)
 
-			if (pendingItemInteraction.isNotEmpty() && !packet.inputData.contains(PlayerAuthInputData.PERFORM_ITEM_INTERACTION)) {
-				packet.inputData.add(PlayerAuthInputData.PERFORM_ITEM_INTERACTION)
-				packet.itemUseTransaction = pendingItemInteraction.pop()
-			}
+//			if (pendingItemInteraction.isNotEmpty() && !packet.inputData.contains(PlayerAuthInputData.PERFORM_ITEM_INTERACTION)) {
+//				packet.inputData.add(PlayerAuthInputData.PERFORM_ITEM_INTERACTION)
+//				packet.itemUseTransaction = pendingItemInteraction.pop()
+//			}
 
 			tickExists = packet.tick
 			silentRotation?.let {
@@ -324,9 +326,9 @@ class EntityLocalPlayer(private val session: GameSession, override val eventMana
 	}
 
     fun useItem(inventoryTransaction: ItemUseTransaction) {
-        if (movementServerAuthoritative && inventoriesServerAuthoritative) {
-            pendingItemInteraction.add(inventoryTransaction)
-        } else {
+//        if (movementServerAuthoritative && inventoriesServerAuthoritative) {
+//            pendingItemInteraction.add(inventoryTransaction)
+//        } else {
             session.sendPacket(InventoryTransactionPacket().apply {
                 transactionType = InventoryTransactionType.ITEM_USE
                 legacyRequestId = inventoryTransaction.legacyRequestId
@@ -340,7 +342,7 @@ class EntityLocalPlayer(private val session: GameSession, override val eventMana
                 clickPosition = inventoryTransaction.clickPosition
                 blockDefinition = inventoryTransaction.blockDefinition
             })
-        }
+//        }
     }
 
     fun attackEntity(entity: Entity, swingValue: SwingMode = SwingMode.BOTH, sound: Boolean = false, mouseover: Boolean = false) {
