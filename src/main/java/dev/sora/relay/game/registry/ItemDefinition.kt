@@ -31,6 +31,7 @@ open class ItemDefinition(private val runtimeId: Int, private val identifier: St
                 || itemTags.contains(ItemTags.TAG_IS_SHOVEL)
                 || itemTags.contains(ItemTags.TAG_IS_FOOD)
                 || identifier == "minecraft:shield"
+				|| identifier == "minecraft:trident"
 				|| identifier == "minecraft:flint_and_steel"
 				|| identifier == "minecraft:totem_of_undying"
 				|| identifier == "minecraft:end_crystal"
@@ -84,7 +85,8 @@ fun ItemData.hasBetterItem(container: AbstractInventory, excludeSlot: Int = -1, 
 		|| tags.contains(ItemTags.TAG_IS_PICKAXE).also { categoryTag = ItemTags.TAG_IS_PICKAXE }
 		|| tags.contains(ItemTags.TAG_IS_AXE).also { categoryTag = ItemTags.TAG_IS_AXE }
 		|| tags.contains(ItemTags.TAG_IS_HOE).also { categoryTag = ItemTags.TAG_IS_HOE }
-		|| tags.contains(ItemTags.TAG_IS_SHOVEL).also { categoryTag = ItemTags.TAG_IS_SHOVEL }) {
+		|| tags.contains(ItemTags.TAG_IS_SHOVEL).also { categoryTag = ItemTags.TAG_IS_SHOVEL }
+		|| definition.identifier == "minecraft:trident") {
 		// compare category and tiers
 		val itemTier = definition.getTier() + getEnchantScore()
 		container.searchForItemIndexed { i, item ->
