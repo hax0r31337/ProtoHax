@@ -25,7 +25,7 @@ class ModuleTargets : CheatModule("Targets", CheatCategory.COMBAT, canToggle = f
 	}
 
     fun EntityPlayer.isBot(): Boolean {
-        if (this is EntityLocalPlayer || !state) return false
+        if (this is EntityLocalPlayer) return false
 
         return when (antiBotModeValue) {
             AntiBotMode.PLAYER_LIST -> {
@@ -37,12 +37,12 @@ class ModuleTargets : CheatModule("Targets", CheatCategory.COMBAT, canToggle = f
     }
 
 	fun EntityPlayer.isTeammate(): Boolean {
-		if (this is EntityLocalPlayer || !state) return false
+		if (this is EntityLocalPlayer) return false
 
 		return when (teamCheckModeValue) {
 			TeamCheckMode.NAME_TAG -> {
-				val selfColor = session.player.metadata[EntityDataTypes.NAME]?.let { analyzeColorCoverage(it as String).maxBy { it.value }.key } ?: 'f'
-				val playerColor = this.metadata[EntityDataTypes.NAME]?.let { analyzeColorCoverage(it as String).maxBy { it.value }.key } ?: 'f'
+				val selfColor = session.player.displayName.let { analyzeColorCoverage(it).maxBy { it.value }.key }
+				val playerColor = this.displayName.let { analyzeColorCoverage(it).maxBy { it.value }.key }
 
 				selfColor == playerColor
 			}
