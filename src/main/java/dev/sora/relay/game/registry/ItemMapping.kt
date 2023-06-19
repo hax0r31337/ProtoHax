@@ -2,6 +2,7 @@ package dev.sora.relay.game.registry
 
 import com.google.gson.JsonParser
 import dev.sora.relay.game.utils.constants.ItemTags
+import dev.sora.relay.utils.logInfo
 import org.cloudburstmc.protocol.common.DefinitionRegistry
 
 class ItemMapping(private val runtimeToGameMap: MutableMap<Int, ItemDefinition>)
@@ -17,7 +18,11 @@ class ItemMapping(private val runtimeToGameMap: MutableMap<Int, ItemDefinition>)
 
 	fun registerCustomItems(itemDefinitions: List<org.cloudburstmc.protocol.bedrock.data.definitions.ItemDefinition>) {
 		itemDefinitions.forEach { itemDefinition ->
+			if (runtimeToGameMap.containsKey(itemDefinition.runtimeId)) {
+				return@forEach
+			}
 			runtimeToGameMap[itemDefinition.runtimeId] = ItemDefinition(itemDefinition.runtimeId, itemDefinition.identifier, emptyArray())
+			logInfo(itemDefinition.identifier)
 		}
 	}
 
