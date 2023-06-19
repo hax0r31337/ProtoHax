@@ -10,7 +10,6 @@ import kotlinx.coroutines.launch
 import org.cloudburstmc.math.vector.Vector3i
 import org.cloudburstmc.protocol.bedrock.data.SubChunkRequestResult
 import org.cloudburstmc.protocol.bedrock.packet.*
-import java.lang.Exception
 import kotlin.math.floor
 
 abstract class ChunkStorage(protected val session: GameSession, override val eventManager: EventManager) : Listenable {
@@ -53,7 +52,7 @@ abstract class ChunkStorage(protected val session: GameSession, override val eve
 			chunkOutOfRangeCheck()
 			val chunk = Chunk(packet.chunkX, packet.chunkZ, dimension,
 				is384WorldSupported && dimension == Dimension.OVERWORLD && (!session.netSessionInitialized || session.netSession.codec.protocolVersion >= 475),
-				session.blockMapping, session.legacyBlockMapping)
+				session.blockMapping)
 			if (!packet.isCachingEnabled && !packet.isRequestSubChunks) {
 				val buf = packet.data.retainedDuplicate()
 				session.scope.launch {

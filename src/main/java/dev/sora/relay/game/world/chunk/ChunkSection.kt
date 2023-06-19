@@ -4,7 +4,7 @@ import dev.sora.relay.game.registry.BlockMapping
 import dev.sora.relay.game.registry.LegacyBlockMapping
 import io.netty.buffer.ByteBuf
 
-class ChunkSection(private val blockMapping: BlockMapping, private val legacyBlockMapping: Lazy<LegacyBlockMapping>) {
+class ChunkSection(private val blockMapping: BlockMapping) {
 
     var storage = BlockStorage(blockMapping.airId)
         private set
@@ -54,14 +54,13 @@ class ChunkSection(private val blockMapping: BlockMapping, private val legacyBlo
         buf.readBytes(metaIds)
 
         var index = 0
-		val legacyMapping = legacyBlockMapping.value
         for (x in 0..15) {
             for (z in 0..15) {
                 for (y in 0..15) {
                     val idx = (x shl 8) + (z shl 4) + y
                     val id = blockIds[idx].toInt()
                     val meta = metaIds[idx shr 1].toInt() shr (idx and 1) * 4 and 15
-                    storage.setBlock(index, legacyMapping.toRuntime(id, meta))
+                    storage.setBlock(index, with(LegacyBlockMapping) { blockMapping.toRuntime(id, meta) } )
                     index++
                 }
             }

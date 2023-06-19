@@ -2,7 +2,6 @@ package dev.sora.relay.game.registry
 
 import com.google.gson.JsonParser
 import dev.sora.relay.game.utils.constants.ItemTags
-import dev.sora.relay.utils.logInfo
 import org.cloudburstmc.protocol.common.DefinitionRegistry
 
 class ItemMapping(private val runtimeToGameMap: MutableMap<Int, ItemDefinition>)
@@ -22,7 +21,6 @@ class ItemMapping(private val runtimeToGameMap: MutableMap<Int, ItemDefinition>)
 				return@forEach
 			}
 			runtimeToGameMap[itemDefinition.runtimeId] = ItemDefinition(itemDefinition.runtimeId, itemDefinition.identifier, emptyArray())
-			logInfo(itemDefinition.identifier)
 		}
 	}
 
@@ -48,5 +46,9 @@ class ItemMapping(private val runtimeToGameMap: MutableMap<Int, ItemDefinition>)
 
             return ItemMapping(mapping)
         }
+
+		override fun emptyMapping(): ItemMapping {
+			return ItemMapping(mutableMapOf())
+		}
     }
 }

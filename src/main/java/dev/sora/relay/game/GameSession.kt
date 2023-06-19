@@ -5,7 +5,6 @@ import dev.sora.relay.game.event.*
 import dev.sora.relay.game.management.BlobCacheManager
 import dev.sora.relay.game.registry.BlockMapping
 import dev.sora.relay.game.registry.ItemMapping
-import dev.sora.relay.game.registry.LegacyBlockMapping
 import dev.sora.relay.game.world.Level
 import dev.sora.relay.session.MinecraftRelayPacketListener
 import dev.sora.relay.session.MinecraftRelaySession
@@ -34,12 +33,9 @@ class GameSession : MinecraftRelayPacketListener {
 
     lateinit var netSession: MinecraftRelaySession
 
-	var itemMapping = ItemMapping(mutableMapOf())
+	var itemMapping = ItemMapping.Provider.emptyMapping()
 		private set
-    var blockMapping = BlockMapping(mutableMapOf(), 0)
-        private set
-    var legacyBlockMapping: Lazy<LegacyBlockMapping> = lazy { LegacyBlockMapping(emptyMap()) }
-        private set
+    var blockMapping = BlockMapping.Provider.emptyMapping()
 
     val netSessionInitialized: Boolean
         get() = this::netSession.isInitialized
@@ -57,18 +53,20 @@ class GameSession : MinecraftRelayPacketListener {
         }
 
 		if (packet is StartGamePacket) {
-			if (packet.itemDefinitions.isNotEmpty()) {
-				itemMapping.registerCustomItems(packet.itemDefinitions)
-			}
-//			if (packet.blockProperties.isNotEmpty()) {
-//				blockMapping.registerCustomBlocks(packet.blockProperties)
-//			}
 			backgroundTask?.let {
 				if (it.isAlive) {
 					logInfo("awaiting mappings to load")
 					it.join()
 				}
 				backgroundTask = null
+			}
+			if (packet.itemDefinitions.isNotEmpty()) {
+				itemMapping.registerCustomItems(packet.itemDefinitions)
+			}
+			if (packet.blockProperties.isNotEmpty()) {
+				if (netSession.codec.protocolVersion >= 503) {
+					blockMapping.registerCustomBlocksFNV(packet.blockProperties)
+				}
 			}
 		}
 
@@ -103,8 +101,6 @@ class GameSession : MinecraftRelayPacketListener {
 				netSession.client!!.peer.codecHelper.itemDefinitions = itemDefinitions
 
 				itemMapping = itemDefinitions
-
-				legacyBlockMapping = lazy { LegacyBlockMapping.Provider.craftMapping(protocolVersion) }
 
 				if (blockTask.isAlive) {
 					blockTask.join()

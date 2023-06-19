@@ -1,12 +1,11 @@
 package dev.sora.relay.game.world.chunk
 
 import dev.sora.relay.game.registry.BlockMapping
-import dev.sora.relay.game.registry.LegacyBlockMapping
 import io.netty.buffer.ByteBuf
 import kotlin.math.abs
 
 class Chunk(val x: Int, val z: Int, val dimension: Int, val is384World: Boolean,
-            private val blockMapping: BlockMapping, private val legacyBlockMapping: Lazy<LegacyBlockMapping>) {
+            private val blockMapping: BlockMapping) {
 
 	var loadedAt = System.currentTimeMillis()
 		private set
@@ -14,7 +13,7 @@ class Chunk(val x: Int, val z: Int, val dimension: Int, val is384World: Boolean,
     val hash: Long
         get() = hash(x, z)
 
-    val sectionStorage = Array(if (is384World) 24 else 16) { ChunkSection(blockMapping, legacyBlockMapping) }
+    val sectionStorage = Array(if (is384World) 24 else 16) { ChunkSection(blockMapping) }
     val maximumHeight = sectionStorage.size * 16
 
     fun isInRadius(playerChunkX: Int, playerChunkZ: Int, radius: Int): Boolean {
