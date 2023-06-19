@@ -15,8 +15,10 @@ import org.cloudburstmc.math.vector.Vector2f
 import org.cloudburstmc.math.vector.Vector3f
 import org.cloudburstmc.math.vector.Vector3i
 import org.cloudburstmc.protocol.bedrock.data.*
+import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData
+import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.InventoryActionData
+import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.InventorySource
 import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.InventoryTransactionType
-import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.ItemUseTransaction
 import org.cloudburstmc.protocol.bedrock.packet.*
 import java.util.*
 import kotlin.math.atan2
@@ -77,7 +79,6 @@ class EntityLocalPlayer(private val session: GameSession, override val eventMana
 		private set
 
 	val inputData = mutableListOf<PlayerAuthInputData>()
-//    private val pendingItemInteraction = LinkedList<ItemUseTransaction>()
 	private val pendingBlockActions = mutableListOf<PlayerBlockActionData>()
     private var skipSwings = 0
 
@@ -241,11 +242,6 @@ class EntityLocalPlayer(private val session: GameSession, override val eventMana
 			packet.inputData.clear()
 			packet.inputData.addAll(inputData)
 
-//			if (pendingItemInteraction.isNotEmpty() && !packet.inputData.contains(PlayerAuthInputData.PERFORM_ITEM_INTERACTION)) {
-//				packet.inputData.add(PlayerAuthInputData.PERFORM_ITEM_INTERACTION)
-//				packet.itemUseTransaction = pendingItemInteraction.pop()
-//			}
-
 			tickExists = packet.tick
 			silentRotation?.let {
 				packet.rotation = Vector3f.from(it.pitch, it.yaw, packet.rotation.z)
@@ -325,24 +321,19 @@ class EntityLocalPlayer(private val session: GameSession, override val eventMana
 		}
 	}
 
-    fun useItem(inventoryTransaction: ItemUseTransaction) {
-//        if (movementServerAuthoritative && inventoriesServerAuthoritative) {
-//            pendingItemInteraction.add(inventoryTransaction)
-//        } else {
-            session.sendPacket(InventoryTransactionPacket().apply {
-                transactionType = InventoryTransactionType.ITEM_USE
-                legacyRequestId = inventoryTransaction.legacyRequestId
-                actions.addAll(inventoryTransaction.actions)
-                actionType = inventoryTransaction.actionType
-                blockPosition = inventoryTransaction.blockPosition
-                blockFace = inventoryTransaction.blockFace
-                hotbarSlot = inventoryTransaction.hotbarSlot
-                itemInHand = inventoryTransaction.itemInHand
-                playerPosition = inventoryTransaction.playerPosition
-                clickPosition = inventoryTransaction.clickPosition
-                blockDefinition = inventoryTransaction.blockDefinition
-            })
-//        }
+    fun useItem(packet: InventoryTransactionPacket, itemConsumed: Int) {
+		packet.transactionType = InventoryTransactionType.ITEM_USE
+
+		if (inventoriesServerAuthoritative && itemConsumed != 0) {
+			val toItem = if (packet.itemInHand.count > itemConsumed) {
+				packet.itemInHand.toBuilder()
+					.count(packet.itemInHand.count - itemConsumed)
+					.build()
+			} else ItemData.AIR
+			packet.actions.add(InventoryActionData(InventorySource.fromContainerWindowId(0), packet.hotbarSlot, packet.itemInHand, toItem))
+		}
+
+		session.sendPacket(packet)
     }
 
     fun attackEntity(entity: Entity, swingValue: SwingMode = SwingMode.BOTH, sound: Boolean = false, mouseover: Boolean = false) {
@@ -390,7 +381,7 @@ class EntityLocalPlayer(private val session: GameSession, override val eventMana
 			this.definition = definition
 		})
 		session.level.setBlockIdAt(block.x, block.y, block.z, definition?.runtimeId ?: 0)
-		useItem(ItemUseTransaction().apply {
+		useItem(InventoryTransactionPacket().apply {
 			actionType = 0
 			blockPosition = block.sub(facing.unitVector)
 			blockFace = facing.ordinal
@@ -399,7 +390,7 @@ class EntityLocalPlayer(private val session: GameSession, override val eventMana
 			playerPosition = vec3Position
 			clickPosition = Vector3f.from(Math.random(), Math.random(), Math.random())
 			blockDefinition = definition
-		})
+		}, 1)
 	}
 
     enum class SwingMode(override val choiceName: String) : NamedChoice {

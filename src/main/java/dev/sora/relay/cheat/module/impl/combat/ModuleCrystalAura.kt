@@ -20,7 +20,7 @@ import org.cloudburstmc.math.vector.Vector3f
 import org.cloudburstmc.math.vector.Vector3i
 import org.cloudburstmc.protocol.bedrock.data.LevelEvent
 import org.cloudburstmc.protocol.bedrock.data.inventory.ContainerId
-import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.ItemUseTransaction
+import org.cloudburstmc.protocol.bedrock.packet.InventoryTransactionPacket
 import org.cloudburstmc.protocol.bedrock.packet.LevelEventPacket
 import org.cloudburstmc.protocol.bedrock.packet.PlayerHotbarPacket
 import kotlin.math.floor
@@ -102,7 +102,7 @@ class ModuleCrystalAura : CheatModule("CrystalAura", CheatCategory.COMBAT) {
 				session.player.inventory.heldItemSlot
 			} else -1
 
-			session.player.useItem(ItemUseTransaction().apply {
+			session.player.useItem(InventoryTransactionPacket().apply {
 				actionType = 0
 				blockPosition = bestPlace.target as Vector3i
 				blockFace = EnumFacing.UP.ordinal
@@ -111,7 +111,7 @@ class ModuleCrystalAura : CheatModule("CrystalAura", CheatCategory.COMBAT) {
 				playerPosition = session.player.vec3Position
 				clickPosition = Vector3f.from(Math.random(), Math.random(), Math.random())
 				blockDefinition = session.player.inventory.hand.blockDefinition
-			})
+			}, 1)
 			placeTimer.reset()
 
 			if (slot != -1) {

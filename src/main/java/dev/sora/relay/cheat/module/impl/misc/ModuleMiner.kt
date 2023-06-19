@@ -16,7 +16,6 @@ import org.cloudburstmc.protocol.bedrock.data.PlayerActionType
 import org.cloudburstmc.protocol.bedrock.data.PlayerBlockActionData
 import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData
 import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.InventoryTransactionType
-import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.ItemUseTransaction
 import org.cloudburstmc.protocol.bedrock.packet.InventoryTransactionPacket
 
 class ModuleMiner : CheatModule("Miner", CheatCategory.MISC) {
@@ -50,7 +49,7 @@ class ModuleMiner : CheatModule("Miner", CheatCategory.MISC) {
 
 		when(actionValue) {
 			Action.USE -> {
-				session.player.useItem(ItemUseTransaction().apply {
+				session.player.useItem(InventoryTransactionPacket().apply {
 					actionType = 0
 					blockPosition = pos
 					blockFace = 0
@@ -59,7 +58,7 @@ class ModuleMiner : CheatModule("Miner", CheatCategory.MISC) {
 					playerPosition = session.player.vec3Position
 					clickPosition = Vector3f.from(Math.random(), Math.random(), Math.random())
 					blockDefinition = session.level.getBlockAt(pos)
-				})
+				}, 0)
 			}
 			Action.BREAK -> {
 				if (lastingBreakTime == 0) {

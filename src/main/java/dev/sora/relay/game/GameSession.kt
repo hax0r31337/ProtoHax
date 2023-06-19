@@ -42,6 +42,7 @@ class GameSession : MinecraftRelayPacketListener {
 
 	private var lastStopBreak = false
 	private var backgroundTask: Thread? = null
+	private var hasReceivedStartGamePacket = false
 
 	val scope = CoroutineScope(Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()).asCoroutineDispatcher() + SupervisorJob())
 
@@ -52,7 +53,7 @@ class GameSession : MinecraftRelayPacketListener {
             return false
         }
 
-		if (packet is StartGamePacket) {
+		if (packet is StartGamePacket && !hasReceivedStartGamePacket) {
 			backgroundTask?.let {
 				if (it.isAlive) {
 					logInfo("awaiting mappings to load")
@@ -68,6 +69,8 @@ class GameSession : MinecraftRelayPacketListener {
 					blockMapping.registerCustomBlocksFNV(packet.blockProperties)
 				}
 			}
+
+			hasReceivedStartGamePacket = true
 		}
 
         return true
@@ -106,6 +109,8 @@ class GameSession : MinecraftRelayPacketListener {
 					blockTask.join()
 				}
 			}
+
+			hasReceivedStartGamePacket = false
         } else if (!player.movementServerAuthoritative && packet is PlayerAuthInputPacket) {
 			convertAuthInput(packet)?.also { netSession.outboundPacket(it) }
 			return false

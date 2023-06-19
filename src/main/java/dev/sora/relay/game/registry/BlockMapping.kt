@@ -1,6 +1,5 @@
 package dev.sora.relay.game.registry
 
-import dev.sora.relay.utils.logInfo
 import org.cloudburstmc.nbt.NBTInputStream
 import org.cloudburstmc.nbt.NbtMap
 import org.cloudburstmc.nbt.util.stream.NetworkDataInputStream
@@ -49,8 +48,6 @@ class BlockMapping(private val runtimeToGameMap: MutableMap<Int, BlockDefinition
 		blockDefinitionList.addAll(runtimeToGameMap.values)
 
 		customBlocks.forEach { blockPropertyData ->
-			logInfo(blockPropertyData.name)
-
 			blockDefinitionList.add(BlockDefinition(0, blockPropertyData.name, NbtMap.EMPTY))
 		}
 
@@ -71,8 +68,7 @@ class BlockMapping(private val runtimeToGameMap: MutableMap<Int, BlockDefinition
         override val resourcePath: String
             get() = "/assets/mcpedata/blocks"
 
-		@Suppress("unchecked_cast")
-        override fun readMapping(version: Short): BlockMapping {
+		override fun readMapping(version: Short): BlockMapping {
             if (!availableVersions.contains(version)) error("Version not available: $version")
 
 			val inputStream = GZIPInputStream(MappingProvider::class.java.getResourceAsStream("${resourcePath}/canonical_block_states_$version.nbt.gz"))
