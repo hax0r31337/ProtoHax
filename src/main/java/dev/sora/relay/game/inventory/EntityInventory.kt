@@ -9,8 +9,7 @@ import org.cloudburstmc.protocol.bedrock.packet.MobEquipmentPacket
 
 open class EntityInventory(val entity: Entity) : AbstractInventory(0) {
 
-    override val capacity: Int
-        get() = 6
+	override val content = Array(6) { ItemData.AIR }
 
     open var hand: ItemData
         get() = content[0]

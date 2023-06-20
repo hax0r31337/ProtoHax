@@ -14,9 +14,7 @@ class ModuleNoSkin : CheatModule("NoSkin", CheatCategory.MISC) {
         ImageData.of(ByteArray(16384).also { for(i in it.indices) it[i] = Byte.MAX_VALUE })
     }
 
-	private val handlePacketInbound = handle<EventPacketInbound> { event ->
-		val packet = event.packet
-
+	private val handlePacketInbound = handle<EventPacketInbound> {
 		if (packet is PlayerListPacket) {
 			packet.entries.forEach {
 				if (it.skin != null) {

@@ -12,7 +12,7 @@ import org.cloudburstmc.protocol.bedrock.data.SubChunkRequestResult
 import org.cloudburstmc.protocol.bedrock.packet.*
 import kotlin.math.floor
 
-abstract class WorldwideBlockStorage(protected val session: GameSession, override val eventManager: EventManager) : Listenable {
+abstract class ChunkStorage(protected val session: GameSession, override val eventManager: EventManager) : Listenable {
 
 	val chunks = mutableMapOf<Long, Chunk>()
 
@@ -21,6 +21,12 @@ abstract class WorldwideBlockStorage(protected val session: GameSession, overrid
 
 	var viewDistance = -1
 		protected set
+
+	/**
+	 * is 384 new world format supported by the server engine
+	 */
+	var is384WorldSupported = false
+		private set
 
 	private fun cleanUp() {
 		chunks.forEach { (_, chunk) ->
@@ -33,14 +39,20 @@ abstract class WorldwideBlockStorage(protected val session: GameSession, overrid
 		cleanUp()
 	}
 
-	private val handlePacketInbound = handle<EventPacketInbound> { event ->
-		val packet = event.packet
-
-		if (packet is LevelChunkPacket) {
+	private val handlePacketInbound = handle<EventPacketInbound> {
+		if (packet is StartGamePacket) {
+			is384WorldSupported = try {
+				// 384 height world was introduced in minecraft 1.18
+				val vanillaVersion = packet.vanillaVersion.split(".")
+				vanillaVersion.size >= 2 && vanillaVersion[0] == "1" && vanillaVersion[1].toInt() >= 18
+			} catch (e: Exception) {
+				true
+			}
+		} else if (packet is LevelChunkPacket) {
 			chunkOutOfRangeCheck()
 			val chunk = Chunk(packet.chunkX, packet.chunkZ, dimension,
-				dimension == Dimension.OVERWORLD && (!session.netSessionInitialized || session.netSession.codec.protocolVersion >= 440),
-				session.blockMapping, session.legacyBlockMapping)
+				is384WorldSupported && dimension == Dimension.OVERWORLD && (!session.netSessionInitialized || session.netSession.codec.protocolVersion >= 475),
+				session.blockMapping)
 			if (!packet.isCachingEnabled && !packet.isRequestSubChunks) {
 				val buf = packet.data.retainedDuplicate()
 				session.scope.launch {
@@ -93,10 +105,11 @@ abstract class WorldwideBlockStorage(protected val session: GameSession, overrid
 
 	protected fun chunkOutOfRangeCheck() {
 		if (viewDistance <= 0) return
-		val playerChunkX = floor(session.thePlayer.posX).toInt() shr 4
-		val playerChunkZ = floor(session.thePlayer.posZ).toInt() shr 4
+		val playerChunkX = floor(session.player.posX).toInt() shr 4
+		val playerChunkZ = floor(session.player.posZ).toInt() shr 4
+		val time = System.currentTimeMillis()
 		chunks.entries.removeIf { (_, chunk) ->
-			val bl = !chunk.isInRadius(playerChunkX, playerChunkZ, viewDistance+1)
+			val bl = time - 10000 > chunk.loadedAt && !chunk.isInRadius(playerChunkX, playerChunkZ, viewDistance+1)
 			if (bl) {
 				val event = EventChunkUnload(session, chunk)
 				session.eventManager.emit(event)

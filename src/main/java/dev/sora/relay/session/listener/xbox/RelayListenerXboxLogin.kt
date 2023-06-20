@@ -8,6 +8,7 @@ import com.nimbusds.jwt.SignedJWT
 import dev.sora.relay.cheat.config.AbstractConfigManager
 import dev.sora.relay.session.MinecraftRelaySession
 import dev.sora.relay.session.listener.RelayListenerEncryptedSession
+import dev.sora.relay.session.listener.xbox.cache.IXboxChainCache
 import dev.sora.relay.utils.HttpUtils
 import dev.sora.relay.utils.base64Decode
 import dev.sora.relay.utils.logError
@@ -26,32 +27,41 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
 
-class RelayListenerXboxLogin(val accessToken: String, val deviceInfo: XboxDeviceInfo) : RelayListenerEncryptedSession() {
+class RelayListenerXboxLogin(val accessToken: () -> String, val deviceInfo: XboxDeviceInfo) : RelayListenerEncryptedSession() {
 
-    constructor(accessToken: String, deviceInfo: XboxDeviceInfo, session: MinecraftRelaySession) : this(accessToken, deviceInfo) {
+    constructor(accessToken: () -> String, deviceInfo: XboxDeviceInfo, session: MinecraftRelaySession) : this(accessToken, deviceInfo) {
         this.session = session
     }
 
+	var chainCache: IXboxChainCache? = null
+
     private var chainExpires = 0L
-    private var identityToken = ""
-        get() {
-            if (field.isEmpty()) {
-                field = fetchIdentityToken(accessToken, deviceInfo)
-            }
-            return field
-        }
     private var chain: List<SignedJWT>? = null
         get() {
             if (field == null || chainExpires < Instant.now().epochSecond) {
-                val chains = fetchChain(identityToken, keyPair)
+				var isFreshChain = false
+                val chains = chainCache?.checkCache(deviceInfo)?.let {
+					logInfo("chain cache hit")
+					keyPair = it.second
+					it.first
+				} ?: fetchChain(fetchIdentityToken(accessToken(), deviceInfo), keyPair).also {
+					isFreshChain = true
+				}
 				field = chains
 
 				// search for chain expiry
 				chainExpires = 0L
-				chains.forEach {  chain ->
+				chains.forEach { chain ->
 					val expires = chain.payload.toJSONObject()["exp"] ?: return@forEach
 					if (expires is Number && (chainExpires == 0L || expires.toLong() < chainExpires)) {
 						chainExpires = expires.toLong()
+					}
+				}
+
+				chainCache?.also {
+					if (isFreshChain) {
+						logInfo("saving chain to cache")
+						it.cache(deviceInfo, chainExpires, chains, keyPair)
 					}
 				}
             }

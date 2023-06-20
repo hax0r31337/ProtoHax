@@ -1,44 +1,43 @@
 package dev.sora.relay.game.registry
 
 import org.cloudburstmc.nbt.NBTInputStream
-import org.cloudburstmc.nbt.NbtList
 import org.cloudburstmc.nbt.NbtMap
-import java.io.DataInputStream
+import org.cloudburstmc.nbt.util.stream.NetworkDataInputStream
 import java.util.zip.GZIPInputStream
 
-class LegacyBlockMapping(private val stateToRuntimeMap: Map<Int, Int>) {
+object LegacyBlockMapping {
 
-    fun toRuntime(id: Int, meta: Int)
-        = toRuntime(id shl 6 or meta)
+	private val stateToBlockMap: Map<Int, BlockDefinition>
 
-    fun toRuntime(state: Int): Int {
-        return stateToRuntimeMap[state] ?: 0
-    }
+	init {
+		val inputStream = GZIPInputStream(MappingProvider::class.java.getResourceAsStream("/assets/mcpedata/legacy_block_states.nbt.gz"))
+		val nbtStream = NBTInputStream(NetworkDataInputStream(inputStream))
+		val stateToBlock = mutableMapOf<Int, BlockDefinition>()
 
-    object Provider : MappingProvider<LegacyBlockMapping>() {
+		while (inputStream.available() > 0) {
+			val tag = nbtStream.readTag() as NbtMap
+			val name = tag.getString("name")
+			val id = tag.getShort("id")
+			val data = tag.getShort("data")
 
-        override val resourcePath: String
-            get() = "/assets/mcpedata/blocks"
+			stateToBlock[id.toInt() shl 6 or data.toInt()] = BlockDefinition(0, name, tag.getCompound("states") ?: NbtMap.EMPTY)
+		}
 
-		@Suppress("unchecked_cast")
-        override fun readMapping(version: Short): LegacyBlockMapping {
-            if (!availableVersions.contains(version)) error("Version not available: $version")
+		stateToBlockMap = stateToBlock
+	}
 
-            val tag = NBTInputStream(
-                DataInputStream(
-                GZIPInputStream(MappingProvider::class.java.getResourceAsStream("${resourcePath}/runtime_block_states_$version.dat"))
-            )
-            ).readTag() as NbtList<NbtMap>
-            val stateToRuntime = mutableMapOf<Int, Int>()
+    fun toBlockState(id: Int, data: Int)
+        = toBlockState(id shl 6 or data)
 
-            tag.forEach { subtag ->
-                val state = subtag.getInt("id") shl 6 or subtag.getShort("data").toInt()
-                val runtime = subtag.getInt("runtimeId")
+	fun toBlockState(state: Int): BlockDefinition {
+		return stateToBlockMap[state] ?: BlockDefinition(0, "minecraft:air", NbtMap.EMPTY)
+	}
 
-                stateToRuntime[state] = runtime
-            }
+	fun BlockMapping.toRuntime(id: Int, data: Int): Int {
+		return getRuntimeByDefinition(toBlockState(id, data))
+	}
 
-            return LegacyBlockMapping(stateToRuntime)
-        }
-    }
+	fun BlockMapping.toRuntime(state: Int): Int {
+		return getRuntimeByDefinition(toBlockState(state))
+	}
 }

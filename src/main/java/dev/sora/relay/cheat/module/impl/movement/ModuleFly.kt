@@ -26,7 +26,7 @@ class ModuleFly : CheatModule("Fly", CheatCategory.MOVEMENT) {
 
     private var launchY = 0f
 	private val canFly: Boolean
-		get() = !pressJumpValue || session.thePlayer.inputData.contains(PlayerAuthInputData.JUMP_DOWN)
+		get() = !pressJumpValue || session.player.inputData.contains(PlayerAuthInputData.JUMP_DOWN)
 
     private val abilityPacket = UpdateAbilitiesPacket().apply {
         playerPermission = PlayerPermission.OPERATOR
@@ -41,62 +41,59 @@ class ModuleFly : CheatModule("Fly", CheatCategory.MOVEMENT) {
     }
 
     override fun onEnable() {
-        launchY = session.thePlayer.posY
+        launchY = session.player.posY
     }
 
 	private open inner class Vanilla(choiceName: String) : Choice(choiceName) {
 
-		private val handleTick = handle<EventTick> { event ->
-			if (event.session.thePlayer.tickExists % 10 == 0L) {
-				event.session.netSession.inboundPacket(abilityPacket.apply {
-					uniqueEntityId = event.session.thePlayer.uniqueEntityId
+		private val handleTick = handle<EventTick> {
+			if (session.player.tickExists % 10 == 0L) {
+				session.netSession.inboundPacket(abilityPacket.apply {
+					uniqueEntityId = session.player.uniqueEntityId
 				})
 			}
 		}
 
-		private val handlePacketInbound = handle<EventPacketInbound> { event ->
-			val packet = event.packet
+		private val handlePacketInbound = handle<EventPacketInbound> {
 			if (packet is UpdateAbilitiesPacket) {
-				event.cancel()
-				event.session.netSession.inboundPacket(abilityPacket.apply {
-					uniqueEntityId = event.session.thePlayer.uniqueEntityId
+				cancel()
+				session.netSession.inboundPacket(abilityPacket.apply {
+					uniqueEntityId = session.player.uniqueEntityId
 				})
 			} else if (packet is StartGamePacket) {
-				event.session.netSession.inboundPacket(abilityPacket.apply {
-					uniqueEntityId = event.session.thePlayer.uniqueEntityId
+				session.netSession.inboundPacket(abilityPacket.apply {
+					uniqueEntityId = session.player.uniqueEntityId
 				})
 			}
 		}
 
-		private val handlePacketOutbound = handle<EventPacketOutbound> { event ->
-			val packet = event.packet
+		private val handlePacketOutbound = handle<EventPacketOutbound> {
 			if (packet is RequestAbilityPacket && packet.ability == Ability.FLYING) {
-				event.cancel()
+				cancel()
 			}
 		}
 	}
 
 	private inner class Mineplex : Vanilla("Mineplex") {
 
-		private var mineplexMotionValue by boolValue("MineplexMotion", false)
+		private var motionValue by boolValue("MineplexMotion", false)
 
-		private val handleTick = handle<EventTick> { event ->
-			val session = event.session
-			if (session.thePlayer.tickExists % 10 == 0L) {
+		private val handleTick = handle<EventTick> {
+			if (session.player.tickExists % 10 == 0L) {
 				session.netSession.inboundPacket(abilityPacket.apply {
-					uniqueEntityId = session.thePlayer.uniqueEntityId
+					uniqueEntityId = session.player.uniqueEntityId
 				})
 			}
 			if (!canFly) {
-				launchY = session.thePlayer.posY
+				launchY = session.player.posY
 				return@handle
 			}
-			val player = session.thePlayer
+			val player = session.player
 			val yaw = Math.toRadians(player.rotationYaw.toDouble()).toFloat()
 			val value = speedValue
-			if (mineplexMotionValue) {
+			if (motionValue) {
 				session.netSession.inboundPacket(SetEntityMotionPacket().apply {
-					runtimeEntityId = session.thePlayer.runtimeEntityId
+					runtimeEntityId = session.player.runtimeEntityId
 					motion = Vector3f.from(-sin(yaw) * value, 0f, +cos(yaw) * value)
 				})
 			} else {
@@ -104,14 +101,12 @@ class ModuleFly : CheatModule("Fly", CheatCategory.MOVEMENT) {
 			}
 		}
 
-		private val handlePacketInbound = handle<EventPacketOutbound> { event ->
-			val packet = event.packet
-
+		private val handlePacketInbound = handle<EventPacketOutbound> {
 			if (packet is RequestAbilityPacket && packet.ability == Ability.FLYING) {
-				event.session.netSession.inboundPacket(abilityPacket.apply {
-					uniqueEntityId = session.thePlayer.uniqueEntityId
+				session.netSession.inboundPacket(abilityPacket.apply {
+					uniqueEntityId = session.player.uniqueEntityId
 				})
-				event.cancel()
+				cancel()
 			} else if (packet is PlayerAuthInputPacket && canFly) {
 				packet.position = packet.position.let {
 					Vector3f.from(it.x, launchY, it.z)
@@ -122,18 +117,16 @@ class ModuleFly : CheatModule("Fly", CheatCategory.MOVEMENT) {
 
 	private inner class Jetpack : Choice("Jetpack") {
 
-		private val handleTick = handle<EventTick> { event ->
-			val session = event.session
-
+		private val handleTick = handle<EventTick> {
 			if (!canFly) {
 				return@handle
 			}
 
 			session.netSession.inboundPacket(SetEntityMotionPacket().apply {
-				runtimeEntityId = session.thePlayer.runtimeEntityId
+				runtimeEntityId = session.player.runtimeEntityId
 
-				val calcYaw: Double = (session.thePlayer.rotationYawHead + 90) * (PI / 180)
-				val calcPitch: Double = (session.thePlayer.rotationPitch) * -(PI / 180)
+				val calcYaw: Double = (session.player.rotationYawHead + 90) * (PI / 180)
+				val calcPitch: Double = (session.player.rotationPitch) * -(PI / 180)
 
 				motion = Vector3f.from(
 					cos(calcYaw) * cos(calcPitch) * speedValue,
@@ -150,17 +143,16 @@ class ModuleFly : CheatModule("Fly", CheatCategory.MOVEMENT) {
 			if (session.netSessionInitialized) {
 				session.netSession.inboundPacket(MobEffectPacket().apply {
 					event = MobEffectPacket.Event.REMOVE
-					runtimeEntityId = session.thePlayer.runtimeEntityId
+					runtimeEntityId = session.player.runtimeEntityId
 					effectId = Effect.SLOW_FALLING
 				})
 			}
 		}
 
-		private val handleTick = handle<EventTick> { event ->
-			val session = event.session
-			if (session.thePlayer.tickExists % 20 != 0L) return@handle
+		private val handleTick = handle<EventTick> {
+			if (session.player.tickExists % 20 != 0L) return@handle
 			session.netSession.inboundPacket(MobEffectPacket().apply {
-				runtimeEntityId = session.thePlayer.runtimeEntityId
+				runtimeEntityId = session.player.runtimeEntityId
 				setEvent(MobEffectPacket.Event.ADD)
 				effectId = Effect.SLOW_FALLING
 				amplifier = 0
@@ -179,14 +171,12 @@ class ModuleFly : CheatModule("Fly", CheatCategory.MOVEMENT) {
 			flag = true
 		}
 
-		private val onTick = handle<EventTick> { event ->
-			val player = event.session.thePlayer
-
+		private val onTick = handle<EventTick> {
 			if (canFly) {
-				val angle = Math.toRadians(player.rotationYaw.toDouble()).toFloat()
+				val angle = Math.toRadians(session.player.rotationYaw.toDouble()).toFloat()
 
-				event.session.netSession.inboundPacket(SetEntityMotionPacket().apply {
-					runtimeEntityId = player.runtimeEntityId
+				session.netSession.inboundPacket(SetEntityMotionPacket().apply {
+					runtimeEntityId = session.player.runtimeEntityId
 					motion = Vector3f.from(-sin(angle) * speedValue, if (flag) 0.42f else -0.42f, cos(angle) * speedValue)
 				})
 				flag = !flag

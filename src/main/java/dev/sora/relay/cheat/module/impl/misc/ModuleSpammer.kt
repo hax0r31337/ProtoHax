@@ -23,8 +23,8 @@ class ModuleSpammer : CheatModule("Spammer", CheatCategory.MISC) {
 	private fun sendMessage(placeholders: Map<String, String>) {
 		session.sendPacket(TextPacket().apply {
 			type = TextPacket.Type.CHAT
-			xuid = session.thePlayer.xuid
-			sourceName = session.thePlayer.username
+			xuid = session.player.xuid
+			sourceName = session.player.username
 			platformChatId = ""
 			message = messageValue.let { if (randomSuffix) "$it >${getRandomString(10 + Random.nextInt(5))}<" else it }.let {
 				var result = it
@@ -56,15 +56,13 @@ class ModuleSpammer : CheatModule("Spammer", CheatCategory.MISC) {
 			lastAttack = null
 		}
 
-		private val handleEntityDespawn = handle<EventEntityDespawn> { event ->
-			if (event.entity is EntityPlayer && event.entity.runtimeEntityId == lastAttack) {
-				sendMessage(mapOf("\$name" to event.entity.username))
+		private val handleEntityDespawn = handle<EventEntityDespawn> {
+			if (entity is EntityPlayer && entity.runtimeEntityId == lastAttack) {
+				sendMessage(mapOf("\$name" to entity.username))
 			}
 		}
 
-		private val handlePacketOutbound = handle<EventPacketOutbound> { event ->
-			val packet = event.packet
-
+		private val handlePacketOutbound = handle<EventPacketOutbound> {
 			if (packet is InventoryTransactionPacket && packet.transactionType == InventoryTransactionType.ITEM_USE_ON_ENTITY && packet.actionType == 1) {
 				lastAttack = packet.runtimeEntityId
 			}

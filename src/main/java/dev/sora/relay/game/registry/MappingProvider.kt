@@ -11,8 +11,10 @@ abstract class MappingProvider<T> {
         .asJsonArray.map { it.asShort }.sortedBy { it }.toTypedArray()
 
     open fun craftMapping(protocolVersion: Int): T {
-        return readMapping(availableVersions.filter { it <= protocolVersion }.max())
+        return availableVersions.filter { it <= protocolVersion }.maxOrNull()?.let { readMapping(it) } ?: emptyMapping()
     }
 
     abstract fun readMapping(version: Short): T
+
+	abstract fun emptyMapping(): T
 }

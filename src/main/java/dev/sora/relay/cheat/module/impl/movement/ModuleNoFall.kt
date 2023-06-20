@@ -18,10 +18,10 @@ class ModuleNoFall : CheatModule("NoFall", CheatCategory.MOVEMENT) {
 
 	private object ElytraGlitch : Choice("ElytraGlitch") {
 
-		val handleTick = handle<EventTick> { event ->
-			if (event.session.thePlayer.tickExists % 10 == 0L) {
-				event.session.sendPacket(PlayerActionPacket().apply {
-					runtimeEntityId = event.session.thePlayer.runtimeEntityId
+		val handleTick = handle<EventTick> {
+			if (session.player.tickExists % 10 == 0L) {
+				session.sendPacket(PlayerActionPacket().apply {
+					runtimeEntityId = session.player.runtimeEntityId
 					action = PlayerActionType.START_GLIDE
 					blockPosition = Vector3i.ZERO
 					resultPosition = Vector3i.ZERO
@@ -32,8 +32,7 @@ class ModuleNoFall : CheatModule("NoFall", CheatCategory.MOVEMENT) {
 
 	private object Cubecraft : Choice("Cubecraft") {
 
-		val handlePacketOutbound = handle<EventPacketOutbound> { event ->
-			val packet = event.packet
+		val handlePacketOutbound = handle<EventPacketOutbound> {
 			if (packet is PlayerAuthInputPacket) {
 				if (packet.delta.y < -0.3f) {
 					packet.delta = Vector3f.ZERO

@@ -20,9 +20,7 @@ class ModuleDeviceSpoof : CheatModule("DeviceSpoof", CheatCategory.MISC) {
     private var deviceIdValue by boolValue("DeviceId", true)
     private var platformValue by boolValue("Platform", true)
 
-	private val handlePacketOutbound = handle<EventPacketOutbound> { event ->
-		val packet = event.packet
-
+	private val handlePacketOutbound = handle<EventPacketOutbound> {
 		if (packet is LoginPacket) {
 			val body = JsonParser.parseString(packet.extra.payload.toString()).asJsonObject
 			if (deviceIdValue) {

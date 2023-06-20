@@ -33,6 +33,27 @@ abstract class Value<T>(val name: String, valueIn: T) {
 
     val defaultValue = valueIn
 
+	private var visibleCheck: () -> Boolean = { true }
+
+	val visible: Boolean
+		get() = visibleCheck()
+
+	var isVisibilityVariable = false
+		private set
+
+	fun visible(func: () -> Boolean): Value<T> {
+		if (!isVisibilityVariable) {
+			visibleCheck = func
+			isVisibilityVariable = true
+		} else {
+			val oldFunc = visibleCheck
+			visibleCheck = {
+				oldFunc() && func()
+			}
+		}
+		return this
+	}
+
     open fun reset() {
         value = defaultValue
     }

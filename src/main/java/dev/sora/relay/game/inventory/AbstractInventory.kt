@@ -9,6 +9,7 @@ import org.cloudburstmc.protocol.bedrock.data.inventory.itemstack.request.ItemSt
 import org.cloudburstmc.protocol.bedrock.data.inventory.itemstack.request.ItemStackRequestSlotData
 import org.cloudburstmc.protocol.bedrock.data.inventory.itemstack.request.action.DropAction
 import org.cloudburstmc.protocol.bedrock.data.inventory.itemstack.request.action.PlaceAction
+import org.cloudburstmc.protocol.bedrock.data.inventory.itemstack.request.action.SwapAction
 import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.InventoryActionData
 import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.InventorySource
 import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.InventoryTransactionType
@@ -16,8 +17,9 @@ import org.cloudburstmc.protocol.bedrock.packet.*
 
 abstract class AbstractInventory(val containerId: Int) {
 
-    abstract val capacity: Int
-    open val content = Array(capacity) { ItemData.AIR }
+    abstract val content: Array<ItemData>
+	open val capacity: Int
+		get() = content.size
 
     /**
      * @return containerId, slotId
@@ -28,7 +30,13 @@ abstract class AbstractInventory(val containerId: Int) {
 
     private fun getSlotTypeFromInventoryId(id: Int, slot: Int): ContainerSlotType {
         return when(id) {
-            ContainerId.INVENTORY -> ContainerSlotType.INVENTORY
+            ContainerId.INVENTORY -> {
+				if (slot < 9) {
+					ContainerSlotType.HOTBAR
+				} else {
+					ContainerSlotType.INVENTORY
+				}
+			}
             ContainerId.ARMOR -> ContainerSlotType.ARMOR
             ContainerId.OFFHAND -> ContainerSlotType.OFFHAND
             else -> ContainerSlotType.LEVEL_ENTITY
@@ -40,13 +48,25 @@ abstract class AbstractInventory(val containerId: Int) {
         val destinationInfo = destinationInventory.getNetworkSlotInfo(destinationSlot)
         return if (serverAuthoritative != Int.MAX_VALUE) {
             ItemStackRequestPacket().also {
-                it.requests.add(ItemStackRequest(serverAuthoritative,
-                    arrayOf(PlaceAction(content[sourceSlot].count,
-                    ItemStackRequestSlotData(getSlotTypeFromInventoryId(sourceInfo.first, sourceInfo.second), sourceInfo.second, content[sourceSlot].netId),
-                    ItemStackRequestSlotData(getSlotTypeFromInventoryId(destinationInfo.first, destinationInfo.second), destinationInfo.second, destinationInventory.content[destinationSlot].netId)
-                    )),
-                    arrayOf(), null
-                ))
+				val src = content[sourceSlot]
+				val dst = destinationInventory.content[destinationSlot]
+				if (dst == ItemData.AIR) {
+					it.requests.add(ItemStackRequest(serverAuthoritative,
+						arrayOf(PlaceAction(src.count,
+							ItemStackRequestSlotData(getSlotTypeFromInventoryId(sourceInfo.first, sourceSlot), sourceInfo.second, src.netId),
+							ItemStackRequestSlotData(getSlotTypeFromInventoryId(destinationInfo.first, destinationSlot), destinationInfo.second, dst.netId)
+						)),
+						arrayOf(), null
+					))
+				} else {
+					it.requests.add(ItemStackRequest(serverAuthoritative,
+						arrayOf(SwapAction(
+							ItemStackRequestSlotData(getSlotTypeFromInventoryId(sourceInfo.first, sourceSlot), sourceInfo.second, src.netId),
+							ItemStackRequestSlotData(getSlotTypeFromInventoryId(destinationInfo.first, destinationSlot), destinationInfo.second, dst.netId)
+						)),
+						arrayOf(), null
+					))
+				}
             }
         } else {
             InventoryTransactionPacket().apply {
@@ -64,7 +84,7 @@ abstract class AbstractInventory(val containerId: Int) {
     open fun moveItem(sourceSlot: Int, destinationSlot: Int, destinationInventory: AbstractInventory, session: GameSession) {
         // send packet to server
         val pk = moveItem(sourceSlot, destinationSlot, destinationInventory,
-            if (session.thePlayer.inventoriesServerAuthoritative) session.thePlayer.inventory.getRequestId() else Int.MAX_VALUE)
+            if (session.player.inventoriesServerAuthoritative) session.player.inventory.getRequestId() else Int.MAX_VALUE)
         sendInventoryPacket(pk, destinationInventory, session)
 
         // sync with client
@@ -93,7 +113,7 @@ abstract class AbstractInventory(val containerId: Int) {
         return if (serverAuthoritative != Int.MAX_VALUE) {
             ItemStackRequestPacket().also {
                 it.requests.add(ItemStackRequest(serverAuthoritative,
-                    arrayOf(DropAction(content[slot].count, ItemStackRequestSlotData(getSlotTypeFromInventoryId(info.first, info.second), info.second, content[slot].netId), false)),
+                    arrayOf(DropAction(content[slot].count, ItemStackRequestSlotData(getSlotTypeFromInventoryId(info.first, slot), info.second, content[slot].netId), false)),
                     arrayOf(), null
                 ))
             }
@@ -112,7 +132,7 @@ abstract class AbstractInventory(val containerId: Int) {
     open fun dropItem(slot: Int, session: GameSession) {
         // send packet to server
         val pk = dropItem(slot,
-            if (session.thePlayer.inventoriesServerAuthoritative) session.thePlayer.inventory.getRequestId() else Int.MAX_VALUE)
+            if (session.player.inventoriesServerAuthoritative) session.player.inventory.getRequestId() else Int.MAX_VALUE)
         sendInventoryPacket(pk, null, session)
 
         // sync with client

@@ -16,7 +16,13 @@ class ChoiceValue(name: String, values: Array<Choice>, value: Choice) : ListValu
 					it.isActive = newValue == it
 				}
 			}
+			values.forEach {
+				it.isSelected = newValue == it
+			}
 			newValue
+		}
+		values.forEach {
+			it.isSelected = value == it
 		}
 	}
 
@@ -33,6 +39,7 @@ class ChoiceValue(name: String, values: Array<Choice>, value: Choice) : ListValu
 
 abstract class Choice(override val choiceName: String) : NamedChoice, Configurable {
 
+	open var isSelected = false
 	open var isActive = false
 		set(value) {
 			if (value == field) return
@@ -65,4 +72,25 @@ abstract class Choice(override val choiceName: String) : NamedChoice, Configurab
 			} as EventHook<in GameEvent>
 		}
 	}
+
+	override fun boolValue(name: String, value: Boolean)
+		= BoolValue(name, value).also { values.add(it) }.visible { isSelected } as BoolValue
+
+	override fun floatValue(name: String, value: Float, range: ClosedFloatingPointRange<Float>)
+		= FloatValue(name, value, range).also { values.add(it) }.visible { isSelected } as FloatValue
+
+	override fun intValue(name: String, value: Int, range: IntRange)
+		= IntValue(name, value, range).also { values.add(it) }.visible { isSelected } as IntValue
+
+	override fun intRangeValue(name: String, value: IntRange, range: IntRange)
+		= IntRangeValue(name, value, range).also { values.add(it) }.visible { isSelected } as IntRangeValue
+
+	override fun clickValue(name: String, value: IntRange, range: IntRange)
+		= ClickValue(name, value, range).also { values.add(it) }.visible { isSelected } as ClickValue
+
+	override fun <T : NamedChoice> listValue(name: String, valuesArr: Array<T>, value: T)
+		= ListValue(name, valuesArr, value).also { values.add(it) }.visible { isSelected } as ListValue<T>
+
+	override fun stringValue(name: String, value: String)
+		= StringValue(name, value).also { values.add(it) }.visible { isSelected } as StringValue
 }

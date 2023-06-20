@@ -9,9 +9,9 @@ class ModuleBlink : CheatModule("Blink", CheatCategory.MOVEMENT) {
 
     private val packetList = mutableListOf<BedrockPacket>()
 
-	private val handlePacketOutbound = handle<EventPacketOutbound> { event ->
-		packetList.add(event.packet)
-		event.cancel()
+	private val handlePacketOutbound = handle<EventPacketOutbound> {
+		packetList.add(packet)
+		cancel()
 	}
 
     override fun onDisable() {

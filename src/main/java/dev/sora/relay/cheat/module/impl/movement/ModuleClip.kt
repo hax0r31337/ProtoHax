@@ -13,7 +13,7 @@ class ModuleClip : CheatModule("Clip", CheatCategory.MOVEMENT, canToggle = false
 	override fun onEnable() {
 		if (!session.netSessionInitialized) return
 
-		val player = session.thePlayer
+		val player = session.player
 		val yaw = Math.toRadians(player.rotationYaw.toDouble()).toFloat()
 
 		player.teleport(player.posX - sin(yaw) * horizontalValue, player.posY + verticalValue, player.posZ + cos(yaw) * horizontalValue)

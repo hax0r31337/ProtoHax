@@ -20,13 +20,11 @@ class ModuleHitEffect : CheatModule("HitEffect", CheatCategory.VISUAL) {
 
 	private var effectValue by listValue("Effect", Effect.values(), Effect.CRITICAL)
 
-	private val onPacketOutbound = handle<EventPacketOutbound> { event ->
-		val packet = event.packet
-
+	private val onPacketOutbound = handle<EventPacketOutbound> {
 		if (packet is InventoryTransactionPacket && packet.transactionType == InventoryTransactionType.ITEM_USE_ON_ENTITY && packet.actionType == 1) {
-			val target = event.session.theWorld.entityMap[packet.runtimeEntityId] ?: return@handle
+			val target = session.level.entityMap[packet.runtimeEntityId] ?: return@handle
 			if (with(moduleManager.getModule(ModuleTargets::class.java)) { target.isTarget() }) {
-				effectValue.deployEffect(event.session, target)
+				effectValue.deployEffect(session, target)
 			}
 		}
 	}

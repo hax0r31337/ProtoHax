@@ -12,10 +12,6 @@ import org.cloudburstmc.protocol.bedrock.packet.InventoryTransactionPacket
 class ContainerInventory(containerId: Int, val type: ContainerType) : AbstractInventory(containerId) {
 
 	override var content = emptyArray<ItemData>()
-    override val capacity: Int
-		// null check is necessary, this method is called before content initialized in super class
-        get() = content?.size ?: 0
-
 
     fun handleClientPacket(packet: BedrockPacket) {
         if (packet is InventoryTransactionPacket) {

@@ -11,7 +11,7 @@ import org.cloudburstmc.protocol.bedrock.packet.*
 import java.util.*
 import kotlin.math.pow
 
-class WorldClient(session: GameSession, eventManager: EventManager) : WorldwideBlockStorage(session, eventManager) {
+class Level(session: GameSession, eventManager: EventManager) : ChunkStorage(session, eventManager) {
 
     val entityMap = mutableMapOf<Long, Entity>()
     val playerList = mutableMapOf<UUID, PlayerListPacket.Entry>()
@@ -21,8 +21,7 @@ class WorldClient(session: GameSession, eventManager: EventManager) : WorldwideB
 		playerList.clear()
 	}
 
-	private val handlePacketInbound = handle<EventPacketInbound> { event ->
-		val packet = event.packet
+	private val handlePacketInbound = handle<EventPacketInbound> {
 
 		if (packet is StartGamePacket) {
 			entityMap.clear()

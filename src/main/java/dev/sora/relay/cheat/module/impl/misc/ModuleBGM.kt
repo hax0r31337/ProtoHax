@@ -22,7 +22,7 @@ class ModuleBGM : CheatModule("BGM", CheatCategory.MISC) {
         session.chat("${song.maxTicks / 20} seconds")
     }
 
-	private val handleTick = handle<EventTick> { event ->
+	private val handleTick = handle<EventTick> {
 		if (ticks + 20 > song.maxTicks) {
 			ticks = 0
 		}
@@ -30,13 +30,13 @@ class ModuleBGM : CheatModule("BGM", CheatCategory.MISC) {
 		notes.forEach { note ->
 			val pk = LevelSoundEventPacket().apply {
 				sound = SoundEvent.NOTE
-				position = event.session.thePlayer.vec3Position
+				position = session.player.vec3Position
 				extraData = note.inst.ordinal shl 8 or note.key.toInt()
 				identifier = ":"
 				isBabySound = false
 				isRelativeVolumeDisabled = false
 			}
-			event.session.sendPacket(pk)
+			session.sendPacket(pk)
 		}
 	}
 

@@ -5,7 +5,7 @@ import dev.sora.relay.cheat.module.CheatModule
 import dev.sora.relay.cheat.value.NamedChoice
 import dev.sora.relay.game.GameSession
 import dev.sora.relay.game.entity.Entity
-import dev.sora.relay.game.entity.EntityPlayerSP
+import dev.sora.relay.game.entity.EntityLocalPlayer
 import dev.sora.relay.game.event.EventTick
 import dev.sora.relay.game.utils.Rotation
 import dev.sora.relay.game.utils.constants.Attribute
@@ -20,53 +20,51 @@ class ModuleKillAura : CheatModule("KillAura", CheatCategory.COMBAT) {
     private var rangeValue by floatValue("Range", 3.7f, 2f..7f)
     private var attackModeValue by listValue("AttackMode", AttackMode.values(), AttackMode.SINGLE)
     private var rotationModeValue by listValue("RotationMode", RotationMode.values(), RotationMode.LOCK)
-    private var swingValue by listValue("Swing", EntityPlayerSP.SwingMode.values(), EntityPlayerSP.SwingMode.BOTH)
+    private var swingValue by listValue("Swing", EntityLocalPlayer.SwingMode.values(), EntityLocalPlayer.SwingMode.BOTH)
 	private var priorityModeValue by listValue("PriorityMode", PriorityMode.values(), PriorityMode.DISTANCE)
 	private var reversePriorityValue by boolValue("ReversePriority", false)
 	private var mouseoverValue by boolValue("Mouseover", false)
     private var swingSoundValue by boolValue("SwingSound", true)
     private var failRateValue by floatValue("FailRate", 0f, 0f..1f)
-    private var failSoundValue by boolValue("FailSound", true)
+    private var failSoundValue by boolValue("FailSound", true).visible { failRateValue > 0f }
 
-	private val handleTick = handle<EventTick> { event ->
-		val session = event.session
-
+	private val handleTick = handle<EventTick> {
 		val range = rangeValue.pow(2)
 		val moduleTargets = moduleManager.getModule(ModuleTargets::class.java)
-		val entityList = session.theWorld.entityMap.values.filter {
-			it.distanceSq(session.thePlayer) < range && with(moduleTargets) { it.isTarget() } }
+		val entityList = session.level.entityMap.values.filter {
+			it.distanceSq(session.player) < range && with(moduleTargets) { it.isTarget() } }
 		if (entityList.isEmpty()) return@handle
 
 		val aimTarget = selectEntity(session, entityList)
 
 		if (cpsValue.range.first >= 20 || cpsValue.canClick) {
 			if (Math.random() <= failRateValue) {
-				session.thePlayer.swing(swingValue, failSoundValue)
+				session.player.swing(swingValue, failSoundValue)
 			} else {
 				when(attackModeValue) {
 					AttackMode.MULTI -> {
-						entityList.forEach { session.thePlayer.attackEntity(it, swingValue, swingSoundValue, mouseoverValue) }
+						entityList.forEach { session.player.attackEntity(it, swingValue, swingSoundValue, mouseoverValue) }
 					}
 					AttackMode.SINGLE -> {
-						session.thePlayer.attackEntity(aimTarget, swingValue, swingSoundValue, mouseoverValue)
+						session.player.attackEntity(aimTarget, swingValue, swingSoundValue, mouseoverValue)
 					}
 				}
 				cpsValue.click()
 			}
 		}
 
-		rotationModeValue.rotate(session, session.thePlayer.vec3Position, aimTarget.vec3Position)?.let {
-			session.thePlayer.silentRotation = it
+		rotationModeValue.rotate(session, session.player.vec3Position, aimTarget.vec3Position)?.let {
+			session.player.silentRotation = it
 		}
 	}
 
 	private fun selectEntity(session: GameSession, entityList: List<Entity>): Entity {
 		return when (priorityModeValue) {
-			PriorityMode.DISTANCE -> entityList.sortedBy { it.distanceSq(session.thePlayer) }
+			PriorityMode.DISTANCE -> entityList.sortedBy { it.distanceSq(session.player) }
 			PriorityMode.HEALTH -> entityList.sortedBy { it.attributes[Attribute.HEALTH]?.value ?: 0f }
 			PriorityMode.DIRECTION -> {
-				val playerRotation = Rotation(session.thePlayer.rotationYaw, session.thePlayer.rotationPitch)
-				val vec3Position = session.thePlayer.vec3Position
+				val playerRotation = Rotation(session.player.rotationYaw, session.player.rotationPitch)
+				val vec3Position = session.player.vec3Position
 				entityList.sortedBy { getRotationDifference(playerRotation, toRotation(vec3Position, it.vec3Position)) }
 			}
 		}.let { if (!reversePriorityValue) it.first() else it.last() }
@@ -94,8 +92,8 @@ class ModuleKillAura : CheatModule("KillAura", CheatCategory.COMBAT) {
 				val aimTarget = toRotation(source, target).let {
 					Rotation(it.yaw, it.pitch / 2)
 				}
-				val last = session.thePlayer.lastRotationServerside
-				val diff = getRotationDifference(session.thePlayer.lastRotationServerside, aimTarget)
+				val last = session.player.lastRotationServerside
+				val diff = getRotationDifference(session.player.lastRotationServerside, aimTarget)
 				return if (diff < 50) {
 					last
 				} else {

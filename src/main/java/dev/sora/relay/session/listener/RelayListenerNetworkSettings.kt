@@ -12,7 +12,6 @@ class RelayListenerNetworkSettings(private val session: MinecraftRelaySession) :
         if (packet is NetworkSettingsPacket) {
             logInfo("selected compression algorithm: ${packet.compressionAlgorithm}")
             session.client!!.setCompression(packet.compressionAlgorithm)
-            // FIXME: @Incompressible annotation takes no effect on nukkit protocol library
             session.sendPacketImmediately(packet)
             session.setCompression(packet.compressionAlgorithm)
             return false

@@ -1,7 +1,7 @@
 package dev.sora.relay.game.inventory
 
 import dev.sora.relay.game.GameSession
-import dev.sora.relay.game.entity.EntityPlayerSP
+import dev.sora.relay.game.entity.EntityLocalPlayer
 import org.cloudburstmc.protocol.bedrock.data.PlayerAuthInputData
 import org.cloudburstmc.protocol.bedrock.data.inventory.ContainerId
 import org.cloudburstmc.protocol.bedrock.data.inventory.ContainerSlotType
@@ -16,13 +16,13 @@ import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.InventoryTra
 import org.cloudburstmc.protocol.bedrock.packet.*
 import java.util.*
 
-class PlayerInventory(private val player: EntityPlayerSP) : EntityInventory(player) {
+class PlayerInventory(private val player: EntityLocalPlayer) : EntityInventory(player) {
+
+	// 36 (inventory) + 4 (armor) + 1 (off-hand)
+	override val content = Array(41) { ItemData.AIR }
 
     var heldItemSlot = 0
         private set
-
-    override val capacity: Int
-        get() = 41 // 36 (inventory) + 4 (armor) + 1 (off-hand)
 
     private var requestId = -1
     private val requestIdMap = mutableMapOf<Int, Int>()

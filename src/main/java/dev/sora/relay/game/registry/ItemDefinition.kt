@@ -1,7 +1,9 @@
 package dev.sora.relay.game.registry
 
 import dev.sora.relay.game.inventory.AbstractInventory
+import dev.sora.relay.game.utils.constants.Enchantment
 import dev.sora.relay.game.utils.constants.ItemTags
+import dev.sora.relay.game.utils.getEnchant
 import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData
 
 open class ItemDefinition(private val runtimeId: Int, private val identifier: String, val tags: Array<String>) :
@@ -29,37 +31,10 @@ open class ItemDefinition(private val runtimeId: Int, private val identifier: St
                 || itemTags.contains(ItemTags.TAG_IS_SHOVEL)
                 || itemTags.contains(ItemTags.TAG_IS_FOOD)
                 || identifier == "minecraft:shield"
+				|| identifier == "minecraft:trident"
 				|| identifier == "minecraft:flint_and_steel"
 				|| identifier == "minecraft:totem_of_undying"
 				|| identifier == "minecraft:end_crystal"
-    }
-
-    fun hasBetterItem(container: AbstractInventory, excludeSlot: Int = -1, strictMode: Boolean = true): Boolean {
-        if (this is UnknownItemDefinition || identifier == "minecraft:air") return false
-
-        var categoryTag: String
-        if (tags.contains(ItemTags.TAG_IS_HELMET).also { categoryTag = ItemTags.TAG_IS_HELMET }
-            || tags.contains(ItemTags.TAG_IS_CHESTPLATE).also { categoryTag = ItemTags.TAG_IS_CHESTPLATE }
-            || tags.contains(ItemTags.TAG_IS_LEGGINGS).also { categoryTag = ItemTags.TAG_IS_LEGGINGS }
-            || tags.contains(ItemTags.TAG_IS_BOOTS).also { categoryTag = ItemTags.TAG_IS_BOOTS }
-            || tags.contains(ItemTags.TAG_IS_SWORD).also { categoryTag = ItemTags.TAG_IS_SWORD }
-            || tags.contains(ItemTags.TAG_IS_PICKAXE).also { categoryTag = ItemTags.TAG_IS_PICKAXE }
-            || tags.contains(ItemTags.TAG_IS_AXE).also { categoryTag = ItemTags.TAG_IS_AXE }
-            || tags.contains(ItemTags.TAG_IS_HOE).also { categoryTag = ItemTags.TAG_IS_HOE }
-            || tags.contains(ItemTags.TAG_IS_SHOVEL).also { categoryTag = ItemTags.TAG_IS_SHOVEL }) {
-            // compare category and tiers
-            val itemTier = getTier()
-            container.searchForItemIndexed { i, item ->
-                if (i == excludeSlot) {
-                    false
-                } else {
-					val alterDefinition = item.itemDefinition
-                    alterDefinition.tags.contains(categoryTag) && (if (strictMode) alterDefinition.getTier() >= itemTier else alterDefinition.getTier() > itemTier)
-                }
-            }?.also { return true }
-            // TODO: compare enchantment
-        }
-        return false
     }
 
     fun getTier(): Int {
@@ -91,3 +66,42 @@ private val airDefinition = ItemDefinition(0, "minecraft:air", emptyArray())
 
 val ItemData.itemDefinition: ItemDefinition
     get() = this.definition as? ItemDefinition ?: airDefinition
+
+fun ItemData.getEnchantScore(): Float {
+	return (getEnchant(Enchantment.DAMAGE_ALL) ?: 0) * 0.4f + (getEnchant(Enchantment.PROTECTION_ALL) ?: 0) * 0.4f + (getEnchant(Enchantment.EFFICIENCY) ?: 0) * 0.3f
+}
+
+fun ItemData.hasBetterItem(container: AbstractInventory, excludeSlot: Int = -1, strictMode: Boolean = true): Boolean {
+	val definition = itemDefinition
+	if (definition is UnknownItemDefinition || definition.identifier == "minecraft:air") return false
+
+	var categoryTag: String
+	val tags = definition.tags
+	if (tags.contains(ItemTags.TAG_IS_HELMET).also { categoryTag = ItemTags.TAG_IS_HELMET }
+		|| tags.contains(ItemTags.TAG_IS_CHESTPLATE).also { categoryTag = ItemTags.TAG_IS_CHESTPLATE }
+		|| tags.contains(ItemTags.TAG_IS_LEGGINGS).also { categoryTag = ItemTags.TAG_IS_LEGGINGS }
+		|| tags.contains(ItemTags.TAG_IS_BOOTS).also { categoryTag = ItemTags.TAG_IS_BOOTS }
+		|| tags.contains(ItemTags.TAG_IS_SWORD).also { categoryTag = ItemTags.TAG_IS_SWORD }
+		|| tags.contains(ItemTags.TAG_IS_PICKAXE).also { categoryTag = ItemTags.TAG_IS_PICKAXE }
+		|| tags.contains(ItemTags.TAG_IS_AXE).also { categoryTag = ItemTags.TAG_IS_AXE }
+		|| tags.contains(ItemTags.TAG_IS_HOE).also { categoryTag = ItemTags.TAG_IS_HOE }
+		|| tags.contains(ItemTags.TAG_IS_SHOVEL).also { categoryTag = ItemTags.TAG_IS_SHOVEL }
+		|| definition.identifier == "minecraft:trident") {
+		// compare category and tiers
+		val itemTier = definition.getTier() + getEnchantScore()
+		container.searchForItemIndexed { i, item ->
+			if (i == excludeSlot) {
+				false
+			} else {
+				val alterDefinition = item.itemDefinition
+				val alterEnchantScore = item.getEnchantScore()
+				alterDefinition.tags.contains(categoryTag) && (if (strictMode) {
+					alterDefinition.getTier() + alterEnchantScore >= itemTier
+ 				} else {
+					alterDefinition.getTier() + alterEnchantScore > itemTier
+				})
+			}
+		}?.also { return true }
+	}
+	return false
+}

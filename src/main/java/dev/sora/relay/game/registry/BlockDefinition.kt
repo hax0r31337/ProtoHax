@@ -2,10 +2,14 @@ package dev.sora.relay.game.registry
 
 import org.cloudburstmc.nbt.NbtMap
 
-open class BlockDefinition(private val runtimeId: Int, val identifier: String, val states: NbtMap):
+open class BlockDefinition(private var runtimeId: Int, val identifier: String, val states: NbtMap):
     org.cloudburstmc.protocol.bedrock.data.definitions.BlockDefinition {
 
     override fun getRuntimeId() = runtimeId
+
+	fun setRuntimeId(runtimeId: Int) {
+		this.runtimeId = runtimeId
+	}
 
 	override fun toString(): String {
 		return identifier

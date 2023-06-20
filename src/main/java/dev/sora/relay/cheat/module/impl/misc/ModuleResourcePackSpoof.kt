@@ -19,9 +19,7 @@ class ModuleResourcePackSpoof : CheatModule("ResourcePackSpoof", CheatCategory.M
 
     private var acceptServerPacks by boolValue("AcceptServerPacks", false)
 
-	private val handlePacketInbound = handle<EventPacketInbound> { event ->
-		val packet = event.packet
-
+	private val handlePacketInbound = handle<EventPacketInbound> {
 		if (packet is ResourcePacksInfoPacket) {
 			if (!acceptServerPacks) {
 				packet.resourcePackInfos.clear()
@@ -41,14 +39,12 @@ class ModuleResourcePackSpoof : CheatModule("ResourcePackSpoof", CheatCategory.M
 		}
 	}
 
-    private val handlePacketOutbound = handle<EventPacketOutbound> { event ->
-		val packet = event.packet
-
+    private val handlePacketOutbound = handle<EventPacketOutbound> {
 		if (packet is ResourcePackClientResponsePacket) {
 			if (packet.status == ResourcePackClientResponsePacket.Status.SEND_PACKS) {
 				packet.packIds.map { it }.forEach {
 					val entry = resourcePackProvider.getPackById(it) ?: return@forEach
-					event.session.netSession.inboundPacket(ResourcePackDataInfoPacket().apply {
+					session.netSession.inboundPacket(ResourcePackDataInfoPacket().apply {
 						packId = UUID.fromString(entry.first.packId)
 						packVersion = entry.first.packVersion
 						maxChunkSize = RESOURCE_PACK_CHUNK_SIZE.toLong()
@@ -60,19 +56,19 @@ class ModuleResourcePackSpoof : CheatModule("ResourcePackSpoof", CheatCategory.M
 					packet.packIds.remove(it)
 				}
 				if (packet.packIds.isEmpty()) {
-					event.cancel()
+					cancel()
 				}
 			}
 		} else if (packet is ResourcePackChunkRequestPacket) {
 			val entry = resourcePackProvider.getPackById(packet.packId.toString()) ?: return@handle
-			event.session.netSession.inboundPacket(ResourcePackChunkDataPacket().apply {
+			session.netSession.inboundPacket(ResourcePackChunkDataPacket().apply {
 				packId = packet.packId
 				packVersion = packet.packVersion
 				chunkIndex = packet.chunkIndex
 				progress = (RESOURCE_PACK_CHUNK_SIZE * chunkIndex).toLong()
 				data = Unpooled.wrappedBuffer(getPackChunk(entry.second, progress.toInt(), RESOURCE_PACK_CHUNK_SIZE))
 			})
-			event.cancel()
+			cancel()
 		}
 	}
 
