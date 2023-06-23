@@ -12,6 +12,9 @@ interface MinecraftRelayPacketListener {
         return true
     }
 
+	fun onPacketPostOutbound(packet: BedrockPacket) {
+	}
+
     fun onDisconnect(client: Boolean, reason: String) {
 
     }

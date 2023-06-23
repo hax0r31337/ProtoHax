@@ -86,10 +86,6 @@ class GameSession : MinecraftRelayPacketListener {
         if (packet is LoginPacket) {
 			val protocolVersion = packet.protocolVersion
 
-			while (netSession.client == null) {
-				Thread.sleep(10L) // wait client connect
-			}
-
 			val blockTask = thread {
 				val blockDefinitions = BlockMapping.Provider.craftMapping(protocolVersion)
 				netSession.peer.codecHelper.blockDefinitions = blockDefinitions
@@ -119,12 +115,20 @@ class GameSession : MinecraftRelayPacketListener {
         return true
     }
 
+	override fun onPacketPostOutbound(packet: BedrockPacket) {
+		eventManager.emit(EventPacketPostOutbound(this, packet))
+	}
+
     override fun onDisconnect(client: Boolean, reason: String) {
         eventManager.emit(EventDisconnect(this, client, reason))
     }
 
-    fun onTick() {
-        eventManager.emit(EventTick(this))
+    fun onTick(post: Boolean) {
+		if (!post) {
+			eventManager.emit(EventTick(this))
+		} else {
+			eventManager.emit(EventPostTick(this))
+		}
     }
 
     fun sendPacket(packet: BedrockPacket) {

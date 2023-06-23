@@ -10,6 +10,7 @@ import org.cloudburstmc.protocol.bedrock.BedrockServerSession
 import org.cloudburstmc.protocol.bedrock.codec.BedrockCodec
 import org.cloudburstmc.protocol.bedrock.netty.BedrockPacketWrapper
 import org.cloudburstmc.protocol.bedrock.packet.BedrockPacket
+import java.util.concurrent.TimeoutException
 
 class MinecraftRelaySession(peer: BedrockPeer, subClientId: Int) : BedrockServerSession(peer, subClientId) {
 
@@ -63,11 +64,28 @@ class MinecraftRelaySession(peer: BedrockPeer, subClientId: Int) : BedrockServer
 			}
 
 			outboundPacket(packet)
+
+			listeners.forEach { l ->
+				try {
+					l.onPacketPostOutbound(packet)
+				} catch (t: Throwable) {
+					logError("packet outbound", t)
+				}
+			}
 		}
     }
 
     override fun setCodec(codec: BedrockCodec) {
-        client?.codec = codec
+		var i = 0
+		while (client == null) {
+			i++
+			if (i > 500) { // 5000 ms
+				throw TimeoutException("client timed out")
+			}
+			Thread.sleep(10L) // wait client connect
+		}
+
+        client!!.codec = codec
         super.setCodec(codec)
     }
 

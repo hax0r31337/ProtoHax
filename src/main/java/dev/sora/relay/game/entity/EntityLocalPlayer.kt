@@ -165,6 +165,14 @@ class EntityLocalPlayer(private val session: GameSession, override val eventMana
 		onPacket(packet)
 	}
 
+	private val handlePacketPostOutbound = handle<EventPacketPostOutbound> {
+		if (packet is MovePlayerPacket) {
+			session.onTick(true)
+		} else if (packet is PlayerAuthInputPacket) {
+			session.onTick(true)
+		}
+	}
+
 	private val handlePacketOutbound = handle<EventPacketOutbound> {
 		// client still sends MovePlayerPacket sometime on if server-auth movement mode
 		if (packet is LoginPacket) {
@@ -178,11 +186,11 @@ class EntityLocalPlayer(private val session: GameSession, override val eventMana
 			packet.chain.forEach {
 				val chainBody = JsonParser.parseString(it.payload.toString()).asJsonObject
 				if (chainBody.has("extraData")) {
-					val xData = chainBody.getAsJsonObject("extraData")
-					uuid = UUID.fromString(xData.get("identity").asString)
-					username = xData.get("displayName").asString
-					if (xData.has("XUID")) {
-						xuid = xData.get("XUID").asString
+					val extraData = chainBody.getAsJsonObject("extraData")
+					uuid = UUID.fromString(extraData.get("identity").asString)
+					username = extraData.get("displayName").asString
+					if (extraData.has("XUID")) {
+						xuid = extraData.get("XUID").asString
 					}
 				}
 			}
@@ -197,7 +205,7 @@ class EntityLocalPlayer(private val session: GameSession, override val eventMana
 
 			onGround = packet.isOnGround
 
-			session.onTick()
+			session.onTick(false)
 			tickExists = packet.tick
 			silentRotation?.let {
 				packet.rotation = Vector3f.from(it.pitch, it.yaw, packet.rotation.z)
@@ -237,7 +245,7 @@ class EntityLocalPlayer(private val session: GameSession, override val eventMana
 				}
 			}
 
-			session.onTick()
+			session.onTick(false)
 
 			packet.inputData.clear()
 			packet.inputData.addAll(inputData)

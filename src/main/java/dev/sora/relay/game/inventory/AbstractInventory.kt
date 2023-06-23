@@ -112,8 +112,9 @@ abstract class AbstractInventory(val containerId: Int) {
         val info = getNetworkSlotInfo(slot)
         return if (serverAuthoritative != Int.MAX_VALUE) {
             ItemStackRequestPacket().also {
+				val item = content[slot]
                 it.requests.add(ItemStackRequest(serverAuthoritative,
-                    arrayOf(DropAction(content[slot].count, ItemStackRequestSlotData(getSlotTypeFromInventoryId(info.first, slot), info.second, content[slot].netId), false)),
+                    arrayOf(DropAction(item.count, ItemStackRequestSlotData(getSlotTypeFromInventoryId(info.first, slot), info.second, item.netId), false)),
                     arrayOf(), null
                 ))
             }
