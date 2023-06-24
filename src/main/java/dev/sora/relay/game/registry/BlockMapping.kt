@@ -8,7 +8,7 @@ import org.cloudburstmc.protocol.common.DefinitionRegistry
 import java.nio.charset.StandardCharsets
 import java.util.zip.GZIPInputStream
 
-class BlockMapping(private val runtimeToGameMap: MutableMap<Int, BlockDefinition>, val airId: Int)
+class BlockMapping(private val runtimeToGameMap: MutableMap<Int, BlockDefinition>, var airId: Int)
 	: DefinitionRegistry<org.cloudburstmc.protocol.bedrock.data.definitions.BlockDefinition> {
 
     private val gameToRuntimeMap = mutableMapOf<BlockDefinition, Int>()
@@ -60,10 +60,16 @@ class BlockMapping(private val runtimeToGameMap: MutableMap<Int, BlockDefinition
 				blockDefinition.runtimeId = index
 				runtimeToGameMap[index] = blockDefinition
 				gameToRuntimeMap[blockDefinition] = index
+
+				if (blockDefinition.identifier == Provider.AIR_IDENTIFIER) {
+					airId = index
+				}
 			}
 	}
 
     object Provider : MappingProvider<BlockMapping>() {
+
+		const val AIR_IDENTIFIER = "minecraft:air"
 
         override val resourcePath: String
             get() = "/assets/mcpedata/blocks"
@@ -80,7 +86,7 @@ class BlockMapping(private val runtimeToGameMap: MutableMap<Int, BlockDefinition
             while (inputStream.available() > 0) {
 				val tag = nbtStream.readTag() as NbtMap
 				val name = tag.getString("name")
-				if (name == "minecraft:air") {
+				if (name == AIR_IDENTIFIER) {
 					airId = runtime
 				}
 
