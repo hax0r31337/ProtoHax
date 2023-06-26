@@ -1,6 +1,7 @@
 package dev.sora.relay.session.listener.xbox.cache
 
 import com.google.gson.JsonArray
+import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import com.nimbusds.jwt.SignedJWT
@@ -54,6 +55,7 @@ class XboxChainCacheFileSystem(val cacheFile: File, override val identifier: Str
 
 		json.add(identifier, identifierJson)
 
+		removeExpired(json)
 		cacheFile.writeText(AbstractConfigManager.DEFAULT_GSON.toJson(json), Charsets.UTF_8)
 	}
 
@@ -86,6 +88,7 @@ class XboxChainCacheFileSystem(val cacheFile: File, override val identifier: Str
 				|| !deviceJson.has("privateKey") || !deviceJson.has("publicKey")) {
 				// remove cache due to cache expired or corrupted
 				identifierJson.remove(device.deviceType)
+				removeExpired(json)
 				cacheFile.writeText(AbstractConfigManager.DEFAULT_GSON.toJson(json), Charsets.UTF_8)
 				return null
 			}
@@ -101,6 +104,25 @@ class XboxChainCacheFileSystem(val cacheFile: File, override val identifier: Str
 		} catch (e: Throwable) {
 			logError("check cache", e)
 			return null
+		}
+	}
+
+	private fun removeExpired(json: JsonObject) {
+		val toRemove = mutableListOf<String>()
+		val epoch = Instant.now().epochSecond
+
+		json.entrySet().forEach { (_, value) ->
+			val identifierJson = value.asJsonObjectOrNull ?: return@forEach
+			toRemove.clear()
+			identifierJson.entrySet().forEach FE1@ { (key, value) ->
+				val deviceJson = value.asJsonObjectOrNull ?: return@FE1
+				if (deviceJson.get("expires").asLong < epoch) {
+					toRemove.add(key)
+				}
+			}
+			toRemove.forEach {
+				identifierJson.remove(it)
+			}
 		}
 	}
 }
