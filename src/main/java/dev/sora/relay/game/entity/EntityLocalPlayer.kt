@@ -1,6 +1,5 @@
 package dev.sora.relay.game.entity
 
-import com.google.gson.JsonParser
 import dev.sora.relay.cheat.value.NamedChoice
 import dev.sora.relay.game.GameSession
 import dev.sora.relay.game.event.*

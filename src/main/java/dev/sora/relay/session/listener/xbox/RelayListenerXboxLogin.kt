@@ -69,6 +69,7 @@ class RelayListenerXboxLogin(val accessToken: () -> String, val deviceInfo: Xbox
 
     override fun onPacketOutbound(packet: BedrockPacket): Boolean {
         if (packet is LoginPacket) {
+			session.keyPair = keyPair
             try {
                 packet.chain.clear()
                 packet.chain.addAll(chain!!)
