@@ -11,6 +11,7 @@ import dev.sora.relay.game.utils.Rotation
 import dev.sora.relay.game.utils.constants.EnumFacing
 import dev.sora.relay.game.utils.removeNetInfo
 import dev.sora.relay.game.utils.toVector3iFloor
+import dev.sora.relay.utils.jwtPayload
 import org.cloudburstmc.math.vector.Vector2f
 import org.cloudburstmc.math.vector.Vector3f
 import org.cloudburstmc.math.vector.Vector3i
@@ -184,7 +185,7 @@ class EntityLocalPlayer(private val session: GameSession, override val eventMana
 			hasSetEntityId = false
 
 			packet.chain.forEach {
-				val chainBody = JsonParser.parseString(it.payload.toString()).asJsonObject
+				val chainBody = jwtPayload(it) ?: return@forEach
 				if (chainBody.has("extraData")) {
 					val extraData = chainBody.getAsJsonObject("extraData")
 					uuid = UUID.fromString(extraData.get("identity").asString)

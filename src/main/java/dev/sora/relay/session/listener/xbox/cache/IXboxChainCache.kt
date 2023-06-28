@@ -1,6 +1,5 @@
 package dev.sora.relay.session.listener.xbox.cache
 
-import com.nimbusds.jwt.SignedJWT
 import dev.sora.relay.session.listener.xbox.XboxDeviceInfo
 import java.security.KeyPair
 
@@ -11,7 +10,7 @@ interface IXboxChainCache {
 	 */
 	val identifier: String
 
-	fun cache(device: XboxDeviceInfo, expires: Long, body: List<SignedJWT>, keyPair: KeyPair)
+	fun cache(device: XboxDeviceInfo, expires: Long, body: List<String>, keyPair: KeyPair)
 
-	fun checkCache(device: XboxDeviceInfo): Pair<List<SignedJWT>, KeyPair>?
+	fun checkCache(device: XboxDeviceInfo): Pair<List<String>, KeyPair>?
 }

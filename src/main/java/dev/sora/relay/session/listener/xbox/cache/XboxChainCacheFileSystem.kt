@@ -1,10 +1,8 @@
 package dev.sora.relay.session.listener.xbox.cache
 
 import com.google.gson.JsonArray
-import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
-import com.nimbusds.jwt.SignedJWT
 import dev.sora.relay.cheat.config.AbstractConfigManager
 import dev.sora.relay.session.listener.xbox.XboxDeviceInfo
 import dev.sora.relay.utils.asJsonObjectOrNull
@@ -19,7 +17,7 @@ import java.util.*
 
 class XboxChainCacheFileSystem(val cacheFile: File, override val identifier: String) : IXboxChainCache {
 
-	override fun cache(device: XboxDeviceInfo, expires: Long, body: List<SignedJWT>, keyPair: KeyPair) {
+	override fun cache(device: XboxDeviceInfo, expires: Long, body: List<String>, keyPair: KeyPair) {
 		val json = if (!cacheFile.exists()) {
 			null
 		} else {
@@ -46,11 +44,11 @@ class XboxChainCacheFileSystem(val cacheFile: File, override val identifier: Str
 			addProperty("expires", expires)
 			add("chain", JsonArray().also {
 				body.forEach { jwt ->
-					it.add(jwt.serialize())
+					it.add(jwt)
 				}
 			})
-			addProperty("privateKey", Base64.getEncoder().encodeToString(keyPair.private.encoded))
-			addProperty("publicKey", Base64.getEncoder().encodeToString(keyPair.public.encoded))
+			addProperty("privateKey", Base64.getEncoder().withoutPadding().encodeToString(keyPair.private.encoded))
+			addProperty("publicKey", Base64.getEncoder().withoutPadding().encodeToString(keyPair.public.encoded))
 		})
 
 		json.add(identifier, identifierJson)
@@ -59,7 +57,7 @@ class XboxChainCacheFileSystem(val cacheFile: File, override val identifier: Str
 		cacheFile.writeText(AbstractConfigManager.DEFAULT_GSON.toJson(json), Charsets.UTF_8)
 	}
 
-	override fun checkCache(device: XboxDeviceInfo): Pair<List<SignedJWT>, KeyPair>? {
+	override fun checkCache(device: XboxDeviceInfo): Pair<List<String>, KeyPair>? {
 		if (!cacheFile.exists()) {
 			return null
 		}
@@ -93,12 +91,12 @@ class XboxChainCacheFileSystem(val cacheFile: File, override val identifier: Str
 				return null
 			}
 
-			val publicKey = EncryptionUtils.generateKey(deviceJson.get("publicKey").asString)
+			val publicKey = EncryptionUtils.parseKey(deviceJson.get("publicKey").asString)
 			val privateKey = KeyFactory.getInstance("EC").generatePrivate(PKCS8EncodedKeySpec(Base64.getDecoder().decode(deviceJson.get("privateKey").asString)))
 
-			val signedJwtList = mutableListOf<SignedJWT>()
+			val signedJwtList = mutableListOf<String>()
 			deviceJson.getAsJsonArray("chain").forEach { jwt ->
-				signedJwtList.add(SignedJWT.parse(jwt.asString))
+				signedJwtList.add(jwt.asString)
 			}
 			return signedJwtList to KeyPair(publicKey, privateKey)
 		} catch (e: Throwable) {

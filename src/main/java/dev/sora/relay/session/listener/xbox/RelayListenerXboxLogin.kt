@@ -3,16 +3,11 @@ package dev.sora.relay.session.listener.xbox
 import coelho.msftauth.api.xbox.*
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
-import com.nimbusds.jose.Payload
-import com.nimbusds.jwt.SignedJWT
 import dev.sora.relay.cheat.config.AbstractConfigManager
 import dev.sora.relay.session.MinecraftRelaySession
 import dev.sora.relay.session.listener.RelayListenerEncryptedSession
 import dev.sora.relay.session.listener.xbox.cache.IXboxChainCache
-import dev.sora.relay.utils.HttpUtils
-import dev.sora.relay.utils.base64Decode
-import dev.sora.relay.utils.logError
-import dev.sora.relay.utils.logInfo
+import dev.sora.relay.utils.*
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -36,7 +31,7 @@ class RelayListenerXboxLogin(val accessToken: () -> String, val deviceInfo: Xbox
 	var chainCache: IXboxChainCache? = null
 
     private var chainExpires = 0L
-    private var chain: List<SignedJWT>? = null
+    private var chain: List<String>? = null
         get() {
             if (field == null || chainExpires < Instant.now().epochSecond) {
 				var isFreshChain = false
@@ -52,9 +47,9 @@ class RelayListenerXboxLogin(val accessToken: () -> String, val deviceInfo: Xbox
 				// search for chain expiry
 				chainExpires = 0L
 				chains.forEach { chain ->
-					val expires = chain.payload.toJSONObject()["exp"] ?: return@forEach
-					if (expires is Number && (chainExpires == 0L || expires.toLong() < chainExpires)) {
-						chainExpires = expires.toLong()
+					val expires = ((jwtPayload(chain) ?: return@forEach).get("exp") ?: return@forEach).asLong
+					if (chainExpires == 0L || expires < chainExpires) {
+						chainExpires = expires
 					}
 				}
 
@@ -77,7 +72,7 @@ class RelayListenerXboxLogin(val accessToken: () -> String, val deviceInfo: Xbox
             try {
                 packet.chain.clear()
                 packet.chain.addAll(chain!!)
-				packet.extra = signJWT(packet.extra.payload, keyPair)
+				packet.extra = signJWT(packet.extra.split('.')[1], keyPair, base64Encoded = true)
             } catch (e: Throwable) {
                 session.inboundPacket(DisconnectPacket().apply {
                     kickMessage = e.toString()
@@ -169,22 +164,22 @@ class RelayListenerXboxLogin(val accessToken: () -> String, val deviceInfo: Xbox
 			return response.body!!.charStream()
         }
 
-        fun fetchChain(identityToken: String, keyPair: KeyPair): List<SignedJWT> {
+        fun fetchChain(identityToken: String, keyPair: KeyPair): List<String> {
             val rawChain = JsonParser.parseReader(fetchRawChain(identityToken, keyPair.public)).asJsonObject
             val chains = rawChain.get("chain").asJsonArray
 
             // add the self-signed jwt
             val identityPubKey = JsonParser.parseString(base64Decode(chains.get(0).asString.split(".")[0]).toString(Charsets.UTF_8)).asJsonObject
 
-            val jwt = signJWT(Payload(AbstractConfigManager.DEFAULT_GSON.toJson(JsonObject().apply {
+            val jwt = signJWT(AbstractConfigManager.DEFAULT_GSON.toJson(JsonObject().apply {
 				addProperty("certificateAuthority", true)
 				addProperty("exp", (Instant.now().epochSecond + TimeUnit.HOURS.toSeconds(6)).toInt())
 				addProperty("nbf", (Instant.now().epochSecond - TimeUnit.HOURS.toSeconds(6)).toInt())
 				addProperty("identityPublicKey", identityPubKey.get("x5u").asString)
-			})), keyPair)
+			}), keyPair)
 
             val list = mutableListOf(jwt)
-			list.addAll(chains.map { SignedJWT.parse(it.asString) })
+			list.addAll(chains.map { it.asString })
             return list
         }
     }

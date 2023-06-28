@@ -10,6 +10,7 @@ import org.cloudburstmc.protocol.bedrock.BedrockServerSession
 import org.cloudburstmc.protocol.bedrock.codec.BedrockCodec
 import org.cloudburstmc.protocol.bedrock.netty.BedrockPacketWrapper
 import org.cloudburstmc.protocol.bedrock.packet.BedrockPacket
+import org.cloudburstmc.protocol.bedrock.packet.ServerToClientHandshakePacket
 import java.util.concurrent.TimeoutException
 
 class MinecraftRelaySession(peer: BedrockPeer, subClientId: Int) : BedrockServerSession(peer, subClientId) {
@@ -119,22 +120,30 @@ class MinecraftRelaySession(peer: BedrockPeer, subClientId: Int) : BedrockServer
             }
         }
 
+		private fun handlePacket(packet: BedrockPacket) {
+			listeners.forEach { l ->
+				try {
+					if (!l.onPacketInbound(packet)) {
+						return
+					}
+				} catch (t: Throwable) {
+					logError("packet inbound", t)
+				}
+			}
+
+			inboundPacket(packet)
+		}
+
         override fun onPacket(wrapper: BedrockPacketWrapper) {
 			val packet = wrapper.packet
 			ReferenceCountUtil.retain(packet)
 
-			scope.launch {
-				listeners.forEach { l ->
-					try {
-						if (!l.onPacketInbound(packet)) {
-							return@launch
-						}
-					} catch (t: Throwable) {
-						logError("packet inbound", t)
-					}
+			if (packet is ServerToClientHandshakePacket) {
+				handlePacket(packet)
+			} else {
+				scope.launch {
+					handlePacket(packet)
 				}
-
-				inboundPacket(packet)
 			}
         }
     }
