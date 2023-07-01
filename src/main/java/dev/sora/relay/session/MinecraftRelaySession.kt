@@ -36,6 +36,7 @@ class MinecraftRelaySession(peer: BedrockPeer, subClientId: Int) : BedrockServer
     val listeners = mutableListOf<MinecraftRelayPacketListener>()
 
 	var keyPair: KeyPair? = null
+	var multithreadingSupported = false
 
 	@OptIn(DelicateCoroutinesApi::class)
 	private val scope = CoroutineScope(newSingleThreadContext("RakRelay") + SupervisorJob())
@@ -155,10 +156,12 @@ class MinecraftRelaySession(peer: BedrockPeer, subClientId: Int) : BedrockServer
 				)
 				enableEncryption(key)
 				outboundPacket(ClientToServerHandshakePacket())
-			} else {
+			} else if (multithreadingSupported) {
 				scope.launch {
 					handlePacket(packet)
 				}
+			} else {
+				handlePacket(packet)
 			}
         }
     }

@@ -71,6 +71,7 @@ class GameSession : MinecraftRelayPacketListener {
 			}
 
 			hasReceivedStartGamePacket = true
+			netSession.multithreadingSupported = true
 		}
 
         return true
