@@ -6,7 +6,8 @@ import com.google.gson.JsonParser
 import dev.sora.relay.cheat.config.AbstractConfigManager
 import dev.sora.relay.session.MinecraftRelaySession
 import dev.sora.relay.session.listener.RelayListenerEncryptedSession
-import dev.sora.relay.session.listener.xbox.cache.IXboxChainCache
+import dev.sora.relay.session.listener.xbox.cache.IXboxIdentityTokenCache
+import dev.sora.relay.session.listener.xbox.cache.XboxIdentityToken
 import dev.sora.relay.utils.*
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
@@ -28,40 +29,25 @@ class RelayListenerXboxLogin(val accessToken: () -> String, val deviceInfo: Xbox
         this.session = session
     }
 
-	var chainCache: IXboxChainCache? = null
+	var tokenCache: IXboxIdentityTokenCache? = null
 
-    private var chainExpires = 0L
-    private var chain: List<String>? = null
+    private var identityToken = XboxIdentityToken("", 0)
         get() {
-            if (field == null || chainExpires < Instant.now().epochSecond) {
-				var isFreshChain = false
-                val chains = chainCache?.checkCache(deviceInfo)?.let {
-					logInfo("chain cache hit")
-					keyPair = it.second
-					it.first
-				} ?: fetchChain(fetchIdentityToken(accessToken(), deviceInfo), keyPair).also {
-					isFreshChain = true
-				}
-				field = chains
-
-				// search for chain expiry
-				chainExpires = 0L
-				chains.forEach { chain ->
-					val expires = ((jwtPayload(chain) ?: return@forEach).get("exp") ?: return@forEach).asLong
-					if (chainExpires == 0L || expires < chainExpires) {
-						chainExpires = expires
-					}
-				}
-
-				chainCache?.also {
-					if (isFreshChain) {
-						logInfo("saving chain to cache")
-						it.cache(deviceInfo, chainExpires, chains, keyPair)
-					}
-				}
+            if (field.notAfter < System.currentTimeMillis() / 1000) {
+                field = tokenCache?.checkCache(deviceInfo)?.also {
+                    logInfo("token cache hit")
+                } ?: fetchIdentityToken(accessToken(), deviceInfo).also {
+                    tokenCache?.let { cache ->
+                        logInfo("saving token cache")
+                        cache.cache(deviceInfo, it)
+                    }
+                }
             }
+
             return field
         }
+    private val chain: List<String>
+        get() = fetchChain(identityToken.token, keyPair)
 
     fun forceFetchChain() {
         chain
@@ -72,7 +58,7 @@ class RelayListenerXboxLogin(val accessToken: () -> String, val deviceInfo: Xbox
 			session.keyPair = keyPair
             try {
                 packet.chain.clear()
-                packet.chain.addAll(chain!!)
+                packet.chain.addAll(chain)
 				packet.extra = signJWT(packet.extra.split('.')[1], keyPair, base64Encoded = true)
             } catch (e: Throwable) {
                 session.inboundPacket(DisconnectPacket().apply {
@@ -94,7 +80,7 @@ class RelayListenerXboxLogin(val accessToken: () -> String, val deviceInfo: Xbox
 		 */
 		val deviceKey = XboxDeviceKey()
 
-        fun fetchIdentityToken(accessToken: String, deviceInfo: XboxDeviceInfo): String {
+        fun fetchIdentityToken(accessToken: String, deviceInfo: XboxDeviceInfo): XboxIdentityToken {
             var userToken: XboxToken? = null
             val userRequestThread = thread {
                 userToken = XboxUserAuthRequest(
@@ -144,7 +130,7 @@ class RelayListenerXboxLogin(val accessToken: () -> String, val deviceInfo: Xbox
                 XboxDevice(deviceKey, deviceToken)
             ).request(HttpUtils.client)
 
-            return xstsToken.toIdentityToken()
+            return XboxIdentityToken(xstsToken.toIdentityToken(), Instant.parse(xstsToken.notAfter).epochSecond)
         }
 
         fun fetchRawChain(identityToken: String, publicKey: PublicKey): Reader {

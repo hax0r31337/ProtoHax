@@ -1,23 +1,17 @@
 package dev.sora.relay.session.listener.xbox.cache
 
-import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import dev.sora.relay.cheat.config.AbstractConfigManager
 import dev.sora.relay.session.listener.xbox.XboxDeviceInfo
 import dev.sora.relay.utils.asJsonObjectOrNull
 import dev.sora.relay.utils.logError
-import org.cloudburstmc.protocol.bedrock.util.EncryptionUtils
 import java.io.File
-import java.security.KeyFactory
-import java.security.KeyPair
-import java.security.spec.PKCS8EncodedKeySpec
 import java.time.Instant
-import java.util.*
 
-class XboxChainCacheFileSystem(val cacheFile: File, override val identifier: String) : IXboxChainCache {
+class XboxIdentityTokenCacheFileSystem(val cacheFile: File, override val identifier: String) : IXboxIdentityTokenCache {
 
-	override fun cache(device: XboxDeviceInfo, expires: Long, body: List<String>, keyPair: KeyPair) {
+	override fun cache(device: XboxDeviceInfo, token: XboxIdentityToken) {
 		val json = if (!cacheFile.exists()) {
 			null
 		} else {
@@ -41,14 +35,8 @@ class XboxChainCacheFileSystem(val cacheFile: File, override val identifier: Str
 		}
 
 		identifierJson.add(device.deviceType, JsonObject().apply {
-			addProperty("expires", expires)
-			add("chain", JsonArray().also {
-				body.forEach { jwt ->
-					it.add(jwt)
-				}
-			})
-			addProperty("privateKey", Base64.getEncoder().withoutPadding().encodeToString(keyPair.private.encoded))
-			addProperty("publicKey", Base64.getEncoder().withoutPadding().encodeToString(keyPair.public.encoded))
+			addProperty("token", token.token)
+			addProperty("expires", token.notAfter)
 		})
 
 		json.add(identifier, identifierJson)
@@ -57,7 +45,7 @@ class XboxChainCacheFileSystem(val cacheFile: File, override val identifier: Str
 		cacheFile.writeText(AbstractConfigManager.DEFAULT_GSON.toJson(json), Charsets.UTF_8)
 	}
 
-	override fun checkCache(device: XboxDeviceInfo): Pair<List<String>, KeyPair>? {
+	override fun checkCache(device: XboxDeviceInfo): XboxIdentityToken? {
 		if (!cacheFile.exists()) {
 			return null
 		}
@@ -82,8 +70,7 @@ class XboxChainCacheFileSystem(val cacheFile: File, override val identifier: Str
 				return null
 			}
 
-			if (deviceJson.get("expires").asLong < Instant.now().epochSecond || !deviceJson.has("chain")
-				|| !deviceJson.has("privateKey") || !deviceJson.has("publicKey")) {
+			if (deviceJson.get("expires").asLong < Instant.now().epochSecond || !deviceJson.has("token")) {
 				// remove cache due to cache expired or corrupted
 				identifierJson.remove(device.deviceType)
 				removeExpired(json)
@@ -91,14 +78,7 @@ class XboxChainCacheFileSystem(val cacheFile: File, override val identifier: Str
 				return null
 			}
 
-			val publicKey = EncryptionUtils.parseKey(deviceJson.get("publicKey").asString)
-			val privateKey = KeyFactory.getInstance("EC").generatePrivate(PKCS8EncodedKeySpec(Base64.getDecoder().decode(deviceJson.get("privateKey").asString)))
-
-			val signedJwtList = mutableListOf<String>()
-			deviceJson.getAsJsonArray("chain").forEach { jwt ->
-				signedJwtList.add(jwt.asString)
-			}
-			return signedJwtList to KeyPair(publicKey, privateKey)
+			return XboxIdentityToken(deviceJson.get("token").asString, deviceJson.get("expires").asLong)
 		} catch (e: Throwable) {
 			logError("check cache", e)
 			return null

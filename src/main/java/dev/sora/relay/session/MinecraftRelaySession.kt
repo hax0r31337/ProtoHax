@@ -106,6 +106,10 @@ class MinecraftRelaySession(peer: BedrockPeer, subClientId: Int) : BedrockServer
 		close(reason)
 	}
 
+	fun disconnectWithPacket(reason: String) {
+		super.disconnect(reason, false)
+	}
+
     inner class MinecraftRelayClientSession(peer: BedrockPeer, subClientId: Int) : BedrockClientSession(peer, subClientId) {
 
         init {

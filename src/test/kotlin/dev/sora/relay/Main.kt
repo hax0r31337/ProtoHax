@@ -12,7 +12,7 @@ import dev.sora.relay.session.listener.RelayListenerEncryptedSession
 import dev.sora.relay.session.listener.RelayListenerNetworkSettings
 import dev.sora.relay.session.listener.xbox.RelayListenerXboxLogin
 import dev.sora.relay.session.listener.xbox.XboxDeviceInfo
-import dev.sora.relay.session.listener.xbox.cache.XboxChainCacheFileSystem
+import dev.sora.relay.session.listener.xbox.cache.XboxIdentityTokenCacheFileSystem
 import dev.sora.relay.utils.logInfo
 import dev.sora.relay.utils.logWarn
 import io.netty.util.internal.logging.InternalLoggerFactory
@@ -23,13 +23,13 @@ import kotlin.concurrent.schedule
 import kotlin.concurrent.thread
 
 val tokenFile = File(".ms_refresh_token")
-val chainCacheFile = File(".chain_cache.json")
+val tokenCacheFile = File(".token_cache.json")
 
 fun main(args: Array<String>) {
     InternalLoggerFactory.setDefaultFactory(LoggerFactory())
     val gameSession = craftSession()
 
-    val dst = InetSocketAddress("127.0.0.1", 19136)
+    val dst = InetSocketAddress("51.79.228.11", 19132)
 	var loginThread: Thread? = null
     val sessionEncryptor = if(tokenFile.exists() && !args.contains("--offline")) {
 		val deviceInfo = XboxDeviceInfo.DEVICE_NINTENDO
@@ -38,7 +38,7 @@ fun main(args: Array<String>) {
 			tokenFile.writeText(refreshToken)
 			accessToken
 		}, deviceInfo).also {
-			it.chainCache = XboxChainCacheFileSystem(chainCacheFile, "account")
+			it.tokenCache = XboxIdentityTokenCacheFileSystem(tokenCacheFile, "account")
 			loginThread = thread {
 				it.forceFetchChain()
 				println("chain ok")

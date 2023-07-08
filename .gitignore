@@ -16,7 +16,7 @@ gradle-app.setting
 # gradle/wrapper/gradle-wrapper.properties
 
 /.ms_refresh_token
-/.chain_cache.json
+/.token_cache.json
 /config.json
 /resource_packs
 /level
