@@ -7,6 +7,19 @@ import org.cloudburstmc.protocol.common.DefinitionRegistry
 class ItemMapping(private val runtimeToGameMap: MutableMap<Int, ItemDefinition>)
 	: DefinitionRegistry<org.cloudburstmc.protocol.bedrock.data.definitions.ItemDefinition> {
 
+	private val gameToRuntimeMap = mutableMapOf<ItemDefinition, Int>()
+
+	init {
+		runtimeToGameMap.forEach { (k, v) ->
+			gameToRuntimeMap[v] = k
+		}
+	}
+
+
+	fun getRuntime(identifier: String): Int {
+		return gameToRuntimeMap.keys.find { it.identifier == identifier }?.runtimeId ?: 0
+	}
+
     override fun getDefinition(runtimeId: Int): org.cloudburstmc.protocol.bedrock.data.definitions.ItemDefinition {
         return runtimeToGameMap[runtimeId] ?: return UnknownItemDefinition(runtimeId)
     }
@@ -20,7 +33,9 @@ class ItemMapping(private val runtimeToGameMap: MutableMap<Int, ItemDefinition>)
 			if (runtimeToGameMap.containsKey(itemDefinition.runtimeId)) {
 				return@forEach
 			}
-			runtimeToGameMap[itemDefinition.runtimeId] = ItemDefinition(itemDefinition.runtimeId, itemDefinition.identifier, emptyArray())
+			val definition = ItemDefinition(itemDefinition.runtimeId, itemDefinition.identifier, emptyArray())
+			runtimeToGameMap[itemDefinition.runtimeId] = definition
+			gameToRuntimeMap[definition] = itemDefinition.runtimeId
 		}
 	}
 

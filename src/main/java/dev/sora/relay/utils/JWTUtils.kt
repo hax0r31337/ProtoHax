@@ -6,10 +6,7 @@ import dev.sora.relay.cheat.config.AbstractConfigManager
 import org.jose4j.jws.EcdsaUsingShaAlgorithm
 import java.security.KeyPair
 import java.security.Signature
-import java.security.SignatureException
 import java.util.*
-import kotlin.math.max
-import kotlin.math.min
 
 fun jwtPayload(jwt: String): JsonObject? {
 	val parts = jwt.split('.')

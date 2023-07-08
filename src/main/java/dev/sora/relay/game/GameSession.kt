@@ -90,7 +90,7 @@ class GameSession : MinecraftRelayPacketListener {
 			val blockTask = thread {
 				val blockDefinitions = BlockMapping.Provider.craftMapping(protocolVersion)
 				netSession.peer.codecHelper.blockDefinitions = blockDefinitions
-				netSession.client!!.peer.codecHelper.blockDefinitions = blockDefinitions
+				netSession.client?.peer?.codecHelper?.blockDefinitions = blockDefinitions
 
 				blockMapping = blockDefinitions
 			}
@@ -98,7 +98,7 @@ class GameSession : MinecraftRelayPacketListener {
 			backgroundTask = thread {
 				val itemDefinitions = ItemMapping.Provider.craftMapping(protocolVersion)
 				netSession.peer.codecHelper.itemDefinitions = itemDefinitions
-				netSession.client!!.peer.codecHelper.itemDefinitions = itemDefinitions
+				netSession.client?.peer?.codecHelper?.itemDefinitions = itemDefinitions
 
 				itemMapping = itemDefinitions
 
