@@ -27,6 +27,7 @@ import org.cloudburstmc.protocol.bedrock.netty.codec.FrameIdCodec
 import org.cloudburstmc.protocol.bedrock.netty.initializer.BedrockClientInitializer
 import org.cloudburstmc.protocol.bedrock.netty.initializer.BedrockServerInitializer
 import java.net.InetSocketAddress
+import kotlin.random.Random
 
 
 open class MinecraftRelay(private val listener: MinecraftRelayListener,
@@ -57,6 +58,7 @@ open class MinecraftRelay(private val listener: MinecraftRelayListener,
             .channelFactory(channelFactory())
             .option(RakChannelOption.RAK_ADVERTISEMENT, motd.toByteBuf())
             .option(RakChannelOption.RAK_SUPPORTED_PROTOCOLS, intArrayOf(8, 9, 10, 11))
+			.option(RakChannelOption.RAK_GUID, Random.nextLong())
             .group(NioEventLoopGroup())
             .childHandler(BedrockRelayInitializer())
             .bind(address)
@@ -99,6 +101,7 @@ open class MinecraftRelay(private val listener: MinecraftRelayListener,
                 }
                 .group(NioEventLoopGroup())
                 .option(RakChannelOption.RAK_PROTOCOL_VERSION, peer.channel.config().getOption(RakChannelOption.RAK_PROTOCOL_VERSION))
+				.option(RakChannelOption.RAK_GUID, Random.nextLong())
                 .handler(object : BedrockClientInitializer() {
                     override fun createSession0(peer: BedrockPeer, subClientId: Int): BedrockClientSession {
 						logInfo("server connected")
