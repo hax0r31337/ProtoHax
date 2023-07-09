@@ -55,3 +55,7 @@ class EventDimensionChange(session: GameSession, val dimension: Int) : GameEvent
 class EventEntitySpawn(session: GameSession, val entity: Entity) : GameEvent(session, "entity_spawn")
 
 class EventEntityDespawn(session: GameSession, val entity: Entity) : GameEvent(session, "entity_despawn")
+
+class EventTargetChange(session: GameSession, val target: Entity) : GameEvent(session, "target_changed")
+
+class EventTargetKilled(session: GameSession, val target: Entity) : GameEvent(session, "target_killed")

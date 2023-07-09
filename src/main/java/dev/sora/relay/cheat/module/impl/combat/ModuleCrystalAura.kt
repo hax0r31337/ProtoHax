@@ -15,7 +15,7 @@ import dev.sora.relay.game.utils.constants.EnumFacing
 import dev.sora.relay.game.utils.removeNetInfo
 import dev.sora.relay.game.utils.toVector3f
 import dev.sora.relay.game.utils.toVector3iFloor
-import dev.sora.relay.utils.timing.TheTimer
+import dev.sora.relay.utils.timing.MillisecondTimer
 import org.cloudburstmc.math.vector.Vector3f
 import org.cloudburstmc.math.vector.Vector3i
 import org.cloudburstmc.protocol.bedrock.data.LevelEvent
@@ -36,8 +36,8 @@ class ModuleCrystalAura : CheatModule("CrystalAura", CheatCategory.COMBAT) {
 
 	private val EXPLOSION_SIZE = 6f
 
-	private val explodeTimer = TheTimer()
-	private val placeTimer = TheTimer()
+	private val explodeTimer = MillisecondTimer()
+	private val placeTimer = MillisecondTimer()
 
 	private val onTickExplode = handle<EventTick>({ explodeTimer.hasTimePassed(delayValue) }) {
 		val rangeSq = rangeValue.pow(2)

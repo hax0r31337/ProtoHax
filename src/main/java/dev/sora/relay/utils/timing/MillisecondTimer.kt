@@ -1,6 +1,7 @@
 package dev.sora.relay.utils.timing
 
-open class TheTimer {
+open class MillisecondTimer {
+
     protected var time = System.currentTimeMillis()
 
     fun reset() {
