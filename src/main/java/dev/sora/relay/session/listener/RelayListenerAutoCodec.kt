@@ -42,10 +42,6 @@ import org.cloudburstmc.protocol.bedrock.packet.RequestNetworkSettingsPacket
 
 class RelayListenerAutoCodec(private val session: MinecraftRelaySession) : MinecraftRelayPacketListener {
 
-    override fun onPacketInbound(packet: BedrockPacket): Boolean {
-        return true
-    }
-
     override fun onPacketOutbound(packet: BedrockPacket): Boolean {
         if (packet is RequestNetworkSettingsPacket) {
             val codec = pickProtocolCodec(packet.protocolVersion)

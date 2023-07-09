@@ -29,7 +29,7 @@ fun main(args: Array<String>) {
     InternalLoggerFactory.setDefaultFactory(LoggerFactory())
     val gameSession = craftSession()
 
-    val dst = InetSocketAddress("127.0.0.1", 19136)
+    val dst = InetSocketAddress("127.0.0.1", 19132)
 	var loginThread: Thread? = null
     val sessionEncryptor = if(tokenFile.exists() && !args.contains("--offline")) {
 		val deviceInfo = XboxDeviceInfo.DEVICE_NINTENDO
@@ -80,7 +80,7 @@ fun main(args: Array<String>) {
             return dst
         }
     })
-    relay.bind(InetSocketAddress("0.0.0.0", 19132))
+    relay.bind(InetSocketAddress("0.0.0.0", 19136))
     println("bind")
     ModuleResourcePackSpoof.resourcePackProvider = ModuleResourcePackSpoof.FileSystemResourcePackProvider(File("./resource_packs"))
     Thread.sleep(Long.MAX_VALUE)

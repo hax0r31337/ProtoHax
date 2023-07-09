@@ -13,8 +13,6 @@ class BlockMapping(private val runtimeToGameMap: MutableMap<Int, BlockDefinition
 
     private val gameToRuntimeMap = mutableMapOf<BlockDefinition, Int>()
 
-	private var hasRegisteredCustomBlocks = false
-
     init {
         runtimeToGameMap.forEach { (k, v) ->
             gameToRuntimeMap[v] = k
@@ -38,17 +36,21 @@ class BlockMapping(private val runtimeToGameMap: MutableMap<Int, BlockDefinition
 	}
 
 	fun registerCustomBlocksFNV(customBlocks: List<BlockPropertyData>) {
-		if (hasRegisteredCustomBlocks) {
-			throw IllegalStateException("Custom blocks has already registered once!")
-		}
-		hasRegisteredCustomBlocks = true
-
 		// custom blocks will cause runtime id to shift
 		val blockDefinitionList = mutableListOf<BlockDefinition>()
 		blockDefinitionList.addAll(runtimeToGameMap.values)
 
+		var hasChanges = false
 		customBlocks.forEach { blockPropertyData ->
-			blockDefinitionList.add(BlockDefinition(0, blockPropertyData.name, NbtMap.EMPTY))
+			val definition = BlockDefinition(0, blockPropertyData.name, NbtMap.EMPTY)
+			if (!blockDefinitionList.contains(definition)) {
+				blockDefinitionList.add(definition)
+				hasChanges = true
+			}
+		}
+		if (!hasChanges) {
+			// no changes has applied to block mapping
+			return
 		}
 
 		runtimeToGameMap.clear()

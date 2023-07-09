@@ -42,7 +42,6 @@ class GameSession : MinecraftRelayPacketListener {
 
 	private var lastStopBreak = false
 	private var backgroundTask: Thread? = null
-	private var hasReceivedStartGamePacket = false
 
 	val scope = CoroutineScope(Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()).asCoroutineDispatcher() + SupervisorJob())
 
@@ -53,7 +52,7 @@ class GameSession : MinecraftRelayPacketListener {
             return false
         }
 
-		if (packet is StartGamePacket && !hasReceivedStartGamePacket) {
+		if (packet is StartGamePacket) {
 			backgroundTask?.let {
 				if (it.isAlive) {
 					logInfo("awaiting mappings to load")
@@ -70,7 +69,6 @@ class GameSession : MinecraftRelayPacketListener {
 				}
 			}
 
-			hasReceivedStartGamePacket = true
 			netSession.multithreadingSupported = true
 		}
 
