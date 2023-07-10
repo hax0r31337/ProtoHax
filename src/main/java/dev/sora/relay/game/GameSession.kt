@@ -66,9 +66,9 @@ class GameSession : MinecraftRelayPacketListener {
 				itemMapping.registerCustomItems(packet.itemDefinitions)
 			}
 			if (packet.blockProperties.isNotEmpty()) {
-				if (netSession.codec.protocolVersion >= 503) {
-					blockMapping.registerCustomBlocksFNV(packet.blockProperties)
-				}
+				blockMapping.registerCustomBlocks(packet.blockProperties, packet.isBlockNetworkIdsHashed)
+			} else {
+				blockMapping.setRuntimeIdHashed(packet.isBlockNetworkIdsHashed)
 			}
 
 			netSession.multithreadingSupported = true

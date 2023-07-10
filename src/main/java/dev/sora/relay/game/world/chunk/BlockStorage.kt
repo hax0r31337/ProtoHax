@@ -36,7 +36,6 @@ class BlockStorage {
         val bitArrayVersion = BitArrayVersion.get(paletteVersion, true)
 
         bitArray = bitArrayVersion.createPalette(MAX_BLOCK_IN_SECTION)
-//        val wordsSize = bitArrayVersion.getWordsForSize(MAX_BLOCK_IN_SECTION)
 
         for (i in bitArray.words.indices) {
             val word = buf.readIntLE()
