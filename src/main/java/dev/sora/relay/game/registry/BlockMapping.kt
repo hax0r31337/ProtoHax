@@ -57,7 +57,7 @@ class BlockMapping(val protocol: Short, private val runtimeToGameMap: MutableMap
 				hasChanges = true
 			}
 		}
-		if (!hasChanges) {
+		if (!hasChanges && this.runtimeIdHashed == runtimeIdHashed) {
 			// no changes has applied to block mapping
 			return
 		}
