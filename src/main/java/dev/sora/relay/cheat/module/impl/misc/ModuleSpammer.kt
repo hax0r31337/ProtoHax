@@ -2,16 +2,12 @@ package dev.sora.relay.cheat.module.impl.misc
 
 import dev.sora.relay.cheat.module.CheatCategory
 import dev.sora.relay.cheat.module.CheatModule
+import dev.sora.relay.cheat.module.impl.combat.ModuleTargets
 import dev.sora.relay.cheat.value.Choice
 import dev.sora.relay.game.entity.EntityPlayer
-import dev.sora.relay.game.event.EventEntityDespawn
-import dev.sora.relay.game.event.EventPacketOutbound
-import dev.sora.relay.game.event.EventTargetKilled
 import dev.sora.relay.game.event.EventTick
 import dev.sora.relay.utils.getRandomString
 import dev.sora.relay.utils.timing.MillisecondTimer
-import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.InventoryTransactionType
-import org.cloudburstmc.protocol.bedrock.packet.InventoryTransactionPacket
 import org.cloudburstmc.protocol.bedrock.packet.TextPacket
 import kotlin.random.Random
 
@@ -51,7 +47,7 @@ class ModuleSpammer : CheatModule("Spammer", CheatCategory.MISC) {
 
 	private inner class KillSay : Choice("KillSay") {
 
-		private val handleTargetKilled = handle<EventTargetKilled> {
+		private val handleTargetKilled = handle<ModuleTargets.EventTargetKilled> {
 			if (target is EntityPlayer) {
 				sendMessage(mapOf("\$name" to target.username))
 			}

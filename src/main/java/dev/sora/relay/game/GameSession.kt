@@ -3,7 +3,6 @@ package dev.sora.relay.game
 import dev.sora.relay.game.entity.EntityLocalPlayer
 import dev.sora.relay.game.event.*
 import dev.sora.relay.game.management.BlobCacheManager
-import dev.sora.relay.game.management.TargetManager
 import dev.sora.relay.game.registry.BlockMapping
 import dev.sora.relay.game.registry.ItemMapping
 import dev.sora.relay.game.world.Level
@@ -31,7 +30,6 @@ class GameSession : MinecraftRelayPacketListener {
     val level = Level(this, eventManager)
 
     val cacheManager = BlobCacheManager(eventManager)
-	val targetManager = TargetManager(this)
 
     lateinit var netSession: MinecraftRelaySession
 
@@ -59,6 +57,7 @@ class GameSession : MinecraftRelayPacketListener {
 				if (it.isAlive) {
 					logInfo("awaiting mappings to load")
 					it.join()
+					logInfo("mappings loaded")
 				}
 				backgroundTask = null
 			}
