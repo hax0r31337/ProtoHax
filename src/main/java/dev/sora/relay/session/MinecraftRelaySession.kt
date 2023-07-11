@@ -39,7 +39,7 @@ class MinecraftRelaySession(peer: BedrockPeer, subClientId: Int) : BedrockServer
 	var keyPair: KeyPair? = null
 	var multithreadingSupported = false
 
-	@OptIn(DelicateCoroutinesApi::class)
+	@OptIn(DelicateCoroutinesApi::class, ExperimentalCoroutinesApi::class)
 	private val scope = CoroutineScope(newSingleThreadContext("RakRelay") + SupervisorJob())
 
     init {
