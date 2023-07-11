@@ -1,6 +1,6 @@
 package dev.sora.relay.utils.timing
 
-class ClickTimer : TheTimer() {
+class ClickTimer : MillisecondTimer() {
 
     private var delay: Long = 0
 

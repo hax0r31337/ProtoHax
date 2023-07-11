@@ -18,8 +18,7 @@ open class BlockDefinition(private var runtimeId: Int, val identifier: String, v
 	override fun equals(other: Any?): Boolean {
 		if (this === other) return true
 		if (javaClass != other?.javaClass) return false
-
-		other as BlockDefinition
+		if (other !is BlockDefinition) return false
 
 		if (identifier != other.identifier) return false
 		return states == other.states

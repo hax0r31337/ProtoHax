@@ -36,7 +36,6 @@ class BlockStorage {
         val bitArrayVersion = BitArrayVersion.get(paletteVersion, true)
 
         bitArray = bitArrayVersion.createPalette(MAX_BLOCK_IN_SECTION)
-//        val wordsSize = bitArrayVersion.getWordsForSize(MAX_BLOCK_IN_SECTION)
 
         for (i in bitArray.words.indices) {
             val word = buf.readIntLE()
@@ -149,8 +148,10 @@ class BlockStorage {
 			val bos = ByteBufOutputStream(buf)
 			val nbtos = NBTOutputStream(if (network) NetworkDataOutputStream(bos) else LittleEndianDataOutputStream(bos))
 			palette.forEach {
+                val def = blockMapping.getDefinition(it)
 				val tag = NbtMap.builder()
-				tag.putCompound("states", blockMapping.getDefinition(it).states)
+                tag.putString("name", def.identifier)
+				tag.putCompound("states", def.states)
 				nbtos.writeTag(tag.build())
 			}
 		}

@@ -1,6 +1,5 @@
 package dev.sora.relay.game.entity
 
-import com.google.gson.JsonParser
 import dev.sora.relay.cheat.value.NamedChoice
 import dev.sora.relay.game.GameSession
 import dev.sora.relay.game.event.*
@@ -11,6 +10,7 @@ import dev.sora.relay.game.utils.Rotation
 import dev.sora.relay.game.utils.constants.EnumFacing
 import dev.sora.relay.game.utils.removeNetInfo
 import dev.sora.relay.game.utils.toVector3iFloor
+import dev.sora.relay.utils.jwtPayload
 import org.cloudburstmc.math.vector.Vector2f
 import org.cloudburstmc.math.vector.Vector3f
 import org.cloudburstmc.math.vector.Vector3i
@@ -165,6 +165,14 @@ class EntityLocalPlayer(private val session: GameSession, override val eventMana
 		onPacket(packet)
 	}
 
+	private val handlePacketPostOutbound = handle<EventPacketPostOutbound> {
+		if (packet is MovePlayerPacket) {
+			session.onTick(true)
+		} else if (packet is PlayerAuthInputPacket) {
+			session.onTick(true)
+		}
+	}
+
 	private val handlePacketOutbound = handle<EventPacketOutbound> {
 		// client still sends MovePlayerPacket sometime on if server-auth movement mode
 		if (packet is LoginPacket) {
@@ -176,13 +184,13 @@ class EntityLocalPlayer(private val session: GameSession, override val eventMana
 			hasSetEntityId = false
 
 			packet.chain.forEach {
-				val chainBody = JsonParser.parseString(it.payload.toString()).asJsonObject
+				val chainBody = jwtPayload(it) ?: return@forEach
 				if (chainBody.has("extraData")) {
-					val xData = chainBody.getAsJsonObject("extraData")
-					uuid = UUID.fromString(xData.get("identity").asString)
-					username = xData.get("displayName").asString
-					if (xData.has("XUID")) {
-						xuid = xData.get("XUID").asString
+					val extraData = chainBody.getAsJsonObject("extraData")
+					uuid = UUID.fromString(extraData.get("identity").asString)
+					username = extraData.get("displayName").asString
+					if (extraData.has("XUID")) {
+						xuid = extraData.get("XUID").asString
 					}
 				}
 			}
@@ -197,7 +205,7 @@ class EntityLocalPlayer(private val session: GameSession, override val eventMana
 
 			onGround = packet.isOnGround
 
-			session.onTick()
+			session.onTick(false)
 			tickExists = packet.tick
 			silentRotation?.let {
 				packet.rotation = Vector3f.from(it.pitch, it.yaw, packet.rotation.z)
@@ -237,7 +245,7 @@ class EntityLocalPlayer(private val session: GameSession, override val eventMana
 				}
 			}
 
-			session.onTick()
+			session.onTick(false)
 
 			packet.inputData.clear()
 			packet.inputData.addAll(inputData)

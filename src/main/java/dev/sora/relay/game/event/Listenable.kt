@@ -2,12 +2,6 @@ package dev.sora.relay.game.event
 
 interface Listenable {
 
-    /**
-     * Children listenables
-     */
-    val children: List<Listenable>
-        get() = emptyList()
-
 	val eventManager: EventManager
 
     /**

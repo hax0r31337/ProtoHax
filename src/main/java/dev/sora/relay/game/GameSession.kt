@@ -42,7 +42,6 @@ class GameSession : MinecraftRelayPacketListener {
 
 	private var lastStopBreak = false
 	private var backgroundTask: Thread? = null
-	private var hasReceivedStartGamePacket = false
 
 	val scope = CoroutineScope(Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()).asCoroutineDispatcher() + SupervisorJob())
 
@@ -53,11 +52,12 @@ class GameSession : MinecraftRelayPacketListener {
             return false
         }
 
-		if (packet is StartGamePacket && !hasReceivedStartGamePacket) {
+		if (packet is StartGamePacket) {
 			backgroundTask?.let {
 				if (it.isAlive) {
 					logInfo("awaiting mappings to load")
 					it.join()
+					logInfo("mappings loaded")
 				}
 				backgroundTask = null
 			}
@@ -65,12 +65,12 @@ class GameSession : MinecraftRelayPacketListener {
 				itemMapping.registerCustomItems(packet.itemDefinitions)
 			}
 			if (packet.blockProperties.isNotEmpty()) {
-				if (netSession.codec.protocolVersion >= 503) {
-					blockMapping.registerCustomBlocksFNV(packet.blockProperties)
-				}
+				blockMapping.registerCustomBlocks(packet.blockProperties, packet.isBlockNetworkIdsHashed)
+			} else {
+				blockMapping.setRuntimeIdHashed(packet.isBlockNetworkIdsHashed)
 			}
 
-			hasReceivedStartGamePacket = true
+			netSession.multithreadingSupported = true
 		}
 
         return true
@@ -86,14 +86,10 @@ class GameSession : MinecraftRelayPacketListener {
         if (packet is LoginPacket) {
 			val protocolVersion = packet.protocolVersion
 
-			while (netSession.client == null) {
-				Thread.sleep(10L) // wait client connect
-			}
-
 			val blockTask = thread {
 				val blockDefinitions = BlockMapping.Provider.craftMapping(protocolVersion)
 				netSession.peer.codecHelper.blockDefinitions = blockDefinitions
-				netSession.client!!.peer.codecHelper.blockDefinitions = blockDefinitions
+				netSession.client?.peer?.codecHelper?.blockDefinitions = blockDefinitions
 
 				blockMapping = blockDefinitions
 			}
@@ -101,7 +97,7 @@ class GameSession : MinecraftRelayPacketListener {
 			backgroundTask = thread {
 				val itemDefinitions = ItemMapping.Provider.craftMapping(protocolVersion)
 				netSession.peer.codecHelper.itemDefinitions = itemDefinitions
-				netSession.client!!.peer.codecHelper.itemDefinitions = itemDefinitions
+				netSession.client?.peer?.codecHelper?.itemDefinitions = itemDefinitions
 
 				itemMapping = itemDefinitions
 
@@ -110,7 +106,6 @@ class GameSession : MinecraftRelayPacketListener {
 				}
 			}
 
-			hasReceivedStartGamePacket = false
         } else if (!player.movementServerAuthoritative && packet is PlayerAuthInputPacket) {
 			convertAuthInput(packet)?.also { netSession.outboundPacket(it) }
 			return false
@@ -119,12 +114,20 @@ class GameSession : MinecraftRelayPacketListener {
         return true
     }
 
+	override fun onPacketPostOutbound(packet: BedrockPacket) {
+		eventManager.emit(EventPacketPostOutbound(this, packet))
+	}
+
     override fun onDisconnect(client: Boolean, reason: String) {
         eventManager.emit(EventDisconnect(this, client, reason))
     }
 
-    fun onTick() {
-        eventManager.emit(EventTick(this))
+    fun onTick(post: Boolean) {
+		if (!post) {
+			eventManager.emit(EventTick(this))
+		} else {
+			eventManager.emit(EventPostTick(this))
+		}
     }
 
     fun sendPacket(packet: BedrockPacket) {

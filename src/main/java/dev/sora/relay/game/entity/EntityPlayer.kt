@@ -13,7 +13,7 @@ open class EntityPlayer(runtimeEntityId: Long, uniqueEntityId: Long,
 		get() = Vector3f.from(posX, posY - EYE_HEIGHT, posZ)
 
 	val displayName: String
-		get() = (metadata[EntityDataTypes.NAME] as? String?)?.ifEmpty { null } ?: username
+		get() = (metadata[EntityDataTypes.NAME] as? String?)?.ifEmpty { username } ?: username
 
     override fun onPacket(packet: BedrockPacket) {
         super.onPacket(packet)

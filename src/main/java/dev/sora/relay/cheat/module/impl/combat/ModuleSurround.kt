@@ -8,7 +8,7 @@ import dev.sora.relay.game.registry.itemDefinition
 import dev.sora.relay.game.utils.AxisAlignedBB
 import dev.sora.relay.game.utils.constants.EnumFacing
 import dev.sora.relay.game.utils.toVector3i
-import dev.sora.relay.utils.timing.TheTimer
+import dev.sora.relay.utils.timing.MillisecondTimer
 import org.cloudburstmc.math.vector.Vector3f
 import org.cloudburstmc.protocol.bedrock.data.inventory.ContainerId
 import org.cloudburstmc.protocol.bedrock.packet.PlayerHotbarPacket
@@ -20,7 +20,7 @@ class ModuleSurround : CheatModule("Surround", CheatCategory.COMBAT) {
 	private var placeDelayValue by intValue("PlaceDelay", 100, 100..1000)
 
 	private val placeableDirections = arrayOf(EnumFacing.EAST, EnumFacing.NORTH, EnumFacing.SOUTH, EnumFacing.WEST, EnumFacing.DOWN)
-	private val delayTimer = TheTimer()
+	private val delayTimer = MillisecondTimer()
 
 	private var holePosition: Vector3f? = null
 

@@ -13,6 +13,7 @@ import io.netty.channel.ServerChannel
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.nio.NioDatagramChannel
 import org.cloudburstmc.netty.channel.raknet.RakChannelFactory
+import org.cloudburstmc.netty.channel.raknet.RakClientChannel
 import org.cloudburstmc.netty.channel.raknet.RakReliability
 import org.cloudburstmc.netty.channel.raknet.config.RakChannelOption
 import org.cloudburstmc.protocol.bedrock.BedrockClientSession
@@ -26,6 +27,7 @@ import org.cloudburstmc.protocol.bedrock.netty.codec.FrameIdCodec
 import org.cloudburstmc.protocol.bedrock.netty.initializer.BedrockClientInitializer
 import org.cloudburstmc.protocol.bedrock.netty.initializer.BedrockServerInitializer
 import java.net.InetSocketAddress
+import kotlin.random.Random
 
 
 open class MinecraftRelay(private val listener: MinecraftRelayListener,
@@ -55,6 +57,8 @@ open class MinecraftRelay(private val listener: MinecraftRelayListener,
         channelFuture = ServerBootstrap()
             .channelFactory(channelFactory())
             .option(RakChannelOption.RAK_ADVERTISEMENT, motd.toByteBuf())
+            .option(RakChannelOption.RAK_SUPPORTED_PROTOCOLS, intArrayOf(8, 9, 10, 11))
+			.option(RakChannelOption.RAK_GUID, Random.nextLong())
             .group(NioEventLoopGroup())
             .childHandler(BedrockRelayInitializer())
             .bind(address)
@@ -76,12 +80,28 @@ open class MinecraftRelay(private val listener: MinecraftRelayListener,
         override fun createSession0(peer: BedrockPeer, subClientId: Int): BedrockServerSession {
             val session = MinecraftRelaySession(peer, subClientId)
 			logInfo("client connected")
+            val address = listener.onSessionCreation(session)
 
             // establish connection to actual server
             Bootstrap()
-                .channelFactory(RakChannelFactory.client(NioDatagramChannel::class.java))
+                .channelFactory {
+                    val udpChannel = NioDatagramChannel()
+                    val channel = RakClientChannel(udpChannel)
+
+                    channel
+                        .connectPromise
+                        .addListener {
+                            if (!it.isSuccess) {
+                                val message = it.cause()?.message
+                                session.disconnectWithPacket(message ?: "failed to connect")
+                            }
+                        }
+
+                    channel
+                }
                 .group(NioEventLoopGroup())
                 .option(RakChannelOption.RAK_PROTOCOL_VERSION, peer.channel.config().getOption(RakChannelOption.RAK_PROTOCOL_VERSION))
+				.option(RakChannelOption.RAK_GUID, Random.nextLong())
                 .handler(object : BedrockClientInitializer() {
                     override fun createSession0(peer: BedrockPeer, subClientId: Int): BedrockClientSession {
 						logInfo("server connected")
@@ -98,7 +118,7 @@ open class MinecraftRelay(private val listener: MinecraftRelayListener,
 
                     override fun initSession(session: BedrockClientSession) {}
                 })
-                .connect(listener.onSessionCreation(session))
+                .connect(address)
                 .syncUninterruptibly()
 
             return session
