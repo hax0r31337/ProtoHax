@@ -30,10 +30,7 @@ class ItemMapping(private val runtimeToGameMap: MutableMap<Int, ItemDefinition>)
 
 	fun registerCustomItems(itemDefinitions: List<org.cloudburstmc.protocol.bedrock.data.definitions.ItemDefinition>) {
 		itemDefinitions.forEach { itemDefinition ->
-			if (runtimeToGameMap.containsKey(itemDefinition.runtimeId)) {
-				return@forEach
-			}
-			val definition = ItemDefinition(itemDefinition.runtimeId, itemDefinition.identifier, emptyArray())
+			val definition = ItemDefinition(itemDefinition.runtimeId, itemDefinition.identifier, ItemTags.tags(itemDefinition.identifier).toTypedArray())
 			runtimeToGameMap[itemDefinition.runtimeId] = definition
 			gameToRuntimeMap[definition] = itemDefinition.runtimeId
 		}
