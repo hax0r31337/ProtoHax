@@ -4,7 +4,7 @@ import dev.sora.relay.game.GameSession
 import dev.sora.relay.game.entity.Entity
 import dev.sora.relay.game.entity.EntityItem
 import dev.sora.relay.game.entity.EntityPlayer
-import dev.sora.relay.game.entity.EntityUnknown
+import dev.sora.relay.game.entity.EntityOther
 import dev.sora.relay.game.event.*
 import org.cloudburstmc.math.vector.Vector3f
 import org.cloudburstmc.protocol.bedrock.packet.*
@@ -22,13 +22,12 @@ class Level(session: GameSession, eventManager: EventManager) : ChunkStorage(ses
 	}
 
 	private val handlePacketInbound = handle<EventPacketInbound> {
-
 		if (packet is StartGamePacket) {
 			entityMap.clear()
 			playerList.clear()
 			dimension = packet.dimensionId
 		} else if (packet is AddEntityPacket) {
-			val entity = EntityUnknown(packet.runtimeEntityId, packet.uniqueEntityId, packet.identifier).apply {
+			val entity = EntityOther(packet.runtimeEntityId, packet.uniqueEntityId, packet.identifier).apply {
 				move(packet.position)
 				rotate(packet.rotation)
 				handleSetData(packet.metadata)

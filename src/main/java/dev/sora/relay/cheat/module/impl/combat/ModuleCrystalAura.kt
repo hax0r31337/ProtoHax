@@ -6,7 +6,7 @@ import dev.sora.relay.game.GameSession
 import dev.sora.relay.game.entity.Entity
 import dev.sora.relay.game.entity.EntityLocalPlayer
 import dev.sora.relay.game.entity.EntityPlayer
-import dev.sora.relay.game.entity.EntityUnknown
+import dev.sora.relay.game.entity.EntityOther
 import dev.sora.relay.game.event.EventEntitySpawn
 import dev.sora.relay.game.event.EventPacketInbound
 import dev.sora.relay.game.event.EventTick
@@ -42,7 +42,7 @@ class ModuleCrystalAura : CheatModule("CrystalAura", CheatCategory.COMBAT) {
 	private val onTickExplode = handle<EventTick>({ explodeTimer.hasTimePassed(delayValue) }) {
 		val rangeSq = rangeValue.pow(2)
 		val crystal = session.level.entityMap.values
-			.filter { it is EntityUnknown && it.identifier == "minecraft:ender_crystal" && it.distanceSq(session.player) < rangeSq }.map {
+			.filter { it is EntityOther && it.identifier == "minecraft:ender_crystal" && it.distanceSq(session.player) < rangeSq }.map {
 				var selfDamage = 0f
 				var mostDamage = 0f
 				session.level.simulateExplosionDamage(it.vec3Position, EXPLOSION_SIZE, listOf(session.player)) { entity, damage ->
@@ -125,7 +125,7 @@ class ModuleCrystalAura : CheatModule("CrystalAura", CheatCategory.COMBAT) {
 	}
 
 	private val handleEntitySpawn = handle<EventEntitySpawn> {
-		if (!explodeTimer.hasTimePassed(delayValue) || entity !is EntityUnknown || entity.identifier != "minecraft:ender_crystal" || entity.distance(session.player) > rangeValue)
+		if (!explodeTimer.hasTimePassed(delayValue) || entity !is EntityOther || entity.identifier != "minecraft:ender_crystal" || entity.distance(session.player) > rangeValue)
 			return@handle
 
 		var selfDamage = 0f

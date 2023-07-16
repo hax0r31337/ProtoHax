@@ -7,7 +7,7 @@ import dev.sora.relay.game.GameSession
 import dev.sora.relay.game.entity.Entity
 import dev.sora.relay.game.entity.EntityLocalPlayer
 import dev.sora.relay.game.entity.EntityPlayer
-import dev.sora.relay.game.entity.EntityUnknown
+import dev.sora.relay.game.entity.EntityOther
 import dev.sora.relay.game.event.*
 import dev.sora.relay.utils.analyzeColorCoverage
 import dev.sora.relay.utils.timing.MillisecondTimer
@@ -17,7 +17,8 @@ import org.cloudburstmc.protocol.bedrock.packet.InventoryTransactionPacket
 class ModuleTargets : CheatModule("Targets", CheatCategory.COMBAT, canToggle = false) {
 
 	private var targetPlayersValue by boolValue("TargetPlayers", true)
-	private var targetEntitiesValue by boolValue("TargetEntities", false)
+	private var targetHostileEntitiesValue by boolValue("TargetHostileEntities", false)
+	private var targetNeutralEntitiesValue by boolValue("TargetNeutralEntities", false)
     private var antiBotModeValue by listValue("AntiBotMode", AntiBotMode.values(), AntiBotMode.NONE)
 	private var teamCheckModeValue by listValue("TeamCheckMode", TeamCheckMode.values(), TeamCheckMode.NONE)
 
@@ -35,7 +36,7 @@ class ModuleTargets : CheatModule("Targets", CheatCategory.COMBAT, canToggle = f
 	fun Entity.isTarget(): Boolean {
 		return if (this == session.player) false
 		else if (targetPlayersValue && this is EntityPlayer) !this.isBot() && !this.isTeammate()
-		else if (targetEntitiesValue && this is EntityUnknown) true
+		else if (this is EntityOther && ((targetHostileEntitiesValue && this.isHostile) || (targetNeutralEntitiesValue && this.isNeutral))) true
 		else false
 	}
 
