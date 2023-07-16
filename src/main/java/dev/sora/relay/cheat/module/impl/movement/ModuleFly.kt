@@ -20,34 +20,35 @@ import kotlin.math.sin
 
 class ModuleFly : CheatModule("Fly", CheatCategory.MOVEMENT) {
 
-    private var modeValue by choiceValue("Mode", arrayOf(Vanilla("Vanilla"), Mineplex(), Jetpack(), Glide(), YPort()), "Vanilla")
-    private var speedValue by floatValue("Speed", 1.5f, 0.1f..5f)
+	private var modeValue by choiceValue("Mode", arrayOf(Vanilla("Vanilla"), Mineplex(), Jetpack(), Glide(), YPort()), "Vanilla")
+	private var speedValue by floatValue("Speed", 1.5f, 0.1f..5f)
 	private var pressJumpValue by boolValue("PressJump", true)
 
-    private var launchY = 0f
+	private var launchY = 0f
 	private val canFly: Boolean
 		get() = !pressJumpValue || session.player.inputData.contains(PlayerAuthInputData.JUMP_DOWN)
 
-    private val abilityPacket = UpdateAbilitiesPacket().apply {
-        playerPermission = PlayerPermission.OPERATOR
-        commandPermission = CommandPermission.OWNER
-        abilityLayers.add(AbilityLayer().apply {
-            layerType = AbilityLayer.Type.BASE
-            abilitiesSet.addAll(Ability.values())
-            abilityValues.addAll(arrayOf(Ability.BUILD, Ability.MINE, Ability.DOORS_AND_SWITCHES, Ability.OPEN_CONTAINERS, Ability.ATTACK_PLAYERS, Ability.ATTACK_MOBS, Ability.OPERATOR_COMMANDS, Ability.MAY_FLY, Ability.FLY_SPEED, Ability.WALK_SPEED))
-            walkSpeed = 0.1f
-            flySpeed = 0.15f
-        })
-    }
+	private val abilityPacket = UpdateAbilitiesPacket().apply {
+		playerPermission = PlayerPermission.OPERATOR
+		commandPermission = CommandPermission.OWNER
+		abilityLayers.add(AbilityLayer().apply {
+			layerType = AbilityLayer.Type.BASE
+			abilitiesSet.addAll(Ability.values())
+			abilityValues.addAll(arrayOf(Ability.BUILD, Ability.MINE, Ability.DOORS_AND_SWITCHES, Ability.OPEN_CONTAINERS, Ability.ATTACK_PLAYERS, Ability.ATTACK_MOBS, Ability.OPERATOR_COMMANDS, Ability.MAY_FLY, Ability.FLY_SPEED, Ability.WALK_SPEED))
+			walkSpeed = 0.1f
+			flySpeed = 0.15f
+		})
+	}
 
-    override fun onEnable() {
-        launchY = session.player.posY
-    }
+	override fun onEnable() {
+		launchY = session.player.posY
+	}
 
 	private open inner class Vanilla(choiceName: String) : Choice(choiceName) {
 
-		private val handleTick = handle<EventTick> {
-			if (session.player.tickExists % 10 == 0L) {
+		override fun onEnable() {
+			if (session.netSessionInitialized) {
+				abilityPacket.abilityLayers[0].flySpeed = speedValue * 0.03f
 				session.netSession.inboundPacket(abilityPacket.apply {
 					uniqueEntityId = session.player.uniqueEntityId
 				})
@@ -57,10 +58,12 @@ class ModuleFly : CheatModule("Fly", CheatCategory.MOVEMENT) {
 		private val handlePacketInbound = handle<EventPacketInbound> {
 			if (packet is UpdateAbilitiesPacket) {
 				cancel()
+				abilityPacket.abilityLayers[0].flySpeed = speedValue * 0.03f
 				session.netSession.inboundPacket(abilityPacket.apply {
 					uniqueEntityId = session.player.uniqueEntityId
 				})
 			} else if (packet is StartGamePacket) {
+				abilityPacket.abilityLayers[0].flySpeed = speedValue * 0.03f
 				session.netSession.inboundPacket(abilityPacket.apply {
 					uniqueEntityId = session.player.uniqueEntityId
 				})
