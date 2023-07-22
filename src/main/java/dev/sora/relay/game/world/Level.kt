@@ -3,8 +3,8 @@ package dev.sora.relay.game.world
 import dev.sora.relay.game.GameSession
 import dev.sora.relay.game.entity.Entity
 import dev.sora.relay.game.entity.EntityItem
-import dev.sora.relay.game.entity.EntityPlayer
 import dev.sora.relay.game.entity.EntityOther
+import dev.sora.relay.game.entity.EntityPlayer
 import dev.sora.relay.game.event.*
 import org.cloudburstmc.math.vector.Vector3f
 import org.cloudburstmc.protocol.bedrock.packet.*

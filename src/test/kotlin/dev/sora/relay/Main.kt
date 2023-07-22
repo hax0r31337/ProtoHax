@@ -16,6 +16,7 @@ import dev.sora.relay.session.listener.xbox.cache.XboxIdentityTokenCacheFileSyst
 import dev.sora.relay.utils.logInfo
 import dev.sora.relay.utils.logWarn
 import io.netty.util.internal.logging.InternalLoggerFactory
+import org.cloudburstmc.protocol.bedrock.util.EncryptionUtils
 import java.io.File
 import java.net.InetSocketAddress
 import java.util.*
@@ -38,11 +39,18 @@ fun main(args: Array<String>) {
 			accessToken
 		}, deviceInfo).also {
 			it.tokenCache = XboxIdentityTokenCacheFileSystem(tokenCacheFile, "account")
+			val token = RelayListenerXboxLogin.fetchIdentityToken(it.accessToken(), deviceInfo)
+			println(token.token)
+			val mcChain = RelayListenerXboxLogin.fetchRawChain(token.token, EncryptionUtils.getMojangPublicKey())
+			println(mcChain.readText())
 		}
 	} else {
 		logWarn("Logged in as Offline Mode, you won't able to join xbox authenticated servers")
 		RelayListenerEncryptedSession()
 	}
+
+	return
+
     val relay = MinecraftRelay(object : MinecraftRelayListener {
         override fun onSessionCreation(session: MinecraftRelaySession): InetSocketAddress {
             session.listeners.add(RelayListenerNetworkSettings(session))

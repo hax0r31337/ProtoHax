@@ -17,7 +17,6 @@ import org.cloudburstmc.protocol.bedrock.packet.BedrockPacket
 import org.cloudburstmc.protocol.bedrock.packet.DisconnectPacket
 import org.cloudburstmc.protocol.bedrock.packet.LoginPacket
 import java.io.Reader
-import java.lang.IllegalStateException
 import java.security.KeyPair
 import java.security.PublicKey
 import java.time.Instant
@@ -38,7 +37,7 @@ class RelayListenerXboxLogin(val accessToken: () -> String, val deviceInfo: Xbox
             if (field.notAfter < System.currentTimeMillis() / 1000) {
                 field = tokenCache?.checkCache(deviceInfo)?.also {
                     logInfo("token cache hit")
-                } ?: fetchIdentityToken(accessToken(), deviceInfo).also {
+                } ?: fetchXboxCredentials(accessToken(), deviceInfo).fetchIdentityToken().also {
                     tokenCache?.let { cache ->
                         logInfo("saving token cache")
                         cache.cache(deviceInfo, it)
@@ -74,11 +73,14 @@ class RelayListenerXboxLogin(val accessToken: () -> String, val deviceInfo: Xbox
     companion object {
 
 		/**
-		 * this key used to sign the post content
+		 * this key used to sign the http POST body
 		 */
 		val deviceKey = XboxDeviceKey()
 
-        fun fetchIdentityToken(accessToken: String, deviceInfo: XboxDeviceInfo): XboxIdentityToken {
+		const val MC_VERSION = "1.20.12"
+		const val MC_PLAYFAB_TITLE_ID = "20CA2"
+
+        fun fetchXboxCredentials(accessToken: String, deviceInfo: XboxDeviceInfo): XboxCredentials {
             var userToken: XboxToken? = null
             val userRequestThread = thread {
                 userToken = XboxUserAuthRequest(
@@ -116,19 +118,14 @@ class RelayListenerXboxLogin(val accessToken: () -> String, val deviceInfo: Xbox
 				}
                 sisuToken.titleToken
             }
-            if (userRequestThread.isAlive)
-                userRequestThread.join()
-            if (userToken == null) error("failed to fetch xbox user token")
-            val xstsToken = XboxXSTSAuthRequest(
-                "https://multiplayer.minecraft.net/",
-                "JWT",
-                "RETAIL",
-                listOf(userToken),
-                titleToken,
-                XboxDevice(deviceKey, deviceToken)
-            ).request(HttpUtils.client)
 
-            return XboxIdentityToken(xstsToken.toIdentityToken(), Instant.parse(xstsToken.notAfter).epochSecond)
+			if (userRequestThread.isAlive)
+                userRequestThread.join()
+
+			return XboxCredentials(
+				userToken ?: error("failed to fetch xbox user token"),
+				titleToken, XboxDevice(deviceKey, deviceToken)
+			)
         }
 
         fun fetchRawChain(identityToken: String, publicKey: PublicKey): Reader {
@@ -139,7 +136,7 @@ class RelayListenerXboxLogin(val accessToken: () -> String, val deviceInfo: Xbox
 			val request = Request.Builder()
 				.url("https://multiplayer.minecraft.net/authentication")
 				.post(AbstractConfigManager.DEFAULT_GSON.toJson(data).toRequestBody("application/json".toMediaType()))
-				.header("Client-Version", "1.19.50")
+				.header("Client-Version", MC_VERSION)
 				.header("Authorization", identityToken)
 				.build()
 			val response = HttpUtils.client.newCall(request).execute()
