@@ -1,6 +1,7 @@
 package dev.sora.relay.session.listener.xbox
 
 import coelho.msftauth.api.xbox.*
+import com.google.gson.Gson
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import dev.sora.relay.cheat.config.AbstractConfigManager
@@ -16,6 +17,7 @@ import org.cloudburstmc.protocol.bedrock.packet.BedrockPacket
 import org.cloudburstmc.protocol.bedrock.packet.DisconnectPacket
 import org.cloudburstmc.protocol.bedrock.packet.LoginPacket
 import java.io.Reader
+import java.lang.IllegalStateException
 import java.security.KeyPair
 import java.security.PublicKey
 import java.time.Instant
@@ -48,10 +50,6 @@ class RelayListenerXboxLogin(val accessToken: () -> String, val deviceInfo: Xbox
         }
     private val chain: List<String>
         get() = fetchChain(identityToken.token, keyPair)
-
-    fun forceFetchChain() {
-        chain
-    }
 
     override fun onPacketOutbound(packet: BedrockPacket): Boolean {
         if (packet is LoginPacket) {
@@ -146,13 +144,14 @@ class RelayListenerXboxLogin(val accessToken: () -> String, val deviceInfo: Xbox
 				.build()
 			val response = HttpUtils.client.newCall(request).execute()
 
-			assert(response.code == 200) { "Http code ${response.code}" }
-
 			return response.body!!.charStream()
         }
 
         fun fetchChain(identityToken: String, keyPair: KeyPair): List<String> {
             val rawChain = JsonParser.parseReader(fetchRawChain(identityToken, keyPair.public)).asJsonObject
+			if (!rawChain.has("chain")) {
+				throw IllegalStateException("No field called \"chain\" has found in response json: ${Gson().toJson(rawChain)}")
+			}
             val chains = rawChain.get("chain").asJsonArray
 
             // add the self-signed jwt

@@ -30,7 +30,6 @@ fun main(args: Array<String>) {
     val gameSession = craftSession()
 
     val dst = InetSocketAddress("127.0.0.1", 19132)
-	var loginThread: Thread? = null
     val sessionEncryptor = if(tokenFile.exists() && !args.contains("--offline")) {
 		val deviceInfo = XboxDeviceInfo.DEVICE_NINTENDO
 		RelayListenerXboxLogin({
@@ -39,10 +38,6 @@ fun main(args: Array<String>) {
 			accessToken
 		}, deviceInfo).also {
 			it.tokenCache = XboxIdentityTokenCacheFileSystem(tokenCacheFile, "account")
-			loginThread = thread {
-				it.forceFetchChain()
-				println("chain ok")
-			}
 		}
 	} else {
 		logWarn("Logged in as Offline Mode, you won't able to join xbox authenticated servers")
@@ -55,10 +50,6 @@ fun main(args: Array<String>) {
 //			session.listeners.add(RelayListenerResourcePackDownloader(session, File("./downloaded_resource_packs")))
 			gameSession.netSession = session
             session.listeners.add(gameSession)
-			loginThread?.also {
-				if (it.isAlive) it.join()
-				loginThread = null
-			}
 			sessionEncryptor.session = session
 			session.listeners.add(sessionEncryptor)
 //            session.listeners.add(object : MinecraftRelayPacketListener {
