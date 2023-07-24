@@ -9,12 +9,15 @@ import dev.sora.relay.game.entity.Entity
 import dev.sora.relay.game.entity.EntityPlayer
 import dev.sora.relay.game.event.EventPacketOutbound
 import dev.sora.relay.game.registry.BlockDefinition
+import org.cloudburstmc.math.vector.*
 import org.cloudburstmc.nbt.NbtMap
 import org.cloudburstmc.protocol.bedrock.data.LevelEvent
 import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.InventoryTransactionType
+import org.cloudburstmc.protocol.bedrock.packet.AddEntityPacket
 import org.cloudburstmc.protocol.bedrock.packet.AnimatePacket
 import org.cloudburstmc.protocol.bedrock.packet.InventoryTransactionPacket
 import org.cloudburstmc.protocol.bedrock.packet.LevelEventPacket
+import kotlin.random.Random
 
 class ModuleHitEffect : CheatModule("HitEffect", CheatCategory.VISUAL) {
 
@@ -60,6 +63,22 @@ class ModuleHitEffect : CheatModule("HitEffect", CheatCategory.VISUAL) {
 					type = LevelEvent.PARTICLE_DESTROY_BLOCK
 					position = if (target is EntityPlayer) target.vec3PositionFeet.add(0f, 1f, 0f) else target.vec3Position
 					data = session.blockMapping.getRuntimeByDefinition(definition)
+				})
+			}
+		},
+		LIGHTNING("Lightning") {
+			override fun deployEffect(session: GameSession, target: Entity){
+				val entityId = Random.nextLong()
+
+				session.netSession.inboundPacket(AddEntityPacket().apply {
+					uniqueEntityId = entityId
+					runtimeEntityId = entityId
+					identifier = "minecraft:lightning_bolt"
+					entityType = 0
+					position = if (target is EntityPlayer) target.vec3PositionFeet.add(0f, 1f, 0f) else target.vec3Position
+					motion = Vector3f.ZERO
+					rotation = Vector2f.ZERO
+					bodyRotation = 0f
 				})
 			}
 		};
