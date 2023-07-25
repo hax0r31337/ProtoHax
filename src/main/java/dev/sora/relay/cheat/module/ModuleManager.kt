@@ -5,6 +5,7 @@ import dev.sora.relay.cheat.module.impl.misc.*
 import dev.sora.relay.cheat.module.impl.movement.*
 import dev.sora.relay.cheat.module.impl.visual.ModuleAntiBlind
 import dev.sora.relay.cheat.module.impl.visual.ModuleHitEffect
+import dev.sora.relay.cheat.module.impl.visual.ModuleNoFireCam
 import dev.sora.relay.cheat.module.impl.visual.ModuleNoHurtCam
 import dev.sora.relay.game.GameSession
 
@@ -46,6 +47,7 @@ class ModuleManager(private val session: GameSession) {
 		registerModule(ModuleMiner())
 		registerModule(ModuleSpeed())
 		registerModule(ModuleHitbox())
+		registerModule(ModuleNoFireCam())
     }
 
 	inline fun <reified T : CheatModule> getModule(t: Class<T>): T {
