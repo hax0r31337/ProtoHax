@@ -12,8 +12,9 @@ import org.cloudburstmc.protocol.bedrock.packet.PlayerAuthInputPacket
 
 class ModuleDisabler : CheatModule("Disabler", CheatCategory.MISC) {
 
-    private var modeValue by choiceValue("Mode", arrayOf(Mineplex, Cubecraft, LifeBoat), Mineplex)
+    private var modeValue by choiceValue("Mode", arrayOf(CubeCraft, Lifeboat), CubeCraft)
 
+	/*
 	private object Mineplex : Choice("Mineplex") {
 
 		private val handleTick = handle<EventTick> {
@@ -26,16 +27,27 @@ class ModuleDisabler : CheatModule("Disabler", CheatCategory.MISC) {
 			})
 		}
 	}
+	 */
+	// RIP Mineplex
 
-	private object Cubecraft : Choice("Cubecraft") {
+	private object CubeCraft : Choice("CubeCraft") {
 
 		private val handlePacketOutbound = handle<EventPacketOutbound> {
 			if (packet is PlayerAuthInputPacket) {
-				packet.motion = Vector2f.from(0.01f, 0.01f)
+				packet.delta = packet.delta.mul(0.0,1.0,0.0);
 
+				session.sendPacket(MovePlayerPacket().apply {
+					runtimeEntityId = session.player.runtimeEntityId
+					isOnGround = true
+					mode = MovePlayerPacket.Mode.TELEPORT
+					teleportationCause = MovePlayerPacket.TeleportationCause.PROJECTILE
+					tick = session.player.tickExists
+				})
+				/*
 				for (i in 0 until 9) {
 					session.netSession.outboundPacket(packet)
 				}
+				 */
 			} else if (packet is NetworkStackLatencyPacket) {
 				cancel()
 			}
@@ -48,11 +60,12 @@ class ModuleDisabler : CheatModule("Disabler", CheatCategory.MISC) {
 				position = player.vec3Position
 				rotation = player.vec3Rotation
 				isOnGround = true
+				tick = session.player.tickExists
 			})
 		}
 	}
 
-	private object LifeBoat : Choice("LifeBoat") {
+	private object Lifeboat : Choice("Lifeboat") {
 
 		private val handlePacketOutbound = handle<EventPacketOutbound> {
 			if (packet is PlayerAuthInputPacket) {
