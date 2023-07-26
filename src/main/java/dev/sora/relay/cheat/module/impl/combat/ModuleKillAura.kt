@@ -18,6 +18,7 @@ class ModuleKillAura : CheatModule("KillAura", CheatCategory.COMBAT) {
 
     private val cpsValue = clickValue()
     private var rangeValue by floatValue("Range", 3.7f, 2f..7f)
+	private var fovValue by intValue("FOV", 180, 30..180)
     private var attackModeValue by listValue("AttackMode", AttackMode.values(), AttackMode.SINGLE)
     private var rotationModeValue by listValue("RotationMode", RotationMode.values(), RotationMode.LOCK)
     private var swingValue by listValue("Swing", EntityLocalPlayer.SwingMode.values(), EntityLocalPlayer.SwingMode.BOTH)
@@ -31,8 +32,11 @@ class ModuleKillAura : CheatModule("KillAura", CheatCategory.COMBAT) {
 	private val handleTick = handle<EventTick> {
 		val range = rangeValue.pow(2)
 		val moduleTargets = moduleManager.getModule(ModuleTargets::class.java)
+		val playerRotation = Rotation(session.player.rotationYaw, session.player.rotationPitch)
 		val entityList = session.level.entityMap.values.filter {
-			it.distanceSq(session.player) < range && with(moduleTargets) { it.isTarget() } }
+			it.distanceSq(session.player) < range && with(moduleTargets) { it.isTarget() } &&
+				(fovValue == 180 || getRotationDifference(playerRotation, toRotation(session.player.vec3Position, it.vec3Position)) <= fovValue)
+		}
 		if (entityList.isEmpty()) return@handle
 
 		val aimTarget = selectEntity(session, entityList)
