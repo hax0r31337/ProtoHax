@@ -141,7 +141,7 @@ class RelayListenerXboxLogin(val accessToken: () -> String, val deviceInfo: Xbox
 			val request = Request.Builder()
 				.url("https://multiplayer.minecraft.net/authentication")
 				.post(AbstractConfigManager.DEFAULT_GSON.toJson(data).toRequestBody("application/json".toMediaType()))
-				.header("Client-Version", "1.19.50")
+				.header("Client-Version", "1.26.33.1")
 				.header("Authorization", identityToken)
 				.build()
 			val response = HttpUtils.client.newCall(request).execute()
